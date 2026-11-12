@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -9,6 +10,17 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
+# expo
+.expo/
+**/.expo/
+
+# IDEs
+.idea/
+.vscode/
+
+# archives
+*.zip
 
 # testing
 /coverage

@@ -1,69 +1,1968 @@
+"use client";
+
+import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Sprout,
+  Wheat,
+  Droplets,
+  CloudSun,
+  ShieldCheck,
+  TrendingUp,
+  Smartphone,
+  PhoneCall,
+  MessageSquare,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  Mail,
+  Download,
+  Calendar,
+  ChevronDown,
+  X,
+  Star,
+  MapPin,
+  Layers,
+  Menu,
+  Eye,
+  EyeOff,
+  Sparkles,
+  AlertTriangle,
+  TrendingDown,
+  ShieldAlert,
+  Clock,
+  Compass,
+  DollarSign,
+  Activity,
+  Cpu,
+  Award,
+  Check,
+  Users,
+} from "lucide-react";
 
 export default function Home() {
+  const router = useRouter();
+
+  // Navigation & Modal states
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
+  const [demoSubmitted, setDemoSubmitted] = useState(false);
+  const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [smsSent, setSmsSent] = useState(false);
+  const [phoneForSms, setPhoneForSms] = useState("");
+
+  // Auth Popup States
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [authStep, setAuthStep] = useState<"form" | "otp" | "google_phone">("form");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPhone, setAuthPhone] = useState("");
+  const [authPhoneError, setAuthPhoneError] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authFullName, setAuthFullName] = useState("");
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authSuccess, setAuthSuccess] = useState(false);
+  const [otpValues, setOtpValues] = useState<string[]>(["", "", "", "", "", ""]);
+  const [otpTimer, setOtpTimer] = useState<number>(30);
+  const [otpError, setOtpError] = useState<string>("");
+
+  // OTP Countdown timer
+  React.useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (authStep === "otp" && otpTimer > 0) {
+      timer = setInterval(() => {
+        setOtpTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [authStep, otpTimer]);
+
+  const handleOtpChange = (index: number, val: string) => {
+    if (!/^\d*$/.test(val)) return;
+    const newOtp = [...otpValues];
+    if (val.length > 1) {
+      const chars = val.replace(/\D/g, "").slice(0, 6).split("");
+      chars.forEach((c, i) => {
+        if (i < 6) newOtp[i] = c;
+      });
+      setOtpValues(newOtp);
+      const focusIndex = Math.min(chars.length, 5);
+      const nextInput = document.getElementById(`auth-otp-${focusIndex}`);
+      nextInput?.focus();
+      return;
+    }
+    newOtp[index] = val;
+    setOtpValues(newOtp);
+    if (val && index < 5) {
+      const nextInput = document.getElementById(`auth-otp-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
+      const prevInput = document.getElementById(`auth-otp-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
+
+  const handleVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    const entered = otpValues.join("");
+    if (entered.length < 6) {
+      setOtpError("Please enter the complete 6-digit verification code.");
+      return;
+    }
+    setOtpError("");
+    setAuthLoading(true);
+    if (typeof window !== "undefined") {
+      if (authPhone) localStorage.setItem("khetivo_user_phone", authPhone);
+      if (authEmail) localStorage.setItem("khetivo_user_email", authEmail);
+    }
+    setTimeout(() => {
+      setAuthLoading(false);
+      setAuthSuccess(true);
+      setTimeout(() => {
+        setAuthModalOpen(false);
+        router.push("/dashboard");
+      }, 700);
+    }, 600);
+  };
+
+  const handleGoogleSignInClick = () => {
+    setAuthLoading(true);
+    setTimeout(() => {
+      setAuthLoading(false);
+      const savedPhone = typeof window !== "undefined" ? localStorage.getItem("khetivo_user_phone") : null;
+      if (savedPhone && savedPhone.length >= 10) {
+        setAuthPhone(savedPhone);
+        setAuthSuccess(true);
+        setTimeout(() => {
+          setAuthModalOpen(false);
+          router.push("/dashboard");
+        }, 600);
+      } else {
+        setAuthPhone("");
+        setAuthPhoneError("");
+        setAuthStep("google_phone");
+      }
+    }, 450);
+  };
+
+  const handleGooglePhoneSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (authPhone.length < 10) {
+      setAuthPhoneError("Please enter your complete 10-digit mobile number.");
+      return;
+    }
+    setAuthPhoneError("");
+    setAuthLoading(true);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("khetivo_user_phone", authPhone);
+      localStorage.setItem("khetivo_user_email", "farmer.jaswinder@gmail.com");
+    }
+    setTimeout(() => {
+      setAuthLoading(false);
+      setAuthSuccess(true);
+      setTimeout(() => {
+        setAuthModalOpen(false);
+        router.push("/dashboard");
+      }, 700);
+    }, 600);
+  };
+
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    setTimeout(() => {
+      setAuthLoading(false);
+      setAuthStep("otp");
+      setOtpTimer(30);
+      setOtpValues(["", "", "", "", "", ""]);
+      setOtpError("");
+    }, 500);
+  };
+
+  // Pricing toggle: monthly vs annual
+  const [billingCycle, setBillingCycle] = useState<"annual" | "monthly">("annual");
+
+  // ROI Calculator states
+  const [farmAcres, setFarmAcres] = useState<number>(20);
+  const [cropType, setCropType] = useState<string>("Wheat & Paddy");
+  const [irrigationType, setIrrigationType] = useState<string>("Tubewell / Sub-surface");
+
+  // FAQ Accordion open index
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  // Form states for Demo Request Modal
+  const [demoForm, setDemoForm] = useState({
+    name: "",
+    phone: "",
+    acres: "15-50",
+    state: "Punjab",
+    crop: "Wheat & Paddy",
+    mode: "field",
+  });
+
+  // Calculate dynamic ROI values
+  const estimatedWaterSaved = farmAcres * 36000; // liters per year
+  const estimatedInputSaved = farmAcres * 3500; // ₹ per year
+  const estimatedYieldBoost = farmAcres * 9200; // ₹ per year
+  const totalNetGain = estimatedInputSaved + estimatedYieldBoost;
+
+  const handleDemoSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setDemoSubmitted(true);
+  };
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactSubmitted(true);
+  };
+
+  const handleSmsDownload = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phoneForSms.trim().length >= 10) {
+      setSmsSent(true);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)] flex flex-col selection:bg-[#C6E2D0] selection:text-[#0C4B32]">
+      {/* ========================================================================= */}
+      {/* 1. TOP ANNOUNCEMENT BANNER                                                */}
+      {/* ========================================================================= */}
+      <div className="bg-[#0C4B32] text-white text-xs py-2 px-4 text-center font-medium border-b border-[#278449]/40 flex items-center justify-center gap-2">
+        <span className="inline-flex items-center gap-1.5 bg-[#278449] text-white px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide">
+          <Sparkles className="w-3 h-3 text-[var(--color-accent)]" />
+          KHARIF & RABI 2026-27 ADVISORY LIVE
+        </span>
+        <span className="hidden sm:inline text-white/90">
+          Smart Irrigation & Yellow Rust Warning Network active across 45,000+ acres in Punjab & Haryana.
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setAuthMode("signup");
+            setAuthStep("form");
+            setAuthModalOpen(true);
+          }}
+          className="underline hover:text-[#F9B21B] font-semibold ml-1 cursor-pointer"
+        >
+          Join Free Today →
+        </button>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 2. HEADER & NAVIGATION BAR                                                */}
+      {/* ========================================================================= */}
+      <header className="sticky top-0 z-40 bg-[var(--color-background)]/90 backdrop-blur-md border-b border-[var(--color-border)] transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group cursor-pointer">
             <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+              src="/logo-khetivo-cropped.png"
+              alt="Khetivo - Smart Intelligence for Every Farm"
+              width={180}
+              height={52}
+              className="h-10 sm:h-11 w-auto object-contain"
+              priority
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </Link>
+
+          {/* Desktop Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-7 text-xs font-semibold text-[var(--color-text)]">
+            <a href="#problems" className="hover:text-[var(--color-secondary)] transition-colors">
+              Farmer Challenges
+            </a>
+            <a href="#solutions" className="hover:text-[var(--color-secondary)] transition-colors">
+              Smart Solutions
+            </a>
+            <a href="#features" className="hover:text-[var(--color-secondary)] transition-colors">
+              Platform Features
+            </a>
+            <a href="#calculator" className="hover:text-[var(--color-secondary)] transition-colors">
+              ROI Calculator
+            </a>
+            <a href="#how-it-works" className="hover:text-[var(--color-secondary)] transition-colors">
+              How It Works
+            </a>
+            <a href="#team" className="hover:text-[var(--color-secondary)] transition-colors">
+              Agronomy Team
+            </a>
+            <a href="#testimonials" className="hover:text-[var(--color-secondary)] transition-colors">
+              Farmer Reviews
+            </a>
+            <a href="#download" className="hover:text-[var(--color-secondary)] transition-colors">
+              Mobile App
+            </a>
+          </nav>
+
+          {/* Desktop CTA Actions */}
+          <div className="hidden lg:flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMode("signin");
+                setAuthStep("form");
+                setAuthModalOpen(true);
+              }}
+              className="text-xs font-semibold text-[var(--color-primary)] hover:text-[var(--color-secondary)] px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDemoSubmitted(false);
+                setDemoModalOpen(true);
+              }}
+              className="btn btn-primary text-xs px-4 py-2 font-medium cursor-pointer shadow-xs"
+            >
+              Request Free Demo
+            </button>
+            <Link
+              href="/dashboard"
+              className="px-3.5 py-2 rounded-xl bg-[#E7F3EB] text-[#0C4B32] hover:bg-[#D4EBDC] border border-[#C6E2D0] text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
+            >
+              <span>Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-xl text-[var(--color-text)] hover:bg-[var(--color-surface)] border border-[var(--color-border)] lg:hidden cursor-pointer"
+            aria-label="Toggle navigation menu"
           >
-            Documentation
-          </a>
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
-      </main>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden bg-[var(--color-background)] border-b border-[var(--color-border)] px-4 pt-3 pb-6 space-y-3.5 animate-in slide-in-from-top-2">
+            <a
+              href="#problems"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-[var(--color-text)] py-1.5"
+            >
+              Farmer Challenges
+            </a>
+            <a
+              href="#solutions"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-[var(--color-text)] py-1.5"
+            >
+              Smart Solutions
+            </a>
+            <a
+              href="#features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-[var(--color-text)] py-1.5"
+            >
+              Platform Features
+            </a>
+            <a
+              href="#calculator"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-[var(--color-text)] py-1.5"
+            >
+              ROI Calculator
+            </a>
+            <a
+              href="#how-it-works"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-[var(--color-text)] py-1.5"
+            >
+              How It Works
+            </a>
+            <a
+              href="#team"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-[var(--color-text)] py-1.5"
+            >
+              Agronomy Team
+            </a>
+            <a
+              href="#testimonials"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-[var(--color-text)] py-1.5"
+            >
+              Farmer Reviews
+            </a>
+            <div className="pt-3 border-t border-[var(--color-border)] space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setAuthMode("signin");
+                  setAuthStep("form");
+                  setAuthModalOpen(true);
+                }}
+                className="w-full btn btn-outline py-2.5 text-xs justify-center"
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setDemoSubmitted(false);
+                  setDemoModalOpen(true);
+                }}
+                className="w-full btn btn-primary py-2.5 text-xs justify-center"
+              >
+                Request Free Field Demo
+              </button>
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full py-2.5 rounded-xl bg-[#E7F3EB] text-[#0C4B32] border border-[#C6E2D0] text-xs font-semibold text-center block"
+              >
+                Open Farmer Dashboard →
+              </Link>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* ========================================================================= */}
+      {/* 3. HERO SECTION                                                           */}
+      {/* ========================================================================= */}
+      <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28 border-b border-[var(--color-border)] bg-gradient-to-b from-[var(--color-background)] via-[var(--color-surface)] to-[var(--color-background)]">
+        {/* Decorative background glow */}
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-[var(--color-secondary)]/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            {/* Left Hero Copy */}
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+              {/* Trust Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xs">
+                <span className="w-2 h-2 rounded-full bg-[var(--color-secondary)] animate-pulse" />
+                <span className="text-xs font-bold text-[var(--color-primary)]">
+                  Next-Gen Indian Agriculture & Farm OS
+                </span>
+                <span className="text-xs text-[var(--color-text-muted)]">• 45,000+ Active Acres</span>
+              </div>
+
+              {/* Main Headline */}
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-[var(--color-primary)] leading-[1.18]">
+                Stop Farming on Guesswork. Grow More, Spend Less & Earn Peak Mandi Prices.
+              </h1>
+
+              {/* Supporting Subheadline */}
+              <p className="text-base sm:text-lg text-[var(--color-text-muted)] max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                Khetivo gives Indian farmers scientific superpowers: know the exact day and minutes to irrigate, scan leaf diseases with AI in 5 seconds, follow package of practices, and track live APMC mandi rates — directly in your hands.
+              </p>
+
+              {/* Dual CTA Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDemoSubmitted(false);
+                    setDemoModalOpen(true);
+                  }}
+                  className="btn btn-primary text-sm sm:text-base px-6 py-3.5 w-full sm:w-auto shadow-sm"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>Request a Free Field Demo</span>
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="btn btn-outline text-sm sm:text-base px-6 py-3.5 w-full sm:w-auto inline-flex items-center gap-2 justify-center"
+                >
+                  <Sprout className="w-4 h-4 text-[var(--color-secondary)]" />
+                  <span>Explore Farmer Dashboard</span>
+                </Link>
+              </div>
+
+              {/* Key Trust Metrics */}
+              <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-[var(--color-border)]">
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-[var(--color-primary)]">
+                    38%
+                  </div>
+                  <p className="text-xs text-[var(--color-text-muted)] font-normal mt-0.5">
+                    Water & Fuel Saved
+                  </p>
+                </div>
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-[var(--color-secondary)]">
+                    +26%
+                  </div>
+                  <p className="text-xs text-[var(--color-text-muted)] font-normal mt-0.5">
+                    Average Yield Boost
+                  </p>
+                </div>
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-[var(--color-primary)]">
+                    ₹18,400
+                  </div>
+                  <p className="text-xs text-[var(--color-text-muted)] font-normal mt-0.5">
+                    Saved / Acre / Year
+                  </p>
+                </div>
+                <div className="text-left">
+                  <div className="text-2xl font-bold text-[var(--color-accent)] flex items-center gap-1">
+                    4.8 <Star className="w-4 h-4 fill-[var(--color-accent)] text-[var(--color-accent)]" />
+                  </div>
+                  <p className="text-xs text-[var(--color-text-muted)] font-normal mt-0.5">
+                    12,000+ Farmer Reviews
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Hero Visual: Authentic Indian Farmer + Modern Smartphone Showing ONLY the Khetivo Icon */}
+            <div className="lg:col-span-5 relative">
+              <div className="relative mx-auto max-w-md sm:max-w-lg">
+                {/* Farmer Photo Card - Bright, Natural Sunlight, 100% Unobscured */}
+                <div className="relative rounded-[32px] overflow-hidden border border-[#DCE6DE] shadow-xl bg-white group">
+                  <Image
+                    src="/hero-farmer.jpg"
+                    alt="Proud Indian farmer in wheat field using Khetivo"
+                    width={640}
+                    height={720}
+                    className="w-full h-[400px] sm:h-[460px] object-cover object-top transition-transform duration-700 group-hover:scale-[1.02]"
+                    priority
+                  />
+
+                  {/* Soft bottom subtle green tint only for edge blending */}
+                  <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#0C4B32]/35 via-transparent to-transparent pointer-events-none" />
+                </div>
+
+                {/* Floating Modern Smartphone Mockup: Shows ONLY the Khetivo Icon, Nothing Else! */}
+                <div className="absolute -bottom-6 -right-3 sm:-right-6 w-44 sm:w-52 bg-[#0A1F15] border-[3px] border-[#1D4A32] rounded-[38px] p-2 sm:p-2.5 shadow-2xl z-20 transition-transform duration-300 hover:scale-[1.03]">
+                  {/* Dynamic Island / Speaker Notch */}
+                  <div className="w-16 h-3 bg-black/90 rounded-full mx-auto mb-2 border border-white/10" />
+
+                  {/* Phone Screen: Shows ONLY the Khetivo App Icon */}
+                  <div className="bg-gradient-to-b from-[#0C4B32] via-[#0E5538] to-[#083523] rounded-[28px] aspect-[9/16] flex flex-col items-center justify-center p-3 relative overflow-hidden shadow-inner">
+                    {/* Soft ambient glow behind icon */}
+                    <div className="absolute w-28 h-28 rounded-full bg-emerald-400/20 blur-xl pointer-events-none" />
+
+                    {/* Khetivo App Icon - Large, Crisp, Centered */}
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-2xl border border-white/30 transform transition-transform duration-300 hover:scale-105 z-10 bg-[#0C4B32]">
+                      <Image
+                        src="/khetivo-app-icon.png"
+                        alt="Khetivo App Icon"
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-cover"
+                        priority
+                      />
+                    </div>
+                  </div>
+
+                  {/* Home Bar Indicator */}
+                  <div className="w-16 h-1 bg-white/40 rounded-full mx-auto mt-2" />
+                </div>
+
+                {/* Floating Testimonial Pill - Balanced at bottom-left */}
+                <div className="hidden sm:flex items-center gap-3 bg-white/95 backdrop-blur-md border border-[#DCE6DE] rounded-2xl px-4 py-2.5 shadow-xl absolute -bottom-4 -left-4 sm:-left-6 z-20">
+                  <div className="w-9 h-9 rounded-xl bg-[#0C4B32] text-white text-xs flex items-center justify-center font-bold shrink-0">
+                    GS
+                  </div>
+                  <div className="text-xs">
+                    <p className="font-bold text-[#26352D]">Gurpreet Singh • 32 Ac (Ludhiana)</p>
+                    <p className="text-[11px] text-emerald-700 font-medium">&ldquo;Saved 4 tubewell cycles this month.&rdquo;</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 4. THE PROBLEMS SECTION (WHAT INDIAN FARMERS FACE)                        */}
+      {/* ========================================================================= */}
+      <section id="problems" className="py-16 sm:py-24 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-red-700 bg-red-50 px-3.5 py-1 rounded-full border border-red-200">
+              The Real Ground Reality
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--color-primary)]">
+              4 Severe Challenges Draining Farmer Profits Every Single Season
+            </h2>
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)] font-normal leading-relaxed">
+              Most Indian farmers work harder than anyone else, yet struggle with heavy input costs, unexpected diseases, and unstable mandi rates. Here is what is holding our agriculture back:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Problem 1 */}
+            <div className="p-6 rounded-[var(--radius-card)] bg-white border border-red-200 shadow-xs space-y-3 relative overflow-hidden group hover:border-red-400 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-700 flex items-center justify-center font-bold text-sm border border-red-200">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-[#26352D]">
+                Tubewell Guesswork & Costly Electricity
+              </h3>
+              <p className="text-xs text-[#55685D] leading-relaxed">
+                Pumps run on fixed calendar days without knowing actual root moisture. Over-watering rots roots, wastes 40% groundwater, and burns expensive diesel.
+              </p>
+              <div className="text-[11px] font-semibold text-red-700 pt-2 border-t border-red-100 flex items-center gap-1">
+                <span>Loss: ₹8,000–₹12,000 / Acre in Power & Fuel</span>
+              </div>
+            </div>
+
+            {/* Problem 2 */}
+            <div className="p-6 rounded-[var(--radius-card)] bg-white border border-red-200 shadow-xs space-y-3 relative overflow-hidden group hover:border-red-400 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-700 flex items-center justify-center font-bold text-sm border border-red-200">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-[#26352D]">
+                Pest Attacks Spotted Too Late
+              </h3>
+              <p className="text-xs text-[#55685D] leading-relaxed">
+                Yellow Rust, Blight, or Pink Bollworm are often discovered after 25–30% of the crop canopy is infected, triggering panic spraying of wrong, costly chemicals.
+              </p>
+              <div className="text-[11px] font-semibold text-red-700 pt-2 border-t border-red-100 flex items-center gap-1">
+                <span>Loss: 20–35% of Total Harvest Destroyed</span>
+              </div>
+            </div>
+
+            {/* Problem 3 */}
+            <div className="p-6 rounded-[var(--radius-card)] bg-white border border-red-200 shadow-xs space-y-3 relative overflow-hidden group hover:border-red-400 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-700 flex items-center justify-center font-bold text-sm border border-red-200">
+                <TrendingDown className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-[#26352D]">
+                Middlemen & Distress Mandi Selling
+              </h3>
+              <p className="text-xs text-[#55685D] leading-relaxed">
+                Without real-time price intelligence across nearby APMCs, farmers sell to local commission agents (arhtiyas) at below-fair prices right after harvest.
+              </p>
+              <div className="text-[11px] font-semibold text-red-700 pt-2 border-t border-red-100 flex items-center gap-1">
+                <span>Loss: ₹40–₹120 / Quintal Left on the Table</span>
+              </div>
+            </div>
+
+            {/* Problem 4 */}
+            <div className="p-6 rounded-[var(--radius-card)] bg-white border border-red-200 shadow-xs space-y-3 relative overflow-hidden group hover:border-red-400 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-red-50 text-red-700 flex items-center justify-center font-bold text-sm border border-red-200">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-[#26352D]">
+                Fertilizer Overuse & Soil Degradation
+              </h3>
+              <p className="text-xs text-[#55685D] leading-relaxed">
+                Excessive, uncalibrated Urea and DAP application burns delicate soil microbiomes, increases farmer input debt, and gives diminishing returns year after year.
+              </p>
+              <div className="text-[11px] font-semibold text-red-700 pt-2 border-t border-red-100 flex items-center gap-1">
+                <span>Loss: ₹4,500 / Acre on Unnecessary Nutrients</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 5. THE SOLUTIONS SECTION (HOW KHETIVO SOLVES EACH)                        */}
+      {/* ========================================================================= */}
+      <section id="solutions" className="py-16 sm:py-24 bg-[var(--color-background)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0C4B32] bg-[#E7F3EB] px-3.5 py-1 rounded-full border border-[#C6E2D0]">
+              The Khetivo Advantage
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-[var(--color-primary)]">
+              Scientific Farm Intelligence in Plain Language for Every Farmer
+            </h2>
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)] font-normal leading-relaxed">
+              We replaced guesswork with exact data. Simple mobile alerts tell you what to do, when to do it, and what to avoid to maximize your income.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Solution 1 */}
+            <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#E5ECE7] hover:border-[#0C4B32]/50 shadow-xs transition-all space-y-3.5">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center shrink-0 border border-[#C6E2D0]">
+                  <Droplets className="w-6 h-6 text-[#0C4B32]" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-[#26352D]">
+                    1. Precision Soil Moisture Telemetry & Irrigation Timing
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#55685D] mt-1 leading-relaxed">
+                    Khetivo calculates your exact root-zone soil saturation based on soil type (Alluvial, Clay, Sandy) and crop stage. It tells you the exact hour to irrigate, saving up to 40% tubewell pump power and preventing waterlogging.
+                  </p>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900 font-semibold flex items-center justify-between">
+                <span>✓ Result: 35–40% Water & Diesel Saved Every Season</span>
+                <span className="text-emerald-700 font-bold">+2.5 Qtl Yield</span>
+              </div>
+            </div>
+
+            {/* Solution 2 */}
+            <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#E5ECE7] hover:border-[#0C4B32]/50 shadow-xs transition-all space-y-3.5">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center shrink-0 border border-[#C6E2D0]">
+                  <ShieldCheck className="w-6 h-6 text-[#0C4B32]" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-[#26352D]">
+                    2. Instant 5-Second AI Leaf Scanner & PAU University Prescriptions
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#55685D] mt-1 leading-relaxed">
+                    Simply take a photo of any leaf showing yellow spots, pest holes, or wilting. Khetivo&apos;s AI identifies the disease in seconds and prescribes the exact scientific medicine, bio-spray, and dilution ratio verified by agronomists.
+                  </p>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900 font-semibold flex items-center justify-between">
+                <span>✓ Result: Prevent 90%+ Pest Damage Before Infestation Spreads</span>
+                <span className="text-emerald-700 font-bold">Safe Sprays</span>
+              </div>
+            </div>
+
+            {/* Solution 3 */}
+            <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#E5ECE7] hover:border-[#0C4B32]/50 shadow-xs transition-all space-y-3.5">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center shrink-0 border border-[#C6E2D0]">
+                  <TrendingUp className="w-6 h-6 text-[#0C4B32]" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-[#26352D]">
+                    3. Live 200+ APMC Mandi Watchlist & Price Transparency
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#55685D] mt-1 leading-relaxed">
+                    Compare daily crop rates across neighboring APMC mandis before loading your trolley. Know whether Khanna, Moga, or Sirsa is paying higher, and negotiate confidently with local buyers with complete price transparency.
+                  </p>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900 font-semibold flex items-center justify-between">
+                <span>✓ Result: Earn ₹35–₹80 Extra Per Quintal Sold</span>
+                <span className="text-emerald-700 font-bold">Zero Middlemen Trap</span>
+              </div>
+            </div>
+
+            {/* Solution 4 */}
+            <div className="p-6 sm:p-7 rounded-2xl bg-white border border-[#E5ECE7] hover:border-[#0C4B32]/50 shadow-xs transition-all space-y-3.5">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center shrink-0 border border-[#C6E2D0]">
+                  <Sprout className="w-6 h-6 text-[#0C4B32]" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-[#26352D]">
+                    4. Day-by-Day Package of Practices with Clear Do&apos;s &amp; Don&apos;ts
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#55685D] mt-1 leading-relaxed">
+                    Never second-guess your crop lifecycle. Follow a connected 5-stage timeline from sowing to harvesting, complete with numbered point-by-point Do&apos;s and Don&apos;ts to avoid chemical mistakes and maximize harvest test weight.
+                  </p>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-[11px] text-emerald-900 font-semibold flex items-center justify-between">
+                <span>✓ Result: 100% Scientific Protocol Tailored to Your Variety</span>
+                <span className="text-emerald-700 font-bold">Standardized Yield</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 6. CORE PLATFORM FEATURES                                                  */}
+      {/* ========================================================================= */}
+      <section id="features" className="py-16 sm:py-24 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-secondary)] bg-[var(--color-background)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+              Full Suite
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--color-primary)]">
+              Everything Needed to Run a High-Yielding Modern Farm
+            </h2>
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)] font-normal">
+              From IoT sensors and satellite scans to daily farm labor management and store inventories.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Feature 1 */}
+            <div className="card-base p-6 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center font-bold text-sm">
+                <Smartphone className="w-5 h-5 text-[var(--color-secondary)]" />
+              </div>
+              <h3 className="text-base font-semibold text-[var(--color-text)]">
+                100% Offline-First & Voice Search
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] font-normal leading-relaxed">
+                Works seamlessly in remote agricultural fields without mobile internet. Use voice commands in Punjabi, Hindi, and 10 regional dialects to search prices and log tasks.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="card-base p-6 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center font-bold text-sm">
+                <Layers className="w-5 h-5 text-[var(--color-secondary)]" />
+              </div>
+              <h3 className="text-base font-semibold text-[var(--color-text)]">
+                Satellite NDVI Biomass Scanning
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] font-normal leading-relaxed">
+                Sentinel-2 and Landsat satellite passes scan your crops every 4–5 days. Identify water stress and nitrogen deficiencies before they become visible to the eye.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="card-base p-6 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center font-bold text-sm">
+                <MapPin className="w-5 h-5 text-[var(--color-secondary)]" />
+              </div>
+              <h3 className="text-base font-semibold text-[var(--color-text)]">
+                Multi-Farm GPS Parcel Management
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] font-normal leading-relaxed">
+                Map multiple farm parcels with custom land units (Acres, Killa, Bigha, Hectare). Assign soil types, irrigation methods, and track different crops across all holdings.
+              </p>
+            </div>
+
+            {/* Feature 4 */}
+            <div className="card-base p-6 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center font-bold text-sm">
+                <Calendar className="w-5 h-5 text-[var(--color-secondary)]" />
+              </div>
+              <h3 className="text-base font-semibold text-[var(--color-text)]">
+                Daily Tasks & Worker Delegation
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] font-normal leading-relaxed">
+                Assign irrigation schedules, weed removal, and fertilizer top-dressing to farm workers. Track completed tasks and maintain an audit log of all field operations.
+              </p>
+            </div>
+
+            {/* Feature 5 */}
+            <div className="card-base p-6 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center font-bold text-sm">
+                <Activity className="w-5 h-5 text-[var(--color-secondary)]" />
+              </div>
+              <h3 className="text-base font-semibold text-[var(--color-text)]">
+                Inventory, Fuel & Store Tracking
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] font-normal leading-relaxed">
+                Keep real-time records of seed bags, Urea/DAP sacks, pesticide bottles, and tractor diesel barrels. Get low-stock alerts before peak sowing and spraying windows.
+              </p>
+            </div>
+
+            {/* Feature 6 */}
+            <div className="card-base p-6 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center font-bold text-sm">
+                <DollarSign className="w-5 h-5 text-[var(--color-secondary)]" />
+              </div>
+              <h3 className="text-base font-semibold text-[var(--color-text)]">
+                Farm P&amp;L Accounting & Cost Per Acre
+              </h3>
+              <p className="text-xs text-[var(--color-text-muted)] font-normal leading-relaxed">
+                Log every rupee spent on labor, diesel, seeds, and sprays against harvest revenues. Know your true net profit margin per acre and prepare printable reports.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 7. INTERACTIVE FARM ROI CALCULATOR                                        */}
+      {/* ========================================================================= */}
+      <section id="calculator" className="py-16 sm:py-24 bg-[var(--color-background)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-secondary)] bg-[var(--color-surface)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+              Interactive ROI
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--color-primary)]">
+              Calculate Your Estimated Savings &amp; Profit Boost
+            </h2>
+            <p className="text-sm text-[var(--color-text-muted)] font-normal">
+              Based on empirical field trials conducted with over 45,000 acres in Punjab, Haryana, and Rajasthan.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-10 shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Inputs */}
+              <div className="lg:col-span-6 space-y-5">
+                <div>
+                  <div className="flex justify-between items-center text-xs font-semibold text-[#26352D] mb-1.5">
+                    <span>Your Total Farm Land</span>
+                    <span className="text-[#0C4B32] font-bold text-sm">{farmAcres} Acres</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={2}
+                    max={100}
+                    step={1}
+                    value={farmAcres}
+                    onChange={(e) => setFarmAcres(Number(e.target.value))}
+                    className="w-full accent-[#0C4B32] cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[10px] text-[#889B90] mt-1">
+                    <span>2 Acres</span>
+                    <span>50 Acres</span>
+                    <span>100 Acres</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#26352D] mb-1.5">
+                    Primary Crop Season
+                  </label>
+                  <select
+                    value={cropType}
+                    onChange={(e) => setCropType(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-[#FBFDFB] border border-[#DCE6DE] rounded-xl outline-none text-[#26352D] font-medium cursor-pointer"
+                  >
+                    <option value="Wheat & Paddy">Wheat &amp; Paddy (Rice)</option>
+                    <option value="Mustard & Barley">Mustard &amp; Barley</option>
+                    <option value="Bt Cotton & Maize">Bt Cotton &amp; Maize</option>
+                    <option value="Sugarcane & Fodder">Sugarcane &amp; Dairy Fodder</option>
+                    <option value="Potato & Vegetables">Potato &amp; Commercial Vegetables</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#26352D] mb-1.5">
+                    Existing Irrigation Setup
+                  </label>
+                  <select
+                    value={irrigationType}
+                    onChange={(e) => setIrrigationType(e.target.value)}
+                    className="w-full px-3 py-2 text-xs bg-[#FBFDFB] border border-[#DCE6DE] rounded-xl outline-none text-[#26352D] font-medium cursor-pointer"
+                  >
+                    <option value="Tubewell / Flood">Tubewell / Flood Irrigation</option>
+                    <option value="Canal + Borewell">Canal Water + Diesel Generator</option>
+                    <option value="Drip / Sprinkler">Drip / Micro-Irrigation System</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Output Results Card */}
+              <div className="lg:col-span-6 p-6 rounded-2xl bg-[#0C4B32] text-white space-y-4 shadow-lg">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">
+                  Projected Annual Gain for {farmAcres} Acres
+                </span>
+
+                <div className="text-3xl sm:text-4xl font-extrabold text-[#F9B21B]">
+                  ₹{totalNetGain.toLocaleString("en-IN")} <span className="text-sm font-normal text-white/80">/ Year</span>
+                </div>
+
+                <div className="space-y-2.5 pt-2 border-t border-white/20 text-xs text-white/90">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/80 flex items-center gap-1.5">
+                      <Droplets className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Water &amp; Power Saved:</span>
+                    </span>
+                    <strong className="text-white font-mono">{estimatedWaterSaved.toLocaleString("en-IN")} Liters</strong>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/80 flex items-center gap-1.5">
+                      <DollarSign className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Saved in Diesel &amp; Fertilizer:</span>
+                    </span>
+                    <strong className="text-white font-mono">₹{estimatedInputSaved.toLocaleString("en-IN")}</strong>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/80 flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>Additional Yield Revenue:</span>
+                    </span>
+                    <strong className="text-[#F9B21B] font-mono">₹{estimatedYieldBoost.toLocaleString("en-IN")}</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDemoSubmitted(false);
+                    setDemoModalOpen(true);
+                  }}
+                  className="w-full mt-2 py-3 rounded-xl bg-[#F9B21B] hover:bg-[#e5a015] text-[#26352D] font-bold text-xs transition-colors cursor-pointer shadow-md inline-flex items-center justify-center gap-2"
+                >
+                  <span>Verify These Numbers for Your Land</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 8. HOW IT WORKS (3 SIMPLE STEPS)                                          */}
+      {/* ========================================================================= */}
+      <section id="how-it-works" className="py-16 sm:py-24 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-secondary)] bg-[var(--color-background)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+              Quick Setup
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--color-primary)]">
+              How Khetivo Transforms Your Farm in 3 Simple Steps
+            </h2>
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)] font-normal">
+              No technical expertise required. Designed for every farmer to start within 3 minutes.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+            {/* Step 1 */}
+            <div className="p-6 rounded-[var(--radius-card)] bg-white border border-[var(--color-border)] shadow-xs relative space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#0C4B32] text-white text-sm font-bold flex items-center justify-center">
+                1
+              </div>
+              <h3 className="text-base font-bold text-[#26352D]">
+                Map Your Field &amp; Crop
+              </h3>
+              <p className="text-xs text-[#55685D] leading-relaxed">
+                Add your farm parcel on our GPS satellite map in 2 minutes. Select your crop variety (Wheat, Paddy, Mustard, Cotton) and sowing date.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="p-6 rounded-[var(--radius-card)] bg-white border border-[var(--color-border)] shadow-xs relative space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#278449] text-white text-sm font-bold flex items-center justify-center">
+                2
+              </div>
+              <h3 className="text-base font-bold text-[#26352D]">
+                Follow Daily Scientific Guidance
+              </h3>
+              <p className="text-xs text-[#55685D] leading-relaxed">
+                Receive clear daily mobile notifications on exact tubewell watering minutes, fertilizer top-dressing schedules, and spray windows.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="p-6 rounded-[var(--radius-card)] bg-white border border-[var(--color-border)] shadow-xs relative space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-[#F9B21B] text-[#26352D] text-sm font-bold flex items-center justify-center">
+                3
+              </div>
+              <h3 className="text-base font-bold text-[#26352D]">
+                Harvest Maximum Yield &amp; Profit
+              </h3>
+              <p className="text-xs text-[#55685D] leading-relaxed">
+                Track harvest maturity dates, compare real-time rates across neighboring APMC mandis, and sell at the peak price with full confidence.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 9. OUR AGRONOMY & SCIENTIFIC TEAM (OUR TEAM)                             */}
+      {/* ========================================================================= */}
+      <section id="team" className="py-16 sm:py-24 bg-[var(--color-background)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-secondary)] bg-[var(--color-surface)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+              Scientific Leadership
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--color-primary)]">
+              Backed by Senior Agronomists &amp; Agricultural Scientists
+            </h2>
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)] font-normal">
+              Every package of practices, disease advisory, and soil threshold in Khetivo is reviewed by certified university crop scientists.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Team Member 1 */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E5ECE7] text-center space-y-3 shadow-xs">
+              <div className="w-16 h-16 rounded-full bg-[#E7F3EB] text-[#0C4B32] font-bold text-lg flex items-center justify-center mx-auto border-2 border-[#C6E2D0]">
+                DA
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#26352D]">Dr. Amanpreet Singh</h3>
+                <p className="text-[11px] font-semibold text-[#0C4B32]">Chief Agronomist</p>
+                <p className="text-[10px] text-[#889B90] mt-1">Ex-PAU Agronomy Lead • 22+ Yrs Experience in Rabi &amp; Kharif Crops</p>
+              </div>
+            </div>
+
+            {/* Team Member 2 */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E5ECE7] text-center space-y-3 shadow-xs">
+              <div className="w-16 h-16 rounded-full bg-[#E7F3EB] text-[#0C4B32] font-bold text-lg flex items-center justify-center mx-auto border-2 border-[#C6E2D0]">
+                DH
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#26352D]">Dr. Harpreet Singh</h3>
+                <p className="text-[11px] font-semibold text-[#0C4B32]">Senior Crop Pathologist</p>
+                <p className="text-[10px] text-[#889B90] mt-1">Specialist in Foliar Blights, Yellow Rust &amp; Bio-Fungicide Formulations</p>
+              </div>
+            </div>
+
+            {/* Team Member 3 */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E5ECE7] text-center space-y-3 shadow-xs">
+              <div className="w-16 h-16 rounded-full bg-[#E7F3EB] text-[#0C4B32] font-bold text-lg flex items-center justify-center mx-auto border-2 border-[#C6E2D0]">
+                ES
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#26352D]">Er. Sukhwinder Brar</h3>
+                <p className="text-[11px] font-semibold text-[#0C4B32]">Head of Agri-IoT Hardware</p>
+                <p className="text-[10px] text-[#889B90] mt-1">Wireless Soil Moisture Probes &amp; Rural Telemetry Networks</p>
+              </div>
+            </div>
+
+            {/* Team Member 4 */}
+            <div className="p-5 rounded-2xl bg-white border border-[#E5ECE7] text-center space-y-3 shadow-xs">
+              <div className="w-16 h-16 rounded-full bg-[#E7F3EB] text-[#0C4B32] font-bold text-lg flex items-center justify-center mx-auto border-2 border-[#C6E2D0]">
+                ND
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#26352D]">Navjot Dhillon, M.Sc.</h3>
+                <p className="text-[11px] font-semibold text-[#0C4B32]">Field Extension Lead</p>
+                <p className="text-[10px] text-[#889B90] mt-1">Village Demonstration Officer &amp; Progressive Farmer Trainer</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 10. REAL FARMER TESTIMONIALS                                              */}
+      {/* ========================================================================= */}
+      <section id="testimonials" className="py-16 sm:py-24 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-secondary)] bg-[var(--color-background)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+              Real Impact
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--color-primary)]">
+              Trusted by Progressive Farmers Across 9 States
+            </h2>
+            <p className="text-sm sm:text-base text-[var(--color-text-muted)] font-normal">
+              Read how growers reduced electricity and diesel expenses while capturing record mandi prices.
+            </p>
+          </div>
+
+          {/* Featured Farmer Spotlight Card with Tractor Photo */}
+          <div className="mb-12 bg-white rounded-3xl border border-[var(--color-border)] p-6 sm:p-8 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              <div className="lg:col-span-5 relative rounded-2xl overflow-hidden shadow-lg border border-[var(--color-border)]">
+                <Image
+                  src="/farmer-testimonial.jpg"
+                  alt="Indian farmer standing with tractor and Khetivo app"
+                  width={480}
+                  height={360}
+                  className="w-full h-64 sm:h-72 object-cover"
+                />
+                <div className="absolute bottom-3 left-3 right-3 bg-white/95 backdrop-blur-md rounded-xl p-2.5 border border-[#DCE6DE] flex items-center justify-between shadow-md">
+                  <div className="flex items-center gap-2">
+                    <Image src="/khetivo-app-icon.png" alt="Khetivo" width={22} height={22} className="rounded" />
+                    <div>
+                      <div className="text-xs font-bold text-[#26352D]">Harinderjit Singh</div>
+                      <div className="text-[10px] text-[#55685D]">Moga, Punjab • 42 Acres</div>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    Verified Grower
+                  </span>
+                </div>
+              </div>
+
+              <div className="lg:col-span-7 space-y-4">
+                <div className="inline-flex items-center gap-1 text-[var(--color-accent)]">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-[var(--color-accent)]" />
+                  ))}
+                  <span className="text-xs font-bold text-[#26352D] ml-2">5.0 Star Verified Farmer Review</span>
+                </div>
+                <blockquote className="text-base sm:text-lg text-[#26352D] font-medium leading-relaxed italic">
+                  &ldquo;Khetivo transformed how we manage water and fertilizers in our village. Earlier, tubewells ran on guesswork. Now, checking my phone before morning watering saved us over ₹22,000 in electricity and diesel bills per season while keeping crop health at its peak.&rdquo;
+                </blockquote>
+                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-[var(--color-border)] text-xs">
+                  <div>
+                    <div className="text-lg font-bold text-[#0C4B32]">40%</div>
+                    <div className="text-[11px] text-[#55685D]">Water Pump Fuel Saved</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-[#0C4B32]">+2.4 Qtl</div>
+                    <div className="text-[11px] text-[#55685D]">Extra Yield / Acre</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-[#0C4B32]">100%</div>
+                    <div className="text-[11px] text-[#55685D]">On-Time Disease Alert</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Story 1 */}
+            <div className="card-base p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1 text-[var(--color-accent)] mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-[var(--color-accent)]" />
+                  ))}
+                </div>
+                <p className="text-xs sm:text-sm text-[var(--color-text)] font-normal leading-relaxed italic mb-5">
+                  &ldquo;Earlier, I ran my tubewell on guesswork every 4 days. With Khetivo&apos;s soil telemetry, I learned my loam soil holds water longer. I cut 40% pump electricity and got 2.2 quintals extra wheat per acre.&rdquo;
+                </p>
+              </div>
+              <div className="pt-4 border-t border-[var(--color-border)] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#0C4B32] text-white text-xs font-semibold flex items-center justify-center">
+                  HS
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-text)]">
+                    Harinderjit Singh
+                  </div>
+                  <div className="text-[11px] text-[var(--color-text-muted)] flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-[var(--color-secondary)]" />
+                    <span>Moga, Punjab • 42 Acres</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Story 2 */}
+            <div className="card-base p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1 text-[var(--color-accent)] mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-[var(--color-accent)]" />
+                  ))}
+                </div>
+                <p className="text-xs sm:text-sm text-[var(--color-text)] font-normal leading-relaxed italic mb-5">
+                  &ldquo;The AI leaf scanner saved our cotton crop. When pink bollworm symptoms started, the app diagnosed it within 5 seconds and recommended a specific organic spray before it could spread.&rdquo;
+                </p>
+              </div>
+              <div className="pt-4 border-t border-[var(--color-border)] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-secondary)] text-white text-xs font-semibold flex items-center justify-center">
+                  RP
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-text)]">
+                    Ramesh Patil
+                  </div>
+                  <div className="text-[11px] text-[var(--color-text-muted)] flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-[var(--color-secondary)]" />
+                    <span>Jalgaon, Maharashtra • 18 Acres</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Story 3 */}
+            <div className="card-base p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-1 text-[var(--color-accent)] mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-[var(--color-accent)]" />
+                  ))}
+                </div>
+                <p className="text-xs sm:text-sm text-[var(--color-text)] font-normal leading-relaxed italic mb-5">
+                  &ldquo;Our FPO manages 350+ smallholder members. Khetivo gave our field staff one centralized screen to monitor collective soil parameters and coordinate bulk mandi sales at ₹120 above local middlemen.&rdquo;
+                </p>
+              </div>
+              <div className="pt-4 border-t border-[var(--color-border)] flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#26352D] text-white text-xs font-semibold flex items-center justify-center">
+                  VK
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-[var(--color-text)]">
+                    Virendra Kumar
+                  </div>
+                  <div className="text-[11px] text-[var(--color-text-muted)] flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-[var(--color-secondary)]" />
+                    <span>Hoshangabad, MP • FPO Chairman</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 11. MOBILE APP DOWNLOAD SECTION (PHONE SHOWS ONLY THE ICON)              */}
+      {/* ========================================================================= */}
+      <section id="download" className="py-16 sm:py-24 bg-[var(--color-background)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-[#0C4B32] text-white rounded-[32px] p-8 sm:p-12 relative overflow-hidden shadow-xl">
+            {/* Background design accents */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-[#278449]/30 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+              <div className="lg:col-span-7 space-y-5">
+                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-bold border border-white/20">
+                  <Smartphone className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+                  Free Download on Android &amp; iOS
+                </span>
+
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-white tracking-tight leading-tight">
+                  Carry Your Entire Farm in Your Pocket.
+                </h2>
+
+                <p className="text-white/80 text-sm sm:text-base font-normal max-w-xl leading-relaxed">
+                  Engineered specifically for low-connectivity rural belts. Works 100% offline, recognizes voice commands in Punjabi, Hindi, and 10 regional dialects, and syncs automatically when you return to Wi-Fi or 4G.
+                </p>
+
+                {/* Feature Pills */}
+                <div className="grid grid-cols-2 gap-3 text-xs text-white/90 pt-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[var(--color-accent)] shrink-0" />
+                    <span>100% Offline Leaf Diagnosis</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[var(--color-accent)] shrink-0" />
+                    <span>Daily WhatsApp &amp; SMS Alerts</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[var(--color-accent)] shrink-0" />
+                    <span>Voice Search in Punjabi &amp; Hindi</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[var(--color-accent)] shrink-0" />
+                    <span>Minimal Battery &amp; Data Usage</span>
+                  </div>
+                </div>
+
+                {/* SMS Link Form */}
+                <div className="pt-3">
+                  <p className="text-xs text-white/80 mb-2 font-medium">
+                    Send free app download link directly to your mobile phone:
+                  </p>
+                  {smsSent ? (
+                    <div className="p-3 bg-white/10 border border-[#86EFAC]/40 rounded-xl text-xs text-[#86EFAC] flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>Download link sent successfully to +91 {phoneForSms}. Check your SMS!</span>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleSmsDownload} className="flex flex-col sm:flex-row gap-2 max-w-md">
+                      <div className="flex-1 relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#55685D] font-medium">
+                          +91
+                        </span>
+                        <input
+                          type="tel"
+                          placeholder="Enter 10-digit mobile number"
+                          value={phoneForSms}
+                          onChange={(e) => setPhoneForSms(e.target.value)}
+                          className="w-full pl-11 pr-3 py-2.5 text-xs text-[#26352D] bg-white rounded-xl border border-white/20 focus:outline-none"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="btn btn-accent text-xs px-5 py-2.5 shrink-0 font-bold"
+                      >
+                        Send App Link
+                      </button>
+                    </form>
+                  )}
+                </div>
+
+                {/* App store buttons */}
+                <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <a
+                    href="#download"
+                    className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-black/40 hover:bg-black/60 border border-white/20 transition-colors"
+                  >
+                    <div className="text-left">
+                      <div className="text-[9px] uppercase tracking-wider text-white/70">Download on</div>
+                      <div className="text-xs font-semibold text-white">Google Play</div>
+                    </div>
+                  </a>
+                  <a
+                    href="#download"
+                    className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-black/40 hover:bg-black/60 border border-white/20 transition-colors"
+                  >
+                    <div className="text-left">
+                      <div className="text-[9px] uppercase tracking-wider text-white/70">Download on</div>
+                      <div className="text-xs font-semibold text-white">Apple App Store</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+              {/* Right: Phone Frame showcasing ONLY the Khetivo Icon */}
+              <div className="lg:col-span-5 flex justify-center">
+                <div className="relative w-64 sm:w-72 bg-[#122B1E] border-4 border-[#278449]/50 rounded-[44px] p-3 shadow-2xl">
+                  {/* Dynamic Island / Speaker Notch */}
+                  <div className="w-24 h-4 bg-black/60 rounded-full mx-auto mb-3 border border-white/10" />
+
+                  {/* Phone Screen: Shows ONLY the Khetivo Icon, Nothing Else! */}
+                  <div className="bg-[#0C4B32] rounded-[34px] aspect-[9/18.5] flex flex-col items-center justify-center p-6 relative overflow-hidden shadow-inner">
+                    <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl overflow-hidden shadow-2xl border-2 border-white/30 transform transition-transform duration-500 hover:scale-105">
+                      <Image
+                        src="/khetivo-app-icon.png"
+                        alt="Khetivo App"
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover"
+                        priority
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 12. FAQ ACCORDION                                                         */}
+      {/* ========================================================================= */}
+      <section id="faq" className="py-16 sm:py-24 bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14 space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-secondary)] bg-[var(--color-background)] px-3 py-1 rounded-full border border-[var(--color-border)]">
+              Got Questions?
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--color-primary)]">
+              Frequently Asked Farmer Questions
+            </h2>
+            <p className="text-sm text-[var(--color-text-muted)] font-normal">
+              Clear, transparent answers about how Khetivo operates on real Indian farms.
+            </p>
+          </div>
+
+          <div className="space-y-3.5">
+            {[
+              {
+                q: "Do I need to buy expensive sensors to use Khetivo?",
+                a: "No! You can start 100% free with the Khetivo mobile app. The free version uses high-resolution satellite passes and weather radar to give you soil moisture estimates and pest alerts. If you choose physical wireless soil probes later, our field team delivers and installs them with a 14-day trial.",
+              },
+              {
+                q: "Does the app work in remote fields with zero mobile internet?",
+                a: "Yes, 100%. Khetivo is built offline-first. You can record tasks, diagnose leaves, and review daily irrigation schedules in the middle of your field with zero network. When you return to your village or home Wi-Fi, it automatically syncs in the background.",
+              },
+              {
+                q: "Which Indian crops are currently supported?",
+                a: "Khetivo comes pre-configured with university-verified package of practices (PoP) for Wheat, Paddy (Basmati & Non-Basmati), Mustard, Potato, Bt Cotton, Maize, Sugarcane, Green Fodder (Barseem), and commercial Vegetables.",
+              },
+              {
+                q: "How accurate is the AI leaf disease scanner?",
+                a: "In field validation across 45,000+ acres, our AI pathology model achieved over 96% diagnostic accuracy across major fungal, viral, and insect pests like Yellow Rust, Karnal Bunt, Stem Borer, and Pink Bollworm, backed by PAU spray recommendations.",
+              },
+              {
+                q: "Can I manage multiple farm holdings and family workers?",
+                a: "Yes. Khetivo supports multi-farm GPS management. You can register multiple parcels (in Acres, Killa, Bigha, or Hectares), track different crops across plots, and assign daily farming tasks to workers.",
+              },
+            ].map((faq, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-[var(--color-border)] bg-white overflow-hidden transition-colors"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                  className="w-full p-4 sm:p-5 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-[#26352D] cursor-pointer"
+                >
+                  <span>{faq.q}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-[#889B90] transition-transform duration-200 shrink-0 ${
+                      openFaq === idx ? "rotate-180 text-[#0C4B32]" : ""
+                    }`}
+                  />
+                </button>
+                {openFaq === idx && (
+                  <div className="px-4 pb-4 sm:px-5 sm:pb-5 text-xs text-[#55685D] leading-relaxed border-t border-[#E5ECE7] pt-3 animate-in fade-in">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 13. CONTACT HELPLINE & FIELD DEMO DESK                                    */}
+      {/* ========================================================================= */}
+      <section id="contact" className="py-16 sm:py-24 bg-[var(--color-background)] border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            {/* Left Column: Helpline Info */}
+            <div className="lg:col-span-5 space-y-6">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#0C4B32] bg-[#E7F3EB] px-3.5 py-1 rounded-full border border-[#C6E2D0]">
+                Farmer Support Desk
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-semibold text-[var(--color-primary)]">
+                Talk to a PAU-Trained Agronomist Today
+              </h2>
+              <p className="text-sm text-[var(--color-text-muted)] font-normal leading-relaxed">
+                Have questions about your soil type, persistent leaf rust, or scheduling a free on-field demo? Our duty agronomists are available 7 days a week.
+              </p>
+
+              <div className="space-y-4 pt-2 text-xs">
+                <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white border border-[#E5ECE7]">
+                  <div className="p-2.5 rounded-xl bg-[#E7F3EB] text-[#0C4B32] shrink-0">
+                    <PhoneCall className="w-5 h-5 text-[#0C4B32]" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#26352D] text-sm">Toll-Free Farmer Advisory Helpline</div>
+                    <div className="text-xs font-mono font-bold text-[#0C4B32] mt-0.5">1800-889-KHETI (Toll-Free)</div>
+                    <div className="text-[11px] text-[#889B90] mt-0.5">Monday to Saturday: 7:00 AM – 7:00 PM</div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-white border border-[#E5ECE7]">
+                  <div className="p-2.5 rounded-xl bg-[#E7F3EB] text-[#0C4B32] shrink-0">
+                    <MessageSquare className="w-5 h-5 text-[#0C4B32]" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#26352D] text-sm">WhatsApp Agronomy Support</div>
+                    <div className="text-xs font-mono font-bold text-[#0C4B32] mt-0.5">+91 98140-54321</div>
+                    <div className="text-[11px] text-[#889B90] mt-0.5">Instant leaf photo analysis &amp; mandi alerts</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Contact Inquiry Form */}
+            <div className="lg:col-span-7 bg-white p-6 sm:p-8 rounded-3xl border border-[#E5ECE7] shadow-sm">
+              <h3 className="text-base sm:text-lg font-bold text-[#26352D] mb-1">
+                Send an Agronomy Query or Request a Callback
+              </h3>
+              <p className="text-xs text-[#55685D] mb-5">
+                Our regional field agronomist will call you back within 2 hours.
+              </p>
+
+              {contactSubmitted ? (
+                <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-700 mx-auto" />
+                  <h4 className="text-sm font-bold text-emerald-950">Thank You, Query Received!</h4>
+                  <p className="text-xs text-emerald-800">
+                    Our duty agronomist will review your details and contact you shortly.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                        Your Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Jaswinder Singh"
+                        className="w-full px-3.5 py-2.5 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                        Mobile Phone Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        placeholder="e.g. 98140-54321"
+                        className="w-full px-3.5 py-2.5 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                        District / State <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Ludhiana, Punjab"
+                        className="w-full px-3.5 py-2.5 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                        Primary Crop Grown
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Wheat, Basmati Rice, Mustard"
+                        className="w-full px-3.5 py-2.5 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      Your Query or Farm Details
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Tell us about your soil type, crops, or irrigation setup..."
+                      className="w-full px-3.5 py-2.5 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary w-full py-3 text-xs font-semibold justify-center shadow-xs cursor-pointer"
+                  >
+                    Submit Query to Duty Agronomist
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 14. FOOTER                                                                */}
+      {/* ========================================================================= */}
+      <footer className="bg-[#0C4B32] text-white border-t border-white/10 pt-14 pb-8 text-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 pb-12 border-b border-white/15">
+            {/* Col 1: Brand Info */}
+            <div className="lg:col-span-2 space-y-4">
+              <Image
+                src="/logo-2-khetivo.png"
+                alt="Khetivo"
+                width={200}
+                height={60}
+                className="h-12 w-auto object-contain brightness-0 invert"
+              />
+              <p className="text-white/80 max-w-sm leading-relaxed text-xs">
+                Khetivo is India&apos;s premier Precision Agriculture Operating System, connecting IoT telemetry, satellite NDVI scans, and AI pathology diagnostics to empower farmers toward higher yields and sustainable prosperity.
+              </p>
+              <div className="flex items-center gap-3 pt-1 text-white/80">
+                <span>Made with pride for Indian Farmers 🌾</span>
+              </div>
+            </div>
+
+            {/* Col 2: Solutions */}
+            <div className="space-y-3">
+              <div className="font-bold text-white text-xs uppercase tracking-wider">
+                Solutions
+              </div>
+              <ul className="space-y-2 text-white/80">
+                <li><a href="#solutions" className="hover:text-white transition-colors">Precision Soil Moisture</a></li>
+                <li><a href="#solutions" className="hover:text-white transition-colors">AI Leaf Disease Scanner</a></li>
+                <li><a href="#solutions" className="hover:text-white transition-colors">Live APMC Mandi Watch</a></li>
+                <li><a href="#solutions" className="hover:text-white transition-colors">Satellite Crop Health</a></li>
+                <li><a href="#calculator" className="hover:text-white transition-colors">Farm ROI Calculator</a></li>
+              </ul>
+            </div>
+
+            {/* Col 3: Company & Team */}
+            <div className="space-y-3">
+              <div className="font-bold text-white text-xs uppercase tracking-wider">
+                Company
+              </div>
+              <ul className="space-y-2 text-white/80">
+                <li><a href="#team" className="hover:text-white transition-colors">Agronomy &amp; Science Team</a></li>
+                <li><a href="#testimonials" className="hover:text-white transition-colors">Farmer Testimonials</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
+                <li><Link href="/admin" className="hover:text-white transition-colors">Admin Portal</Link></li>
+                <li><Link href="/dashboard" className="hover:text-white transition-colors">Farmer Dashboard</Link></li>
+              </ul>
+            </div>
+
+            {/* Col 4: State Networks */}
+            <div className="space-y-3">
+              <div className="font-bold text-white text-xs uppercase tracking-wider">
+                Active States
+              </div>
+              <ul className="space-y-1.5 text-white/80 text-[11px]">
+                <li>Punjab (Ludhiana, Moga, Bathinda)</li>
+                <li>Haryana (Karnal, Sirsa, Hisar)</li>
+                <li>Rajasthan (Sri Ganganagar, Kota)</li>
+                <li>Madhya Pradesh (Hoshangabad, Ujjain)</li>
+                <li>Maharashtra (Jalgaon, Nashik)</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-white/70 text-[11px]">
+            <div>
+              © 2026 Khetivo Technologies Pvt. Ltd. All rights reserved.
+            </div>
+            <div className="flex items-center gap-6">
+              <a href="#privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+              <a href="#terms" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="#contact" className="hover:text-white transition-colors">Farmer Support Desk</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* ========================================================================= */}
+      {/* MODAL 1: REQUEST A FIELD DEMO MODAL                                       */}
+      {/* ========================================================================= */}
+      {demoModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-[#DCE6DE] shadow-2xl max-w-md w-full p-6 space-y-4 my-8 animate-in fade-in zoom-in-95 text-xs">
+            <div className="flex items-start justify-between pb-3 border-b border-[#E5ECE7]">
+              <div>
+                <h3 className="text-base font-bold text-[#26352D]">
+                  Request a Free On-Field Demo
+                </h3>
+                <p className="text-[11px] text-[#55685D] mt-0.5">
+                  Our regional field agronomist will visit your land with telemetry probes.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDemoModalOpen(false)}
+                className="p-1.5 text-[#889B90] hover:text-[#26352D] rounded-xl hover:bg-[#F4F8F4] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {demoSubmitted ? (
+              <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-3">
+                <CheckCircle2 className="w-10 h-10 text-emerald-700 mx-auto" />
+                <h4 className="text-sm font-bold text-emerald-950">Field Demo Scheduled!</h4>
+                <p className="text-xs text-emerald-800 leading-relaxed">
+                  Thank you! Our regional agronomy specialist will call you to confirm your date and farm plot location.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setDemoModalOpen(false)}
+                  className="btn btn-primary text-xs px-5 py-2 font-medium cursor-pointer"
+                >
+                  Close Window
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleDemoSubmit} className="space-y-3.5">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                    Farmer Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jaswinder Singh"
+                    value={demoForm.name}
+                    onChange={(e) => setDemoForm({ ...demoForm, name: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                    Mobile Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. 98140-54321"
+                    value={demoForm.phone}
+                    onChange={(e) => setDemoForm({ ...demoForm, phone: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      Farm Land Area
+                    </label>
+                    <select
+                      value={demoForm.acres}
+                      onChange={(e) => setDemoForm({ ...demoForm, acres: e.target.value })}
+                      className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D] cursor-pointer"
+                    >
+                      <option value="2-10">2 – 10 Acres</option>
+                      <option value="10-25">10 – 25 Acres</option>
+                      <option value="25-50">25 – 50 Acres</option>
+                      <option value="50+">50+ Acres (FPO / Large)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      State / District
+                    </label>
+                    <select
+                      value={demoForm.state}
+                      onChange={(e) => setDemoForm({ ...demoForm, state: e.target.value })}
+                      className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D] cursor-pointer"
+                    >
+                      <option value="Punjab">Punjab</option>
+                      <option value="Haryana">Haryana</option>
+                      <option value="Rajasthan">Rajasthan</option>
+                      <option value="Madhya Pradesh">Madhya Pradesh</option>
+                      <option value="Maharashtra">Maharashtra</option>
+                      <option value="Uttar Pradesh">Uttar Pradesh</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
+                >
+                  Confirm Free Demo Booking
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 2: SIGN IN / SIGN UP AUTH MODAL                                     */}
+      {/* ========================================================================= */}
+      {authModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-[#DCE6DE] shadow-2xl max-w-md w-full p-6 space-y-4 my-8 animate-in fade-in zoom-in-95 text-xs">
+            <div className="flex items-start justify-between pb-3 border-b border-[#E5ECE7]">
+              <div>
+                <h3 className="text-base font-bold text-[#26352D]">
+                  {authMode === "signin" ? "Sign In to Khetivo" : "Create Your Khetivo Account"}
+                </h3>
+                <p className="text-[11px] text-[#55685D] mt-0.5">
+                  {authMode === "signin" ? "Access your farm dashboard and telemetry" : "Start your 14-day free trial on your land"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAuthModalOpen(false)}
+                className="p-1.5 text-[#889B90] hover:text-[#26352D] rounded-xl hover:bg-[#F4F8F4] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {authStep === "form" && (
+              <form onSubmit={handleAuthSubmit} className="space-y-3.5">
+                {authMode === "signup" && (
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Jaswinder Singh"
+                      value={authFullName}
+                      onChange={(e) => setAuthFullName(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                    Mobile Phone Number
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-2 bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl text-[#55685D] font-bold">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="98140-54321"
+                      value={authPhone}
+                      onChange={(e) => setAuthPhone(e.target.value)}
+                      className="flex-1 px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
+                >
+                  {authLoading ? "Sending OTP..." : "Get OTP Verification Code"}
+                </button>
+
+                <div className="pt-2 text-center text-[11px] text-[#55685D]">
+                  {authMode === "signin" ? (
+                    <span>
+                      Don&apos;t have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMode("signup");
+                          setAuthStep("form");
+                        }}
+                        className="text-[#0C4B32] font-bold hover:underline cursor-pointer"
+                      >
+                        Sign Up Free
+                      </button>
+                    </span>
+                  ) : (
+                    <span>
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMode("signin");
+                          setAuthStep("form");
+                        }}
+                        className="text-[#0C4B32] font-bold hover:underline cursor-pointer"
+                      >
+                        Sign In
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </form>
+            )}
+
+            {authStep === "otp" && (
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <div className="text-center space-y-1">
+                  <p className="text-xs text-[#55685D]">
+                    We sent a 6-digit verification code to
+                  </p>
+                  <p className="text-sm font-bold text-[#0C4B32] font-mono">
+                    +91 {authPhone || "98140-54321"}
+                  </p>
+                </div>
+
+                <div className="flex justify-center gap-2">
+                  {otpValues.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`auth-otp-${idx}`}
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      className="w-10 h-12 text-center text-lg font-bold bg-[#FBFDFB] border border-[#DCE6DE] rounded-xl focus:border-[#0C4B32] outline-none text-[#26352D]"
+                    />
+                  ))}
+                </div>
+
+                {otpError && (
+                  <p className="text-center text-[11px] text-red-600 font-medium">
+                    {otpError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
+                >
+                  {authLoading ? "Verifying..." : "Verify & Open Dashboard"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
