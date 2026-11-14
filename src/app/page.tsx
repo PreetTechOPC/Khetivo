@@ -40,7 +40,17 @@ import {
   Award,
   Check,
   Users,
+  Lock,
 } from "lucide-react";
+import {
+  isPhoneAlreadyVerified,
+  sanitizePhone,
+  saveRegisteredUser,
+  findUserByIdentifier,
+  sendRealOtpApi,
+  verifyRealOtpApi,
+} from "@/lib/authStore";
+import { signInWithGoogleAppwrite } from "@/lib/appwriteAuth";
 
 export default function Home() {
   const router = useRouter();
@@ -57,6 +67,7 @@ export default function Home() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [authStep, setAuthStep] = useState<"form" | "otp" | "google_phone">("form");
+  const [authIdentifier, setAuthIdentifier] = useState(""); // Phone, Gmail or Farmer ID for Sign In
   const [authEmail, setAuthEmail] = useState("");
   const [authPhone, setAuthPhone] = useState("");
   const [authPhoneError, setAuthPhoneError] = useState("");
@@ -65,8 +76,10 @@ export default function Home() {
   const [showAuthPassword, setShowAuthPassword] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authSuccess, setAuthSuccess] = useState(false);
+  const [authSuccessMsg, setAuthSuccessMsg] = useState("");
+  const [alreadyVerifiedNotice, setAlreadyVerifiedNotice] = useState(false);
   const [otpValues, setOtpValues] = useState<string[]>(["", "", "", "", "", ""]);
-  const [otpTimer, setOtpTimer] = useState<number>(30);
+  const [otpTimer, setOtpTimer] = useState<number>(60);
   const [otpError, setOtpError] = useState<string>("");
 
   // OTP Countdown timer
@@ -111,7 +124,8 @@ export default function Home() {
     }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  // Real OTP Verification (Strictly One-Time Process for Signup Only)
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const entered = otpValues.join("");
     if (entered.length < 6) {
@@ -120,72 +134,184 @@ export default function Home() {
     }
     setOtpError("");
     setAuthLoading(true);
-    if (typeof window !== "undefined") {
-      if (authPhone) localStorage.setItem("khetivo_user_phone", authPhone);
-      if (authEmail) localStorage.setItem("khetivo_user_email", authEmail);
+
+    const clean = sanitizePhone(authPhone);
+    const result = await verifyRealOtpApi(clean, entered, {
+      name: authFullName || "Jaswinder Singh",
+      email: authEmail || (authStep === "google_phone" ? "farmer.jaswinder@gmail.com" : `${clean}@khetivo.farm`),
+    });
+
+    setAuthLoading(false);
+
+    if (!result.success) {
+      setOtpError(result.message);
+      if (result.alreadyVerified) {
+        setAlreadyVerifiedNotice(true);
+      }
+      return;
     }
+
+    setAuthSuccess(true);
+    setAuthSuccessMsg("Mobile Number Verified Successfully! Welcome to Khetivo.");
     setTimeout(() => {
-      setAuthLoading(false);
-      setAuthSuccess(true);
-      setTimeout(() => {
-        setAuthModalOpen(false);
-        router.push("/dashboard");
-      }, 700);
-    }, 600);
+      setAuthModalOpen(false);
+      router.push("/dashboard");
+    }, 700);
   };
 
-  const handleGoogleSignInClick = () => {
+  const handleResendOtp = async () => {
+    const clean = sanitizePhone(authPhone);
+    if (isPhoneAlreadyVerified(clean)) {
+      setOtpError("This user is already verified and registered. Please sign in directly.");
+      return;
+    }
     setAuthLoading(true);
-    setTimeout(() => {
+    setOtpError("");
+    const res = await sendRealOtpApi(clean);
+    setAuthLoading(false);
+    if (!res.success) {
+      setOtpError(res.message);
+      if (res.alreadyVerified) setAlreadyVerifiedNotice(true);
+      return;
+    }
+    setOtpTimer(60);
+    setOtpValues(["", "", "", "", "", ""]);
+    const firstBox = document.getElementById("auth-otp-0");
+    firstBox?.focus();
+  };
+
+  const handleGoogleSignInClick = async () => {
+    setAuthLoading(true);
+    setAuthPhoneError("");
+    setAlreadyVerifiedNotice(false);
+
+    try {
+      await signInWithGoogleAppwrite("/dashboard");
+    } catch (err: any) {
       setAuthLoading(false);
-      const savedPhone = typeof window !== "undefined" ? localStorage.getItem("khetivo_user_phone") : null;
-      if (savedPhone && savedPhone.length >= 10) {
-        setAuthPhone(savedPhone);
+      setAuthPhoneError(err?.message || "Failed to start Google sign in with Appwrite.");
+    }
+  };
+
+  const handleGooglePhoneSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = sanitizePhone(authPhone);
+    if (clean.length < 10) {
+      setAuthPhoneError("Please enter your complete 10-digit mobile number.");
+      return;
+    }
+
+    // Check if phone has already been verified
+    if (isPhoneAlreadyVerified(clean)) {
+      setAuthPhoneError(`Phone number +91 ${clean} has already been verified. Sign-up OTP is a one-time process. Please sign in directly.`);
+      setAlreadyVerifiedNotice(true);
+      return;
+    }
+
+    setAuthPhoneError("");
+    setAlreadyVerifiedNotice(false);
+    setAuthLoading(true);
+
+    const res = await sendRealOtpApi(clean);
+    setAuthLoading(false);
+
+    if (!res.success) {
+      setAuthPhoneError(res.message);
+      if (res.alreadyVerified) setAlreadyVerifiedNotice(true);
+      return;
+    }
+
+    setAuthStep("otp");
+    setOtpTimer(60);
+    setOtpValues(["", "", "", "", "", ""]);
+    setOtpError("");
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthPhoneError("");
+    setAlreadyVerifiedNotice(false);
+
+    // =========================================================================
+    // SIGN IN: DIRECT CREDENTIALS LOGIN (NO OTP!)
+    // =========================================================================
+    if (authMode === "signin") {
+      const idVal = authIdentifier.trim();
+      if (!idVal) {
+        setAuthPhoneError("Please enter your Mobile Number, Gmail, or Farmer ID.");
+        return;
+      }
+      if (!authPassword || authPassword.length < 4) {
+        setAuthPhoneError("Please enter your account password.");
+        return;
+      }
+
+      setAuthLoading(true);
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: idVal, password: authPassword }),
+        });
+        const data = await res.json();
+        setAuthLoading(false);
+
+        if (!res.ok || !data.success) {
+          setAuthPhoneError(data.message || "Invalid credentials. Please try again.");
+          return;
+        }
+
+        saveRegisteredUser({
+          name: data.user.name,
+          phone: data.user.phone,
+          email: data.user.email,
+          provider: "phone",
+        });
         setAuthSuccess(true);
+        setAuthSuccessMsg("Signed in successfully via Appwrite.");
         setTimeout(() => {
           setAuthModalOpen(false);
           router.push("/dashboard");
         }, 600);
-      } else {
-        setAuthPhone("");
-        setAuthPhoneError("");
-        setAuthStep("google_phone");
+      } catch {
+        setAuthLoading(false);
+        setAuthPhoneError("Network error signing in. Please try again.");
       }
-    }, 450);
-  };
+      return;
+    }
 
-  const handleGooglePhoneSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (authPhone.length < 10) {
+    // =========================================================================
+    // SIGN UP: REAL OTP VERIFICATION (ONE-TIME PROCESS)
+    // =========================================================================
+    const clean = sanitizePhone(authPhone);
+    if (clean.length < 10) {
       setAuthPhoneError("Please enter your complete 10-digit mobile number.");
       return;
     }
-    setAuthPhoneError("");
-    setAuthLoading(true);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("khetivo_user_phone", authPhone);
-      localStorage.setItem("khetivo_user_email", "farmer.jaswinder@gmail.com");
-    }
-    setTimeout(() => {
-      setAuthLoading(false);
-      setAuthSuccess(true);
-      setTimeout(() => {
-        setAuthModalOpen(false);
-        router.push("/dashboard");
-      }, 700);
-    }, 600);
-  };
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    // Enforce: OTP verification is a one-time process for signup only
+    if (isPhoneAlreadyVerified(clean)) {
+      setAuthPhoneError(
+        `This mobile number (+91 ${clean}) has already completed one-time OTP verification. An account already exists. Please sign in directly.`
+      );
+      setAlreadyVerifiedNotice(true);
+      return;
+    }
+
     setAuthLoading(true);
-    setTimeout(() => {
-      setAuthLoading(false);
-      setAuthStep("otp");
-      setOtpTimer(30);
-      setOtpValues(["", "", "", "", "", ""]);
-      setOtpError("");
-    }, 500);
+    const res = await sendRealOtpApi(clean);
+    setAuthLoading(false);
+
+    if (!res.success) {
+      setAuthPhoneError(res.message);
+      if (res.alreadyVerified) setAlreadyVerifiedNotice(true);
+      return;
+    }
+
+    setAuthStep("otp");
+    setOtpTimer(60);
+    setOtpValues(["", "", "", "", "", ""]);
+    setOtpError("");
   };
 
   // Pricing toggle: monthly vs annual
@@ -1822,112 +1948,181 @@ export default function Home() {
       {authModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
           <div className="bg-white rounded-3xl border border-[#DCE6DE] shadow-2xl max-w-md w-full p-6 space-y-4 my-8 animate-in fade-in zoom-in-95 text-xs">
+            {/* Modal Header */}
             <div className="flex items-start justify-between pb-3 border-b border-[#E5ECE7]">
               <div>
                 <h3 className="text-base font-bold text-[#26352D]">
-                  {authMode === "signin" ? "Sign In to Khetivo" : "Create Your Khetivo Account"}
+                  {authSuccess
+                    ? "Welcome to Khetivo"
+                    : authStep === "google_phone"
+                    ? "Verify Mobile Phone"
+                    : authStep === "otp"
+                    ? "Enter Verification Code"
+                    : authMode === "signin"
+                    ? "Sign In to Khetivo"
+                    : "Create Your Khetivo Account"}
                 </h3>
                 <p className="text-[11px] text-[#55685D] mt-0.5">
-                  {authMode === "signin" ? "Access your farm dashboard and telemetry" : "Start your 14-day free trial on your land"}
+                  {authSuccess
+                    ? "Authentication successful"
+                    : authStep === "google_phone"
+                    ? "1-time mobile verification required for farm alerts"
+                    : authStep === "otp"
+                    ? "Single-use OTP verification for your security"
+                    : authMode === "signin"
+                    ? "Access your farm dashboard, sensors, and telemetry"
+                    : "Start your 14-day free trial on your land"}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setAuthModalOpen(false)}
+                onClick={() => {
+                  setAuthModalOpen(false);
+                  setAuthSuccess(false);
+                  setAuthStep("form");
+                  setAuthPhoneError("");
+                  setAlreadyVerifiedNotice(false);
+                }}
                 className="p-1.5 text-[#889B90] hover:text-[#26352D] rounded-xl hover:bg-[#F4F8F4] transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {authStep === "form" && (
-              <form onSubmit={handleAuthSubmit} className="space-y-3.5">
-                {authMode === "signup" && (
-                  <div>
-                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Jaswinder Singh"
-                      value={authFullName}
-                      onChange={(e) => setAuthFullName(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
-                    />
+            {/* SUCCESS STATE */}
+            {authSuccess ? (
+              <div className="py-6 text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center mx-auto border border-[#C6E2D0]">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[#26352D]">Verification Successful</h4>
+                  <p className="text-[11px] text-[#55685D] mt-1 max-w-xs mx-auto">
+                    {authSuccessMsg || "Redirecting to your Khetivo Farm Operations Dashboard..."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalOpen(false);
+                    router.push("/dashboard");
+                  }}
+                  className="btn btn-primary py-2 px-5 text-xs font-semibold rounded-xl"
+                >
+                  Go to Dashboard →
+                </button>
+              </div>
+            ) : authStep === "google_phone" ? (
+              /* GOOGLE USER PHONE NUMBER STEP (OTP required) */
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE]">
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.97 0 12s.45 3.83 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span className="font-semibold text-[#26352D] truncate">farmer.jaswinder@gmail.com</span>
+                  <span className="ml-auto text-[10px] text-[#0C4B32] font-bold bg-[#E7F3EB] px-2 py-0.5 rounded-full">
+                    Connected
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-[#55685D] leading-relaxed">
+                  To complete your account creation, mobile number OTP verification is required. Each user can only verify once.
+                </p>
+
+                {alreadyVerifiedNotice && (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="leading-snug">
+                        <strong>Already Verified:</strong> This phone number has already been verified for an existing user. The OTP is only verified for one time not multiple times.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode("signin");
+                        setAuthStep("form");
+                        setAlreadyVerifiedNotice(false);
+                        setAuthPhoneError("");
+                      }}
+                      className="w-full py-1.5 px-3 bg-white border border-amber-300 rounded-lg text-amber-900 font-bold hover:bg-amber-100 transition-colors text-center cursor-pointer"
+                    >
+                      Sign In with this Number →
+                    </button>
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
-                    Mobile Phone Number
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-2 bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl text-[#55685D] font-bold">
-                      +91
-                    </span>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="98140-54321"
-                      value={authPhone}
-                      onChange={(e) => setAuthPhone(e.target.value)}
-                      className="flex-1 px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
-                    />
+                <form onSubmit={handleGooglePhoneSubmit} className="space-y-3.5">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      Mobile Phone Number
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-2 bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl text-[#55685D] font-bold">
+                        +91
+                      </span>
+                      <input
+                        type="tel"
+                        required
+                        maxLength={10}
+                        placeholder="98140-54321"
+                        value={authPhone}
+                        onChange={(e) => {
+                          setAuthPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                          setAuthPhoneError("");
+                          setAlreadyVerifiedNotice(false);
+                        }}
+                        className="flex-1 px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                      />
+                    </div>
+                    {authPhoneError && !alreadyVerifiedNotice && (
+                      <p className="text-red-600 text-[10px] mt-1 font-medium">{authPhoneError}</p>
+                    )}
                   </div>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={authLoading}
-                  className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
-                >
-                  {authLoading ? "Sending OTP..." : "Get OTP Verification Code"}
-                </button>
+                  <button
+                    type="submit"
+                    disabled={authLoading}
+                    className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
+                  >
+                    {authLoading ? "Sending OTP..." : "Get OTP Verification Code"}
+                  </button>
 
-                <div className="pt-2 text-center text-[11px] text-[#55685D]">
-                  {authMode === "signin" ? (
-                    <span>
-                      Don&apos;t have an account?{" "}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAuthMode("signup");
-                          setAuthStep("form");
-                        }}
-                        className="text-[#0C4B32] font-bold hover:underline cursor-pointer"
-                      >
-                        Sign Up Free
-                      </button>
-                    </span>
-                  ) : (
-                    <span>
-                      Already have an account?{" "}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAuthMode("signin");
-                          setAuthStep("form");
-                        }}
-                        className="text-[#0C4B32] font-bold hover:underline cursor-pointer"
-                      >
-                        Sign In
-                      </button>
-                    </span>
-                  )}
-                </div>
-              </form>
-            )}
-
-            {authStep === "otp" && (
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthStep("form");
+                        setAuthPhoneError("");
+                        setAlreadyVerifiedNotice(false);
+                      }}
+                      className="text-[#55685D] hover:text-[#26352D] text-[11px] font-medium cursor-pointer"
+                    >
+                      ← Back to Options
+                    </button>
+                  </div>
+                </form>
+              </div>
+            ) : authStep === "otp" ? (
+              /* REAL OTP VERIFICATION STEP (STRICTLY FOR SIGNUP USERS - ONE TIME PROCESS) */
               <form onSubmit={handleVerifyOtp} className="space-y-4">
                 <div className="text-center space-y-1">
+                  <div className="w-10 h-10 rounded-full bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center mx-auto border border-[#C6E2D0] mb-2">
+                    <Lock className="w-5 h-5" />
+                  </div>
                   <p className="text-xs text-[#55685D]">
-                    We sent a 6-digit verification code to
+                    We sent a 6-digit verification code via SMS to
                   </p>
                   <p className="text-sm font-bold text-[#0C4B32] font-mono">
                     +91 {authPhone || "98140-54321"}
                   </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-center text-[11px] text-[#55685D]">
+                  🛡️ <strong>One-Time Verification Process:</strong> This verification is required only once for signup. Existing signin users do not need OTP.
                 </div>
 
                 <div className="flex justify-center gap-2">
@@ -1937,6 +2132,7 @@ export default function Home() {
                       id={`auth-otp-${idx}`}
                       type="text"
                       maxLength={1}
+                      autoFocus={idx === 0}
                       value={digit}
                       onChange={(e) => handleOtpChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
@@ -1946,9 +2142,22 @@ export default function Home() {
                 </div>
 
                 {otpError && (
-                  <p className="text-center text-[11px] text-red-600 font-medium">
-                    {otpError}
-                  </p>
+                  <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-center">
+                    <p className="text-[11px] text-red-600 font-semibold">{otpError}</p>
+                    {alreadyVerifiedNotice && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMode("signin");
+                          setAuthStep("form");
+                          setOtpError("");
+                        }}
+                        className="mt-1.5 text-[10px] font-bold text-[#0C4B32] hover:underline cursor-pointer block mx-auto"
+                      >
+                        Switch to Direct Sign In →
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 <button
@@ -1956,9 +2165,291 @@ export default function Home() {
                   disabled={authLoading}
                   className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
                 >
-                  {authLoading ? "Verifying..." : "Verify & Open Dashboard"}
+                  {authLoading ? "Verifying OTP..." : "Verify & Activate Khetivo Account"}
                 </button>
+
+                <div className="flex items-center justify-between pt-1 text-[11px] text-[#55685D]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthStep("form");
+                      setOtpError("");
+                    }}
+                    className="hover:text-[#26352D] cursor-pointer"
+                  >
+                    ← Change Number
+                  </button>
+
+                  {otpTimer > 0 ? (
+                    <span>
+                      Resend in <strong className="text-[#0C4B32]">{otpTimer}s</strong>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      className="font-bold text-[#0C4B32] hover:underline cursor-pointer"
+                    >
+                      Resend OTP Code
+                    </button>
+                  )}
+                </div>
               </form>
+            ) : (
+              /* STANDARD FORM: SIGN IN (DIRECT, NO OTP) OR SIGN UP (REAL 1-TIME OTP) */
+              <div className="space-y-3.5">
+                {/* 1. GOOGLE AUTH BUTTON */}
+                <button
+                  type="button"
+                  onClick={handleGoogleSignInClick}
+                  disabled={authLoading}
+                  className="w-full py-2.5 px-3 bg-white hover:bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl font-semibold text-[#26352D] text-xs flex items-center justify-center gap-2.5 transition-colors shadow-2xs cursor-pointer"
+                >
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.97 0 12s.45 3.83 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>{authMode === "signin" ? "Sign in with Google" : "Sign up with Google"}</span>
+                </button>
+
+                {/* 2. OR DIVIDER */}
+                <div className="relative flex items-center justify-center my-1">
+                  <div className="w-full border-t border-[#E5ECE7]" />
+                  <span className="bg-white px-2.5 text-[10px] uppercase tracking-wider text-[#889B90] font-semibold">
+                    {authMode === "signin" ? "or sign in with credentials" : "or register with mobile & email"}
+                  </span>
+                </div>
+
+                {/* 3. ALREADY VERIFIED NOTIFICATION BANNER */}
+                {alreadyVerifiedNotice && (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] space-y-2">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <p className="leading-snug">
+                        <strong>User Already Verified:</strong> This mobile number has already completed one-time OTP verification. OTP is strictly for signup, not signin. Please sign in directly.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode("signin");
+                        setAlreadyVerifiedNotice(false);
+                        setAuthPhoneError("");
+                      }}
+                      className="w-full py-1.5 px-3 bg-white border border-amber-300 rounded-lg text-amber-900 font-bold hover:bg-amber-100 transition-colors text-center cursor-pointer"
+                    >
+                      Sign In Directly to Account →
+                    </button>
+                  </div>
+                )}
+
+                {/* 4. FORM BODY */}
+                <form onSubmit={handleAuthSubmit} className="space-y-3.5">
+                  {/* SIGN UP FORM (REAL OTP REQUIRED - ONE TIME PROCESS) */}
+                  {authMode === "signup" ? (
+                    <>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                          Full Name
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Jaswinder Singh"
+                          value={authFullName}
+                          onChange={(e) => setAuthFullName(e.target.value)}
+                          className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-semibold text-[#26352D]">
+                            Mobile Phone Number
+                          </label>
+                          <span className="text-[10px] text-[#0C4B32] font-semibold">
+                            * 1-Time Real OTP Required
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-3 py-2 bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl text-[#55685D] font-bold">
+                            +91
+                          </span>
+                          <input
+                            type="tel"
+                            required
+                            maxLength={10}
+                            placeholder="98140-54321"
+                            value={authPhone}
+                            onChange={(e) => {
+                              setAuthPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                              setAuthPhoneError("");
+                              setAlreadyVerifiedNotice(false);
+                            }}
+                            className="flex-1 px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                          />
+                        </div>
+                        {authPhoneError && !alreadyVerifiedNotice && (
+                          <p className="text-red-600 text-[10px] mt-1 font-medium">{authPhoneError}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                          Gmail / Email ID
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          placeholder="e.g. jaswinder@gmail.com"
+                          value={authEmail}
+                          onChange={(e) => setAuthEmail(e.target.value)}
+                          className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                          Account Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={showAuthPassword ? "text" : "password"}
+                            required
+                            placeholder="Create account password"
+                            value={authPassword}
+                            onChange={(e) => setAuthPassword(e.target.value)}
+                            className="w-full px-3 py-2 pr-9 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAuthPassword(!showAuthPassword)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#889B90] hover:text-[#26352D]"
+                          >
+                            {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
+                      >
+                        {authLoading ? "Sending Real OTP..." : "Get OTP Verification Code"}
+                      </button>
+                    </>
+                  ) : (
+                    /* SIGN IN FORM (DIRECT CREDENTIALS LOGIN - NO OTP FOR SIGNIN USERS!) */
+                    <>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                          Mobile Phone, Gmail, or Farmer ID
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. 98140-54321, farmer@gmail.com or KHET-98140"
+                          value={authIdentifier}
+                          onChange={(e) => {
+                            setAuthIdentifier(e.target.value);
+                            setAuthPhoneError("");
+                          }}
+                          className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                        />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="text-[11px] font-semibold text-[#26352D]">
+                            Password
+                          </label>
+                          <a
+                            href="#forgot"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              alert("Password reset instructions will be sent to your registered contact.");
+                            }}
+                            className="text-[10px] text-[#0C4B32] hover:underline"
+                          >
+                            Forgot?
+                          </a>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showAuthPassword ? "text" : "password"}
+                            required
+                            placeholder="••••••••"
+                            value={authPassword}
+                            onChange={(e) => {
+                              setAuthPassword(e.target.value);
+                              setAuthPhoneError("");
+                            }}
+                            className="w-full px-3 py-2 pr-9 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAuthPassword(!showAuthPassword)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#889B90] hover:text-[#26352D]"
+                          >
+                            {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        {authPhoneError && (
+                          <p className="text-red-600 text-[10px] mt-1 font-medium">{authPhoneError}</p>
+                        )}
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={authLoading}
+                        className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
+                      >
+                        {authLoading ? "Signing in..." : "Sign In to Farm Dashboard"}
+                      </button>
+                    </>
+                  )}
+
+                  {/* BOTTOM TOGGLE BETWEEN SIGN IN AND SIGN UP */}
+                  <div className="pt-2 text-center text-[11px] text-[#55685D]">
+                    {authMode === "signin" ? (
+                      <span>
+                        Don&apos;t have an account?{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthMode("signup");
+                            setAuthStep("form");
+                            setAuthPhoneError("");
+                            setAlreadyVerifiedNotice(false);
+                          }}
+                          className="text-[#0C4B32] font-bold hover:underline cursor-pointer"
+                        >
+                          Sign Up Free
+                        </button>
+                      </span>
+                    ) : (
+                      <span>
+                        Already have an account?{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthMode("signin");
+                            setAuthStep("form");
+                            setAuthPhoneError("");
+                            setAlreadyVerifiedNotice(false);
+                          }}
+                          className="text-[#0C4B32] font-bold hover:underline cursor-pointer"
+                        >
+                          Sign In Directly
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </form>
+              </div>
             )}
           </div>
         </div>

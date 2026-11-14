@@ -13,13 +13,21 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface SettingsScreenProps {
   onBack: () => void;
+  currentUser?: { name: string; email: string; phone?: string; id?: string };
+  onLogout?: () => void;
+  onNavigateToAuth?: () => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({
+  onBack,
+  currentUser,
+  onLogout,
+  onNavigateToAuth,
+}) => {
   // Form State matching `src/app/dashboard/page.tsx` Settings
-  const [farmerName, setFarmerName] = useState('Mohan Lal');
-  const [phone, setPhone] = useState('+91 98140-54321');
-  const [email, setEmail] = useState('mohan.lal@khetivo.farm');
+  const [farmerName, setFarmerName] = useState(currentUser?.name || 'Mohan Lal');
+  const [phone, setPhone] = useState(currentUser?.phone || '+91 98140-54321');
+  const [email, setEmail] = useState(currentUser?.email || 'mohan.lal@khetivo.farm');
   const [mandi, setMandi] = useState("Khanna Mandi (Asia's Largest Grain Market - Ludhiana)");
   const [baseAddress, setBaseAddress] = useState('Village Samrala, GT Road Belt, Ludhiana, Punjab 141001');
 
@@ -99,6 +107,67 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
               <Ionicons name="checkmark" size={15} color="#FFFFFF" />
               <Text style={styles.saveBtnText}>Save Preferences</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ACTIVE ACCOUNT & APPWRITE STATUS */}
+        <View style={styles.authStatusCard}>
+          <View style={styles.authStatusLeft}>
+            <View style={styles.authAvatarCircle}>
+              <Text style={styles.authAvatarLetter}>
+                {(currentUser?.name || farmerName || 'K').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.authStatusInfo}>
+              <View style={styles.authStatusRow}>
+                <Text style={styles.authStatusName} numberOfLines={1}>
+                  {currentUser?.name || farmerName}
+                </Text>
+                <View style={styles.appwritePill}>
+                  <Ionicons name="shield-checkmark" size={11} color="#059669" />
+                  <Text style={styles.appwritePillText}>Appwrite Auth</Text>
+                </View>
+              </View>
+              <Text style={styles.authStatusEmail} numberOfLines={1}>
+                {currentUser?.email || email}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.authActionBtns}>
+            {onNavigateToAuth && (
+              <TouchableOpacity
+                style={styles.switchAccountBtn}
+                onPress={onNavigateToAuth}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="swap-horizontal" size={13} color="#0C4B32" />
+                <Text style={styles.switchAccountText}>Switch / Google</Text>
+              </TouchableOpacity>
+            )}
+            {onLogout && (
+              <TouchableOpacity
+                style={styles.logoutBtn}
+                onPress={() => {
+                  Alert.alert(
+                    'Sign Out',
+                    'Are you sure you want to sign out from your Appwrite session?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Sign Out',
+                        style: 'destructive',
+                        onPress: onLogout,
+                      },
+                    ]
+                  );
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="log-out-outline" size={13} color="#DC2626" />
+                <Text style={styles.logoutText}>Sign Out</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -309,6 +378,102 @@ const styles = StyleSheet.create({
   topBarTitle: { fontSize: 16, fontWeight: '700', color: '#26352D' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 14 },
+
+  authStatusCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#DCE6DE',
+    gap: 12,
+  },
+  authStatusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  authAvatarCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#0C4B32',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  authAvatarLetter: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  authStatusInfo: {
+    flex: 1,
+  },
+  authStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  authStatusName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#26352D',
+  },
+  appwritePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#E7F3EB',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  appwritePillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  authStatusEmail: {
+    fontSize: 12,
+    color: '#55685D',
+    marginTop: 2,
+  },
+  authActionBtns: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F4F1',
+  },
+  switchAccountBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#E7F3EB',
+  },
+  switchAccountText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0C4B32',
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    backgroundColor: '#FEE2E2',
+  },
+  logoutText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
 
   toastCard: {
     backgroundColor: '#ECFDF5',

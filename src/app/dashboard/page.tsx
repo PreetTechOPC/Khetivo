@@ -77,6 +77,27 @@ import {
   Shield,
   Play,
 } from "lucide-react";
+import { signOutUser, deleteRegisteredUser } from "@/lib/authStore";
+import {
+  checkAppwriteHealth,
+  syncFarmsFromAppwrite,
+  createFarmInAppwrite,
+  deleteFarmInAppwrite,
+  syncTasksFromAppwrite,
+  createTaskInAppwrite,
+  updateTaskStatusInAppwrite,
+  deleteTaskFromAppwrite,
+  syncCropsFromAppwrite,
+  createCropInAppwrite,
+  createInventoryItemInAppwrite,
+  logUsageInAppwrite,
+  restockItemInAppwrite,
+  createEquipmentInAppwrite,
+  reportEquipmentProblemInAppwrite,
+  createSupportTicketInAppwrite,
+  bookFieldVisitInAppwrite,
+  CloudFarm,
+} from "@/lib/appwriteSync";
 
 interface NavItem {
   id: string;
@@ -1877,13 +1898,8 @@ const OWNERSHIP_OPTIONS = [
   "Farmer Producer Org (FPO) / Co-operative",
 ];
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // Farms list state (starts with 2 distinct farm holdings, each with multiple crops!)
-  const [farms, setFarms] = useState<FarmData[]>([
+// Default initial farms data
+export const INITIAL_FARMS: FarmData[] = [
     {
       id: "farm-1",
       name: "Khetivo Green Acres",
@@ -1990,7 +2006,15 @@ export default function DashboardPage() {
         },
       ],
     },
-  ]);
+];
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Farms list state (starts with 2 distinct farm holdings, each with multiple crops!)
+  const [farms, setFarms] = useState<FarmData[]>(INITIAL_FARMS);
 
   // Default to "all" farms view as requested!
   const [selectedFarmId, setSelectedFarmId] = useState<string>("all");
@@ -2044,14 +2068,111 @@ export default function DashboardPage() {
   const [settingsAutoIrrigationNotice, setSettingsAutoIrrigationNotice] = useState(true);
   const [settingsToast, setSettingsToast] = useState<string | null>(null);
 
+  // Account Management & Danger Zone states
+  const [deleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState("");
+
   // Active Admin Broadcasts & Crop Templates Sync
   const [activeCropTemplates, setActiveCropTemplates] = useState<CropMasterTemplate[]>(CROP_TEMPLATES);
   const [activeAdminBroadcasts, setActiveAdminBroadcasts] = useState<any[]>(DEFAULT_FARMER_BROADCASTS);
   const [advisoryCategoryFilter, setAdvisoryCategoryFilter] = useState<string>("all");
   const [advisorySearchTerm, setAdvisorySearchTerm] = useState<string>("");
 
+  // Appwrite Cloud Sync State
+  const [appwriteStatus, setAppwriteStatus] = useState<"checking" | "connected" | "offline">("checking");
+  const [appwriteDbName, setAppwriteDbName] = useState<string>("khetivo_main");
+
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // 0. Connect and synchronize with Appwrite Cloud Database
+    const initAppwrite = async () => {
+      try {
+        const health = await checkAppwriteHealth();
+        if (health.connected) {
+          setAppwriteStatus("connected");
+          if (health.database) setAppwriteDbName(health.database);
+
+          // Fetch cloud registered farms
+          const cloudFarms = await syncFarmsFromAppwrite();
+          if (cloudFarms && cloudFarms.length > 0) {
+            const mappedFarms: FarmData[] = cloudFarms.map((cf) => ({
+              id: cf.$id || `farm-${Date.now()}`,
+              name: cf.name,
+              address: cf.address || [cf.village, cf.district, cf.state].filter(Boolean).join(", "),
+              village: cf.village || "",
+              district: cf.district || "Ludhiana",
+              state: cf.state || "Punjab",
+              pinCode: cf.pinCode || "",
+              totalArea: cf.totalArea || 10,
+              areaUnit: (cf.areaUnit as LandAreaUnit) || "Acres",
+              ownership: cf.ownership || "Owned",
+              latitude: cf.latitude || 30.901,
+              longitude: cf.longitude || 75.8573,
+              soilType: cf.soilType || "Alluvial Loam",
+              irrigationType: cf.irrigationType || "Tubewell",
+              waterSource: cf.waterSource || "Groundwater",
+              crops: INITIAL_FARMS[0]?.crops || [],
+              cropTemplate: cf.cropTemplate || "",
+            }));
+            setFarms(mappedFarms);
+          } else if (cloudFarms && cloudFarms.length === 0 && INITIAL_FARMS.length > 0) {
+            // Seed first farm to Appwrite database
+            const initFarm = INITIAL_FARMS[0];
+            createFarmInAppwrite({
+              name: initFarm.name,
+              address: initFarm.address,
+              village: initFarm.village || "",
+              district: initFarm.district || "Ludhiana",
+              state: initFarm.state || "Punjab",
+              pinCode: initFarm.pinCode || "",
+              totalArea: initFarm.totalArea,
+              areaUnit: initFarm.areaUnit,
+              ownership: initFarm.ownership,
+              latitude: initFarm.latitude,
+              longitude: initFarm.longitude,
+              soilType: initFarm.soilType,
+              irrigationType: initFarm.irrigationType,
+              waterSource: initFarm.waterSource,
+              cropTemplate: initFarm.cropTemplate,
+            });
+          }
+
+          // Fetch cloud tasks
+          const cloudTasks = await syncTasksFromAppwrite();
+          if (cloudTasks && cloudTasks.length > 0) {
+            setTaskList((prev) => {
+              const prevMap = new Map(prev.map((t) => [t.id, t]));
+              cloudTasks.forEach((ct) => {
+                prevMap.set(ct.$id || ct.title, {
+                  id: ct.$id || `task-${Date.now()}`,
+                  farmId: ct.farmId,
+                  farmName: "Main Farm",
+                  title: ct.title,
+                  category: ct.category as any,
+                  priority: ct.priority as any,
+                  status: ct.status as any,
+                  dueDate: ct.dueDate ? ct.dueDate.split("T")[0] : currentDateStr,
+                  assignedTo: ct.assignedTo || "Unassigned",
+                  zone: ct.zone,
+                  crop: ct.crop,
+                  instructions: ct.instructions,
+                });
+              });
+              return Array.from(prevMap.values());
+            });
+          }
+        } else {
+          setAppwriteStatus("offline");
+        }
+      } catch {
+        setAppwriteStatus("offline");
+      }
+    };
+
+    initAppwrite();
 
     // 1. Load active broadcasts
     try {
@@ -2304,6 +2425,19 @@ export default function DashboardPage() {
     } catch {
       // safe fallback
     }
+
+    // Book field visit in Appwrite Cloud
+    bookFieldVisitInAppwrite({
+      farmerName: fieldVisitFarmerName.trim(),
+      phone: fieldVisitPhone.trim(),
+      farmName: assignedFarm,
+      crop: fieldVisitCrop,
+      reason: fieldVisitReason,
+      scheduledDate: fieldVisitDate,
+      timeSlot: fieldVisitSlot,
+      tier: fieldVisitTier === "priority" ? "Priority Express (₹799)" : "Standard (₹499)",
+      fee,
+    });
 
     setFieldVisitSuccess({
       visitId: randomVisitId,
@@ -2569,6 +2703,21 @@ export default function DashboardPage() {
 
     setInventoryItems((prev) => [newItem, ...prev]);
     setAddItemModalOpen(false);
+
+    // Save to Appwrite Cloud
+    createInventoryItemInAppwrite({
+      farmId: newItem.farmId,
+      storeId: newItem.storeId,
+      name: newItem.name,
+      category: newItem.category,
+      batchNumber: newItem.batchNumber,
+      purchasedDate: newItem.purchasedDate,
+      expiryDate: newItem.expiryDate,
+      quantity: newItem.quantity,
+      unit: newItem.unit,
+      rate: newItem.rate,
+      lowStockThreshold: newItem.lowStockThreshold,
+    });
   };
 
   // Open Log Usage Modal
@@ -2623,6 +2772,18 @@ export default function DashboardPage() {
 
     setUsageLogs((prev) => [newUsage, ...prev]);
     setLogUsageModalOpen(false);
+
+    // Save usage to Appwrite Cloud
+    logUsageInAppwrite({
+      itemId: newUsage.itemId,
+      farmId: newUsage.farmId,
+      storeId: newUsage.storeId,
+      quantityUsed: newUsage.quantityUsed,
+      unit: newUsage.unit,
+      purpose: newUsage.purpose,
+      crop: newUsage.crop,
+      appliedBy: newUsage.appliedBy,
+    });
   };
 
   // Restock Item
@@ -2656,6 +2817,9 @@ export default function DashboardPage() {
       )
     );
     setRestockModalOpen(false);
+
+    // Update stock in Appwrite Cloud
+    restockItemInAppwrite(activeItemForRestock.id, qty);
   };
 
   const handleDeleteItem = (id: string) => {
@@ -2751,9 +2915,28 @@ export default function DashboardPage() {
     };
     setTaskList((prev) => [newTask, ...prev]);
     setCreateTaskModalOpen(false);
+
+    // Save to Appwrite Cloud
+    createTaskInAppwrite({
+      farmId: targetFarm.id,
+      title: newTask.title,
+      category: newTask.category,
+      priority: newTask.priority,
+      status: newTask.status,
+      dueDate: newTask.dueDate,
+      assignedTo: newTask.assignedTo,
+      zone: newTask.zone,
+      crop: newTask.crop,
+      instructions: newTask.instructions,
+    });
   };
 
   const handleToggleTaskStatus = (taskId: string) => {
+    const target = taskList.find((t) => t.id === taskId);
+    if (target) {
+      const nextStatus = target.status === "Completed" ? "Pending" : "Completed";
+      updateTaskStatusInAppwrite(taskId, nextStatus);
+    }
     setTaskList((prev) =>
       prev.map((t) => {
         if (t.id === taskId) {
@@ -2770,6 +2953,7 @@ export default function DashboardPage() {
   };
 
   const handleSetTaskStatus = (taskId: string, newStatus: "To Do" | "In Progress" | "Completed") => {
+    updateTaskStatusInAppwrite(taskId, newStatus);
     setTaskList((prev) =>
       prev.map((t) =>
         t.id === taskId
@@ -2785,6 +2969,7 @@ export default function DashboardPage() {
 
   const handleDeleteTask = (taskId: string) => {
     if (confirm("Are you sure you want to delete this farm task?")) {
+      deleteTaskFromAppwrite(taskId);
       setTaskList((prev) => prev.filter((t) => t.id !== taskId));
     }
   };
@@ -2869,6 +3054,18 @@ export default function DashboardPage() {
     };
     setEquipmentList((prev) => [newEq, ...prev]);
     setRegisterEquipmentModalOpen(false);
+
+    // Save to Appwrite Cloud
+    createEquipmentInAppwrite({
+      farmId: targetFarm.id,
+      name: newEq.name,
+      category: newEq.category,
+      model: newEq.modelNumber,
+      operator: newEq.operator,
+      status: newEq.status,
+      runtimeHours: newEq.runtimeHours,
+      fuelEfficiency: newEq.fuelEfficiency,
+    });
   };
 
   // Open Report Problem Modal
@@ -2921,6 +3118,16 @@ export default function DashboardPage() {
     setEquipmentIssues((prev) => [newIssue, ...prev]);
     setReportProblemModalOpen(false);
     setEquipmentFilter("issues");
+
+    // Report problem to Appwrite Cloud
+    reportEquipmentProblemInAppwrite({
+      equipmentId: newIssue.equipmentId,
+      farmId: newIssue.farmId,
+      issueType: newIssue.issueType,
+      severity: newIssue.severity,
+      description: newIssue.description,
+      reportedBy: newIssue.reportedBy,
+    });
   };
 
   // Mark Issue Resolved
@@ -3088,6 +3295,16 @@ export default function DashboardPage() {
     };
 
     setSupportTickets((prev) => [newTicket, ...prev]);
+
+    // Save support ticket to Appwrite Cloud
+    createSupportTicketInAppwrite({
+      farmName: newTicket.farmName,
+      cropName: newTicket.cropName,
+      subject: newTicket.subject,
+      category: newTicket.category,
+      priority: newTicket.priority,
+      description: newTicket.description,
+    });
 
     // Sync ticket into admin portal khetivo_admin_tickets
     try {
@@ -3446,6 +3663,31 @@ export default function DashboardPage() {
     setSettingsAutoIrrigationNotice(true);
     setSettingsToast("Settings reset to system defaults.");
     setTimeout(() => setSettingsToast(null), 3000);
+  };
+
+  const handleSignOut = () => {
+    signOutUser();
+    setSettingsToast("You have been signed out successfully. Redirecting...");
+    setTimeout(() => {
+      router.push("/");
+    }, 400);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmInput.trim().toUpperCase() !== "DELETE") {
+      setDeleteAccountError("Please type DELETE to confirm account deletion.");
+      return;
+    }
+    setDeleteAccountError("");
+    setIsDeletingAccount(true);
+    const phoneToPurge = settingsPhone || userPhone || "9814054321";
+    await deleteRegisteredUser(phoneToPurge);
+    setIsDeletingAccount(false);
+    setDeleteAccountModalOpen(false);
+    setSettingsToast("Your farmer account and data have been permanently deleted.");
+    setTimeout(() => {
+      router.push("/");
+    }, 800);
   };
 
   // Consolidated multi-farm calculations
@@ -3891,6 +4133,47 @@ export default function DashboardPage() {
     setFarms((prev) => [newFarm, ...prev]);
     setSelectedFarmId(newFarm.id);
 
+    // Persist farm and crops to Appwrite Cloud Database
+    createFarmInAppwrite({
+      name: newFarm.name,
+      address: newFarm.address,
+      village: newFarm.village,
+      district: newFarm.district,
+      state: newFarm.state,
+      pinCode: newFarm.pinCode,
+      totalArea: newFarm.totalArea,
+      areaUnit: newFarm.areaUnit,
+      ownership: newFarm.ownership,
+      latitude: newFarm.latitude,
+      longitude: newFarm.longitude,
+      soilType: newFarm.soilType,
+      irrigationType: newFarm.irrigationType,
+      waterSource: newFarm.waterSource,
+      cropTemplate: newFarm.cropTemplate,
+    }).then((created) => {
+      if (created && created.$id) {
+        assignedCrops.forEach((c) => {
+          createCropInAppwrite({
+            farmId: created.$id!,
+            name: c.name,
+            variety: c.variety,
+            area: c.area,
+            areaUnit: c.areaUnit,
+            season: c.season,
+            stage: c.stage,
+            stageStep: c.stageStep,
+            currentDay: c.currentDay,
+            totalDays: c.totalDays,
+            health: c.health,
+            sownDate: c.sownDate,
+            harvestDate: new Date(Date.now() + 100 * 86400000).toISOString(),
+            nextMilestone: c.nextMilestone,
+            color: c.color,
+          });
+        });
+      }
+    });
+
     // Sync newly created farm to khetivo_admin_clients so it reflects across /admin
     try {
       if (typeof window !== "undefined") {
@@ -3965,6 +4248,25 @@ export default function DashboardPage() {
         return f;
       })
     );
+
+    // Save additional crop to Appwrite Cloud
+    createCropInAppwrite({
+      farmId: targetFarm.id,
+      name: newCropObj.name,
+      variety: newCropObj.variety,
+      area: newCropObj.area,
+      areaUnit: newCropObj.areaUnit,
+      season: newCropObj.season,
+      stage: newCropObj.stage,
+      stageStep: newCropObj.stageStep,
+      currentDay: newCropObj.currentDay,
+      totalDays: newCropObj.totalDays,
+      health: newCropObj.health,
+      sownDate: newCropObj.sownDate,
+      harvestDate: new Date(Date.now() + 100 * 86400000).toISOString(),
+      nextMilestone: newCropObj.nextMilestone,
+      color: newCropObj.color,
+    });
 
     setAddCropModalOpen(false);
   };
@@ -4235,7 +4537,7 @@ export default function DashboardPage() {
             </div>
             <button
               type="button"
-              onClick={() => router.push("/")}
+              onClick={handleSignOut}
               title="Sign Out"
               className="p-1.5 text-[#55685D] hover:text-[#EA4335] hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
             >
@@ -4274,6 +4576,37 @@ export default function DashboardPage() {
 
           {/* Right: Farm Switcher Pill + Notifications & Field Visit Action */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            {/* Appwrite Cloud Sync Badge */}
+            <div
+              title={
+                appwriteStatus === "connected"
+                  ? `Connected to Appwrite Cloud Database (${appwriteDbName})`
+                  : appwriteStatus === "checking"
+                  ? "Verifying Appwrite Cloud connection..."
+                  : "Operating in local cache mode"
+              }
+              className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                appwriteStatus === "connected"
+                  ? "bg-[#EAF3EC] text-[#0C4B32] border-[#C6E2D0]"
+                  : appwriteStatus === "checking"
+                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                  : "bg-gray-100 text-gray-700 border-gray-200"
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  appwriteStatus === "connected"
+                    ? "bg-[#278449] animate-pulse"
+                    : appwriteStatus === "checking"
+                    ? "bg-amber-500 animate-spin"
+                    : "bg-gray-400"
+                }`}
+              />
+              <span className="font-semibold">
+                {appwriteStatus === "connected" ? "Appwrite Connected" : appwriteStatus === "checking" ? "Connecting..." : "Local Mode"}
+              </span>
+            </div>
+
             {/* Quick Farm Switcher Indicator on Mobile */}
             <button
               type="button"
@@ -9505,7 +9838,7 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+                  <div className="grid grid-cols-3 sm:flex sm:items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       onClick={handleResetSettings}
@@ -9513,6 +9846,14 @@ export default function DashboardPage() {
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Reset</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="px-3.5 py-2 text-xs font-medium rounded-xl bg-white text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
                     </button>
                     <button
                       type="button"
@@ -9690,22 +10031,98 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
+                  {/* CARD 3: Account Security & Danger Zone */}
+                  <div className="bg-white p-5 sm:p-6 rounded-2xl border border-red-200 shadow-xs space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-red-100">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                          <ShieldAlert className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-[#26352D]">Account Management & Danger Zone</h3>
+                          <p className="text-[11px] text-[#55685D]">Sign out of your farmer session or permanently delete your account and records</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
+                        Account Actions
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Sign Out Card */}
+                      <div className="p-4 rounded-xl border border-[#DCE6DE] bg-[#FBFDFB] flex flex-col justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <LogOut className="w-4 h-4 text-[#0C4B32]" />
+                            <h4 className="text-xs font-bold text-[#26352D]">Sign Out of Dashboard</h4>
+                          </div>
+                          <p className="text-[11px] text-[#55685D] leading-relaxed">
+                            Sign out of your active session on this device. Your farm land records, crop data, and registered login will remain securely saved for your next login.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSignOut}
+                          className="w-full sm:w-auto self-start px-4 py-2 text-xs font-semibold rounded-xl bg-white text-[#26352D] hover:text-[#0C4B32] border border-[#DCE6DE] hover:bg-[#F4F8F4] transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+
+                      {/* Delete Account Card */}
+                      <div className="p-4 rounded-xl border border-red-200 bg-red-50/40 flex flex-col justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                            <h4 className="text-xs font-bold text-red-700">Permanently Delete Account</h4>
+                          </div>
+                          <p className="text-[11px] text-[#55685D] leading-relaxed">
+                            Irreversibly delete your farmer account, registered phone number (+91 {settingsPhone ? settingsPhone.replace(/\D/g, "").slice(-10) : "9814054321"}), OTP verification record, and all associated farm holdings.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteConfirmInput("");
+                            setDeleteAccountError("");
+                            setDeleteAccountModalOpen(true);
+                          }}
+                          className="w-full sm:w-auto self-start px-4 py-2 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-xs transition-colors cursor-pointer inline-flex items-center justify-center gap-2"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete Account</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Bottom Save Bar */}
-                  <div className="pt-3 border-t border-[#E5ECE7] grid grid-cols-2 sm:flex sm:items-center justify-end gap-2.5">
+                  <div className="pt-3 border-t border-[#E5ECE7] flex flex-wrap items-center justify-between gap-2.5">
                     <button
                       type="button"
-                      onClick={handleResetSettings}
-                      className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-white text-[#55685D] hover:text-[#26352D] border border-[#DCE6DE] hover:bg-[#F4F8F4] transition-colors cursor-pointer text-center"
+                      onClick={handleSignOut}
+                      className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-white text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 transition-colors cursor-pointer inline-flex items-center gap-1.5"
                     >
-                      Reset Defaults
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
                     </button>
-                    <button
-                      type="submit"
-                      className="btn btn-primary text-xs px-5 py-2.5 inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer text-center"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Save Settings</span>
-                    </button>
+                    <div className="flex items-center gap-2.5 ml-auto">
+                      <button
+                        type="button"
+                        onClick={handleResetSettings}
+                        className="px-4 py-2.5 text-xs font-semibold rounded-xl bg-white text-[#55685D] hover:text-[#26352D] border border-[#DCE6DE] hover:bg-[#F4F8F4] transition-colors cursor-pointer text-center"
+                      >
+                        Reset Defaults
+                      </button>
+                      <button
+                        type="submit"
+                        className="btn btn-primary text-xs px-5 py-2.5 inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer text-center"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Save Settings</span>
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -13470,6 +13887,95 @@ export default function DashboardPage() {
                 className="px-4 py-2 text-xs font-semibold rounded-xl bg-[#0C4B32] hover:bg-[#083624] text-white shadow-xs cursor-pointer"
               >
                 Done Watching
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================== DELETE ACCOUNT CONFIRMATION MODAL ===================== */}
+      {deleteAccountModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+          onClick={() => {
+            if (!isDeletingAccount) setDeleteAccountModalOpen(false);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-md w-full p-6 border border-red-200 shadow-2xl relative space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Icon */}
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6 text-red-600" />
+            </div>
+
+            <div className="text-center space-y-1.5">
+              <h3 className="text-lg font-bold text-[#26352D]">Delete Farmer Account?</h3>
+              <p className="text-xs text-[#55685D] leading-relaxed">
+                This action is <span className="font-semibold text-red-600">permanent and irreversible</span>. All your linked farm parcels, crop logs, machinery inventory, and one-time OTP verification history will be permanently erased.
+              </p>
+            </div>
+
+            <div className="p-3 bg-red-50/70 rounded-xl border border-red-200 text-xs text-red-800 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                <span>Account To Be Purged:</span>
+              </div>
+              <p className="text-[11px] text-red-700 pl-5">
+                Farmer: <span className="font-semibold">{settingsFarmerName || "Jaswinder Singh"}</span> ({settingsPhone || "+91 9814054321"})
+              </p>
+              <p className="text-[11px] text-red-600 pl-5">
+                Once deleted, this phone number will be free to sign up again as a brand new farmer.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold text-[#26352D]">
+                Type <span className="text-red-600 font-mono font-bold">DELETE</span> to confirm:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmInput}
+                onChange={(e) => {
+                  setDeleteConfirmInput(e.target.value);
+                  if (deleteAccountError) setDeleteAccountError("");
+                }}
+                disabled={isDeletingAccount}
+                placeholder="DELETE"
+                className="w-full px-3.5 py-2.5 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none text-xs text-[#26352D] font-mono tracking-wider disabled:opacity-50"
+              />
+              {deleteAccountError && (
+                <p className="text-[11px] text-red-600 font-medium">{deleteAccountError}</p>
+              )}
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setDeleteAccountModalOpen(false)}
+                disabled={isDeletingAccount}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-white text-[#55685D] hover:text-[#26352D] border border-[#DCE6DE] hover:bg-[#F4F8F4] transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmInput.trim().toUpperCase() !== "DELETE" || isDeletingAccount}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+              >
+                {isDeletingAccount ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Deleting Account...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Permanently Delete</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

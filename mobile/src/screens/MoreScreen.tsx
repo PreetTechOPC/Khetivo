@@ -126,6 +126,14 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({ onNavigate, onOpenTutori
       color: '#4B5563',
       bgColor: '#F3F4F6',
     },
+    {
+      id: 'auth',
+      title: 'Farmer Account / Sign In',
+      subtitle: 'Gmail, Farmer ID & Google sign-in / registration',
+      icon: 'person-circle-outline',
+      color: '#059669',
+      bgColor: '#D1FAE5',
+    },
   ];
 
   return (

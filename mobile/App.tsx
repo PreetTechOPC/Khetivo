@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
   Modal,
   ScrollView,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from './src/theme/colors';
 import { initialFarms, Farm } from './src/data/mockData';
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -26,16 +26,62 @@ import { ReportsScreen } from './src/screens/ReportsScreen';
 import { SubscriptionScreen } from './src/screens/SubscriptionScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { MoreScreen } from './src/screens/MoreScreen';
+import { AuthScreen } from './src/screens/AuthScreen';
 import { TutorialModal } from './src/components/TutorialModal';
+import { getCurrentUser, logout } from './src/services/appwrite';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
 export default function App() {
   const [farms, setFarms] = useState<Farm[]>(initialFarms);
   const [activeFarmId, setActiveFarmId] = useState<string>('farm-1');
   const [currentScreen, setCurrentScreen] = useState<string>('home');
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+    phone?: string;
+    id?: string;
+  }>({
+    name: 'Mohan Lal',
+    email: 'mohan.lal@khetivo.farm',
+    phone: '+91 98140-54321',
+    id: 'KV-FARM-1042',
+  });
   const [farmModalVisible, setFarmModalVisible] = useState(false);
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [openAddFarmDirectly, setOpenAddFarmDirectly] = useState(false);
+
+  // Restore authenticated Appwrite session on application mount
+  useEffect(() => {
+    getCurrentUser()
+      .then((user) => {
+        if (user) {
+          setCurrentUser({
+            name: user.name,
+            email: user.email,
+            phone: user.phone || '+91 98140-54321',
+            id: user.id,
+          });
+        }
+      })
+      .catch((err) => {
+        console.log('Appwrite session status:', err);
+      });
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.warn('Logout notice:', e);
+    }
+    setCurrentUser({
+      name: 'Mohan Lal',
+      email: 'mohan.lal@khetivo.farm',
+      phone: '+91 98140-54321',
+      id: 'KV-FARM-1042',
+    });
+    setCurrentScreen('home');
+  };
 
   const currentFarm = farms.find((f) => f.id === activeFarmId) || farms[0];
 
@@ -91,7 +137,28 @@ export default function App() {
       case 'subscription':
         return <SubscriptionScreen onBack={() => setCurrentScreen('home')} />;
       case 'settings':
-        return <SettingsScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <SettingsScreen
+            onBack={() => setCurrentScreen('home')}
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            onNavigateToAuth={() => setCurrentScreen('auth')}
+          />
+        );
+      case 'auth':
+      case 'signin':
+      case 'signup':
+      case 'login':
+        return (
+          <AuthScreen
+            initialMode={currentScreen === 'signup' ? 'signup' : 'signin'}
+            onLoginSuccess={(user) => {
+              setCurrentUser(user);
+              setCurrentScreen('home');
+            }}
+            onBack={() => setCurrentScreen('home')}
+          />
+        );
       case 'more':
         return (
           <MoreScreen
@@ -105,6 +172,7 @@ export default function App() {
           <HomeScreen
             currentFarm={currentFarm}
             farms={farms}
+            farmerName={currentUser.name}
             onSelectFarm={() => setFarmModalVisible(true)}
             onNavigate={(screen) => setCurrentScreen(screen)}
             onOpenTutorial={() => setTutorialVisible(true)}
@@ -114,9 +182,10 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-      <View style={styles.container}>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <StatusBar style="dark" />
+        <View style={styles.container}>
         {/* Main Active Screen */}
         <View style={styles.screenContainer}>{renderScreen()}</View>
 
@@ -125,7 +194,8 @@ export default function App() {
         {/* Tabs: Home | Farms | Tasks | Reports | More                               */}
         {/* Active tab has a rich dark-green pill capsule around the icon only        */}
         {/* ========================================================================= */}
-        <View style={styles.bottomNav}>
+        {!['auth', 'signin', 'signup', 'login'].includes(currentScreen) && (
+          <View style={styles.bottomNav}>
           {/* 1. Home */}
           <TouchableOpacity
             style={styles.navTab}
@@ -234,6 +304,7 @@ export default function App() {
             </Text>
           </TouchableOpacity>
         </View>
+        )}
 
         {/* ========================================================================= */}
         {/* ALL FARMS SWITCHER MODAL (With + Add Another Farm)                         */}
@@ -314,6 +385,7 @@ export default function App() {
         />
       </View>
     </SafeAreaView>
+  </SafeAreaProvider>
   );
 }
 

@@ -3,7 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2, Mail, Sprout } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, ArrowRight, CheckCircle2, Mail, Sprout, AlertTriangle, Lock } from "lucide-react";
+import {
+  isPhoneAlreadyVerified,
+  sanitizePhone,
+  saveRegisteredUser,
+  findUserByIdentifier,
+  sendRealOtpApi,
+  verifyRealOtpApi,
+} from "@/lib/authStore";
+import { signInWithGoogleAppwrite } from "@/lib/appwriteAuth";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -21,6 +30,8 @@ export default function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [alreadyVerifiedNotice, setAlreadyVerifiedNotice] = useState(false);
+  const [demoOtpHint, setDemoOtpHint] = useState("482910");
 
   // OTP states
   const [otpValues, setOtpValues] = useState<string[]>(["", "", "", "", "", ""]);
@@ -68,7 +79,7 @@ export default function SignUpPage() {
     }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     const entered = otpValues.join("");
     if (entered.length < 6) {
@@ -77,72 +88,109 @@ export default function SignUpPage() {
     }
     setOtpError("");
     setLoading(true);
-    if (typeof window !== "undefined") {
-      if (phoneNumber) localStorage.setItem("khetivo_user_phone", phoneNumber);
-      if (email) localStorage.setItem("khetivo_user_email", email);
-    }
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 700);
-    }, 600);
-  };
 
-  const handleGoogleAuth = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Check if user already created an account with a phone number
-      const savedPhone = typeof window !== "undefined" ? localStorage.getItem("khetivo_user_phone") : null;
-      if (savedPhone) {
-        // Already created -> No need to enter phone number again! Direct dashboard access
-        setPhoneNumber(savedPhone);
-        setSuccess(true);
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 600);
-      } else {
-        // Creating account with Google / first time -> Ask phone number!
-        setPhoneNumber("");
-        setPhoneError("");
-        setStep("google_phone");
+    const clean = sanitizePhone(phoneNumber);
+    const result = await verifyRealOtpApi(clean, entered, {
+      name: fullName || "Jaswinder Singh",
+      email: email || (step === "google_phone" ? googleEmail : `${clean}@khetivo.farm`),
+    });
+
+    setLoading(false);
+
+    if (!result.success) {
+      setOtpError(result.message);
+      if (result.alreadyVerified) {
+        setAlreadyVerifiedNotice(true);
       }
-    }, 450);
+      return;
+    }
+
+    setSuccess(true);
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 700);
   };
 
-  const handleGooglePhoneSubmit = (e: React.FormEvent) => {
+  const handleGoogleAuth = async () => {
+    setLoading(true);
+    setAlreadyVerifiedNotice(false);
+    setPhoneError("");
+    try {
+      await signInWithGoogleAppwrite("/dashboard");
+    } catch (err: any) {
+      setLoading(false);
+      setPhoneError(err?.message || "Failed to start Google sign in with Appwrite.");
+    }
+  };
+
+  const handleGooglePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phoneNumber.length < 10) {
+    const clean = sanitizePhone(phoneNumber);
+    if (clean.length < 10) {
       setPhoneError("Please enter your complete 10-digit mobile number.");
       return;
     }
-    setPhoneError("");
-    setLoading(true);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("khetivo_user_phone", phoneNumber);
-      localStorage.setItem("khetivo_user_email", googleEmail);
+
+    // Single-time verification enforcement:
+    if (isPhoneAlreadyVerified(clean)) {
+      setPhoneError(`Phone number +91 ${clean} has already been verified previously. An account already exists. Please sign in directly.`);
+      setAlreadyVerifiedNotice(true);
+      return;
     }
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 700);
-    }, 600);
+
+    setPhoneError("");
+    setAlreadyVerifiedNotice(false);
+    setLoading(true);
+
+    const res = await sendRealOtpApi(clean);
+    setLoading(false);
+
+    if (!res.success) {
+      setPhoneError(res.message);
+      if (res.alreadyVerified) setAlreadyVerifiedNotice(true);
+      return;
+    }
+
+    setStep("otp");
+    setOtpTimer(60);
+    setOtpValues(["", "", "", "", "", ""]);
+    setOtpError("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPhoneError("");
+    setAlreadyVerifiedNotice(false);
+
+    const clean = sanitizePhone(phoneNumber);
+    if (clean.length < 10) {
+      setPhoneError("Please enter your complete 10-digit mobile number.");
+      return;
+    }
+
+    // In sign up, check if already verified:
+    if (isPhoneAlreadyVerified(clean)) {
+      setPhoneError(
+        `This mobile number (+91 ${clean}) has already completed one-time OTP verification. Sign-up OTP cannot be verified multiple times. Please sign in directly.`
+      );
+      setAlreadyVerifiedNotice(true);
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setStep("otp");
-      setOtpTimer(30);
-      setOtpValues(["", "", "", "", "", ""]);
-      setOtpError("");
-    }, 500);
+    const res = await sendRealOtpApi(clean);
+    setLoading(false);
+
+    if (!res.success) {
+      setPhoneError(res.message);
+      if (res.alreadyVerified) setAlreadyVerifiedNotice(true);
+      return;
+    }
+
+    setStep("otp");
+    setOtpTimer(60);
+    setOtpValues(["", "", "", "", "", ""]);
+    setOtpError("");
   };
 
   return (
