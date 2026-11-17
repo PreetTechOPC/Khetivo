@@ -80,6 +80,7 @@ import {
 import { signOutUser, deleteRegisteredUser } from "@/lib/authStore";
 import {
   checkAppwriteHealth,
+  subscribeToDatabaseChanges,
   syncFarmsFromAppwrite,
   createFarmInAppwrite,
   deleteFarmInAppwrite,
@@ -89,13 +90,24 @@ import {
   deleteTaskFromAppwrite,
   syncCropsFromAppwrite,
   createCropInAppwrite,
+  syncInventoryFromAppwrite,
   createInventoryItemInAppwrite,
+  createFarmStoreInAppwrite,
   logUsageInAppwrite,
   restockItemInAppwrite,
+  syncEquipmentFromAppwrite,
   createEquipmentInAppwrite,
   reportEquipmentProblemInAppwrite,
+  syncSupportFromAppwrite,
   createSupportTicketInAppwrite,
   bookFieldVisitInAppwrite,
+  syncFinancialsFromAppwrite,
+  createFinancialTransactionInAppwrite,
+  deleteFinancialTransactionInAppwrite,
+  syncTeamFromAppwrite,
+  createTeamMemberInAppwrite,
+  syncInvoicesFromAppwrite,
+  syncAdvisoriesFromAppwrite,
   CloudFarm,
 } from "@/lib/appwriteSync";
 
@@ -112,42 +124,7 @@ interface NavSection {
   items: NavItem[];
 }
 
-export const DEFAULT_FARMER_BROADCASTS = [
-  {
-    id: "bc-101",
-    title: "Urgent Yellow Rust (Stripe Rust) Alert in Ludhiana Bet",
-    category: "Pest & Disease Alert",
-    priority: "High / Emergency",
-    targetCrop: "Wheat (Kanak)",
-    targetDistrict: "Ludhiana",
-    targetGrowthStage: "Crown Root / Tillering",
-    message:
-      "High relative humidity (>85%) following unseasonal rain has created optimal spore conditions for Stripe Rust. Inspect early tillering leaf tips in low-lying parcels.",
-    actionPrescription:
-      "Tilt / Propiconazole 25% EC @ 200 ml in 200L water per acre with hollow-cone spray nozzle. Withhold urea top-dressing until treated.",
-    channels: ["In-App Banner", "WhatsApp"],
-    dispatchedAt: "28 Oct 2026, 08:30 AM",
-    dispatchedBy: "Dr. Harpreet Singh (PAU)",
-    status: "Active",
-  },
-  {
-    id: "bc-102",
-    title: "Sub-4°C Ground Frost Warning for Mustard Intercrops",
-    category: "Weather & Frost Warning",
-    priority: "Medium / Advisory",
-    targetCrop: "Mustard / Sarson",
-    targetDistrict: "Bathinda",
-    targetGrowthStage: "All Stages",
-    message:
-      "Night temperatures projected to dip to 3.8°C over next 48 hours with clear skies and calm winds in the Bathinda-Abohar belt. High frost risk for flowering siliquae.",
-    actionPrescription:
-      "Apply light evening irrigation to raise soil thermal capacity. Light smoke heaps along windward boundary if temperatures drop below 3°C.",
-    channels: ["In-App Banner", "SMS Alert"],
-    dispatchedAt: "26 Oct 2026, 04:15 PM",
-    dispatchedBy: "Dr. Gurmeet Kaur (PAU)",
-    status: "Active",
-  },
-];
+export const DEFAULT_FARMER_BROADCASTS: any[] = [];
 
 const NAV_SECTIONS: NavSection[] = [
   {
@@ -344,95 +321,7 @@ export const APP_MODULES: AppModuleDef[] = [
   { id: "settings", label: "Settings", description: "Farmer profile, currency, SMS alerts & unit preferences", category: "Farm Admin" },
 ];
 
-export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
-  {
-    id: "tm-1",
-    name: "Jaswinder Singh",
-    phone: "+91 98140-54321",
-    email: "jaswinder@khetivo.farm",
-    designationId: "des-1",
-    designationTitle: "Owner & Farm Administrator",
-    roleCategory: "admin",
-    farmId: "all",
-    farmName: "All Holdings",
-    status: "Active",
-    allowedModules: [
-      "dashboard",
-      "weather",
-      "tasks",
-      "inventory",
-      "equipment",
-      "crops",
-      "expenses",
-      "reports",
-      "my-farms",
-      "team",
-      "settings",
-    ],
-    joinedDate: "2024-01-15",
-    notes: "Primary account owner with unrestricted system administrative access.",
-  },
-  {
-    id: "tm-2",
-    name: "Harpreet Singh",
-    phone: "+91 98721-12345",
-    email: "harpreet.field@khetivo.farm",
-    designationId: "des-2",
-    designationTitle: "Field Supervisor & Operations Lead",
-    roleCategory: "supervisor",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    status: "Active",
-    allowedModules: ["dashboard", "weather", "tasks", "inventory", "equipment", "crops"],
-    joinedDate: "2024-06-10",
-    notes: "Supervises sowing schedules, field worker shifts, and irrigation routines.",
-  },
-  {
-    id: "tm-3",
-    name: "Gurmukh Ram",
-    phone: "+91 98882-67890",
-    email: "gurmukh.ram@khetivo.farm",
-    designationId: "des-4",
-    designationTitle: "Tractor & Heavy Machinery Driver",
-    roleCategory: "operator",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    status: "Active",
-    allowedModules: ["dashboard", "tasks", "equipment"],
-    joinedDate: "2024-09-01",
-    notes: "Main operator for John Deere 5050D and laser leveler.",
-  },
-  {
-    id: "tm-4",
-    name: "Dr. R. K. Sharma",
-    phone: "+91 94170-98765",
-    email: "dr.sharma@pau.edu",
-    designationId: "des-3",
-    designationTitle: "Consulting Agronomist (Crop Advisor)",
-    roleCategory: "agronomist",
-    farmId: "all",
-    farmName: "All Holdings",
-    status: "Active",
-    allowedModules: ["dashboard", "weather", "crops", "reports"],
-    joinedDate: "2025-02-14",
-    notes: "Advises on IPM pest scouting, nutrient dosage, and spray windows.",
-  },
-  {
-    id: "tm-5",
-    name: "Balwinder Kaur",
-    phone: "+91 98765-43210",
-    email: "balwinder.store@khetivo.farm",
-    designationId: "des-5",
-    designationTitle: "Store & Inventory Keeper",
-    roleCategory: "inventory",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    status: "Active",
-    allowedModules: ["dashboard", "inventory", "equipment"],
-    joinedDate: "2025-05-20",
-    notes: "Logs seed dispatches, pesticide stocks, and vendor delivery challans.",
-  },
-];
+export const INITIAL_TEAM_MEMBERS: TeamMember[] = [];
 
 // ==========================================
 // SUBSCRIPTION & PLAN DEFINITIONS
@@ -521,38 +410,7 @@ export interface BillingInvoice {
   status: "Paid" | "Pending";
 }
 
-export const INITIAL_INVOICES: BillingInvoice[] = [
-  {
-    id: "inv-2026-01",
-    invoiceNo: "KH-2026-1102",
-    date: "14 Nov 2026",
-    period: "Nov 2026 – Nov 2027",
-    planName: "Khetivo Precision Enterprise (Annual 50 Acres)",
-    amount: 5999,
-    paymentMethod: "UPI AutoPay (Axis Bank ••9814)",
-    status: "Paid",
-  },
-  {
-    id: "inv-2025-01",
-    invoiceNo: "KH-2025-1102",
-    date: "14 Nov 2025",
-    period: "Nov 2025 – Nov 2026",
-    planName: "Khetivo Precision Enterprise (Annual 50 Acres)",
-    amount: 5999,
-    paymentMethod: "Visa ending in •••• 4242",
-    status: "Paid",
-  },
-  {
-    id: "inv-2024-01",
-    invoiceNo: "KH-2024-1102",
-    date: "14 Nov 2024",
-    period: "Nov 2024 – Nov 2025",
-    planName: "Khetivo Precision Pro (Annual 25 Acres)",
-    amount: 2999,
-    paymentMethod: "UPI (Google Pay)",
-    status: "Paid",
-  },
-];
+export const INITIAL_INVOICES: BillingInvoice[] = [];
 
 // ==========================================
 // SUPPORT & AGRONOMY TICKETS DEFINITIONS
@@ -573,52 +431,7 @@ export interface SupportTicket {
   resolution?: string;
 }
 
-export const INITIAL_SUPPORT_TICKETS: SupportTicket[] = [
-  {
-    id: "tkt-1",
-    ticketNo: "TKT-8942",
-    subject: "Yellow rust patches detected on wheat leaves after heavy rain",
-    category: "Crop Health & Pathology",
-    farmName: "Khetivo Green Acres (Samrala)",
-    cropName: "Wheat (PBW-824)",
-    priority: "Urgent",
-    status: "In Review",
-    createdAt: "27 Oct 2026, 09:30 AM",
-    lastReply: "Dr. Harpreet Singh: Advised foliar spray of Propiconazole 25% EC @ 200ml/acre in 200L water. Monitor for 48 hours.",
-    assignedAgronomist: "Dr. Harpreet Singh (PAU Senior Pathologist)",
-    description: "Observed scattered yellow powdery pustules forming linear stripes along leaf veins in Block B following the morning fog and wet spell. Need confirmation on fungicide dosage.",
-  },
-  {
-    id: "tkt-2",
-    ticketNo: "TKT-7821",
-    subject: "Solar tubewell pump solenoid valve relay offline",
-    category: "IoT & Machinery Telemetry",
-    farmName: "Samrala Model Farm",
-    cropName: "All Holdings",
-    priority: "Normal",
-    status: "Resolved",
-    createdAt: "22 Oct 2026, 03:15 PM",
-    lastReply: "Hardware Support: Field technician rebooted 4G SIM module and re-flashed relay board firmware to v2.4.",
-    assignedAgronomist: "Er. Gurjit Virk (IoT Telemetry Team)",
-    description: "Automatic shutoff trigger failed to close solenoid valve #2 after scheduled 45-minute drip cycle.",
-    resolution: "GSM relay board firmware updated to v2.4. Signal connectivity confirmed at 94% RSSI.",
-  },
-  {
-    id: "tkt-3",
-    ticketNo: "TKT-6510",
-    subject: "Soil zinc deficiency inquiry prior to 1st urea top-dressing",
-    category: "Irrigation & Soil",
-    farmName: "Khetivo Green Acres (Samrala)",
-    cropName: "Wheat",
-    priority: "Normal",
-    status: "Resolved",
-    createdAt: "18 Oct 2026, 11:20 AM",
-    lastReply: "Agronomy Advisory: Recommended Zinc Sulphate 21% @ 25 kg/acre mixed with dry soil or foliar 0.5% spray with unslaked lime.",
-    assignedAgronomist: "Dr. R. K. Sharma (Agronomy Consultant)",
-    description: "Previous soil sample showed 0.48 ppm available zinc. Asking whether to apply with basal DAP or 1st top dressing.",
-    resolution: "Farmer confirmed application with first irrigation top-dressing.",
-  },
-];
+export const INITIAL_SUPPORT_TICKETS: SupportTicket[] = [];
 
 export const AGRONOMY_FAQS = [
   {
@@ -673,151 +486,11 @@ export const INVENTORY_UNITS = [
   "meters",
 ];
 
-export const INITIAL_STORES: FarmStore[] = [
-  {
-    id: "store-1",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    name: "Store 1",
-    type: "Main Input Godown",
-    location: "North Parcel Shed A",
-    notes: "Main storage for solid fertilizers, seeds and bulk materials",
-  },
-  {
-    id: "store-2",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    name: "Chemical & Spray Locker",
-    type: "Pesticide & Spray Storage",
-    location: "Near Tubewell 1 (Ventilated)",
-    notes: "Safe locker for fungicides, insecticides and herbicides",
-  },
-  {
-    id: "store-3",
-    farmId: "farm-2",
-    farmName: "Malwa Golden Fields (Sangrur)",
-    name: "Store 1",
-    type: "Barn & Seed Store",
-    location: "East Barn",
-    notes: "Primary holding store for Sangrur acreage",
-  },
-];
+export const INITIAL_STORES: FarmStore[] = [];
 
-export const INITIAL_INVENTORY_ITEMS: InventoryItem[] = [
-  {
-    id: "inv-1",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    storeId: "store-1",
-    storeName: "Store 1",
-    name: "Mancozeb 75% WP",
-    category: "Fungicide",
-    batchNumber: "MZ-2508",
-    purchasedDate: "2026-10-15",
-    expiryDate: "2026-11-12", // Expiring soon in ~17 days -> reminder
-    quantity: 25,
-    unit: "kg",
-    rate: 450,
-    lowStockThreshold: 10,
-  },
-  {
-    id: "inv-2",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    storeId: "store-1",
-    storeName: "Store 1",
-    name: "Urea 46% N (IFFCO Neem Coated)",
-    category: "Fertilizer",
-    batchNumber: "UR-9921",
-    purchasedDate: "2026-10-01",
-    expiryDate: "2027-10-01",
-    quantity: 38,
-    unit: "bags",
-    rate: 266,
-    lowStockThreshold: 15,
-  },
-  {
-    id: "inv-3",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    storeId: "store-1",
-    storeName: "Store 1",
-    name: "DAP (Di-Ammonium Phosphate 18:46:0)",
-    category: "Fertilizer",
-    batchNumber: "DAP-4102",
-    purchasedDate: "2026-09-20",
-    expiryDate: "2027-09-20",
-    quantity: 4, // Low stock alert (below 10) -> reminder
-    unit: "bags",
-    rate: 1350,
-    lowStockThreshold: 10,
-  },
-  {
-    id: "inv-4",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    storeId: "store-2",
-    storeName: "Chemical & Spray Locker",
-    name: "Emamectin Benzoate 5% SG",
-    category: "Insecticide",
-    batchNumber: "EB-3310",
-    purchasedDate: "2026-10-05",
-    expiryDate: "2028-04-15",
-    quantity: 12,
-    unit: "packets",
-    rate: 320,
-    lowStockThreshold: 5,
-  },
-  {
-    id: "inv-5",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    storeId: "store-1",
-    storeName: "Store 1",
-    name: "Rivulis 16mm Drip Lateral Line",
-    category: "Irrigation Hardware",
-    batchNumber: "DL-8812",
-    purchasedDate: "2026-08-10",
-    expiryDate: "2029-08-10",
-    quantity: 650,
-    unit: "meters",
-    rate: 12,
-    lowStockThreshold: 200,
-  },
-];
+export const INITIAL_INVENTORY_ITEMS: InventoryItem[] = [];
 
-export const INITIAL_USAGE_LOGS: ItemUsageLog[] = [
-  {
-    id: "usage-1",
-    itemId: "inv-1",
-    itemName: "Mancozeb 75% WP",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    storeId: "store-1",
-    storeName: "Store 1",
-    quantityUsed: 5,
-    unit: "kg",
-    date: "2026-10-25",
-    purpose: "Preventative foliar spray for early blight scouting in Potato Parcel",
-    crop: "Potato",
-    appliedBy: "Harpreet Singh",
-  },
-  {
-    id: "usage-2",
-    itemId: "inv-2",
-    itemName: "Urea 46% N (IFFCO Neem Coated)",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    storeId: "store-1",
-    storeName: "Store 1",
-    quantityUsed: 12,
-    unit: "bags",
-    date: "2026-10-22",
-    purpose: "1st Nitrogen Top-Dressing post first irrigation in Wheat Zone A",
-    crop: "Wheat",
-    appliedBy: "Gurmukh Ram",
-  },
-];
+export const INITIAL_USAGE_LOGS: ItemUsageLog[] = [];
 
 export interface FarmTask {
   id: string;
@@ -847,129 +520,7 @@ export const TASK_CATEGORIES = [
   "Soil Testing & Field Scouting",
 ];
 
-export const INITIAL_TASKS: FarmTask[] = [
-  {
-    id: "task-1",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    title: "Apply Urea Top-Dressing",
-    category: "Fertilization & Nutrition",
-    priority: "High",
-    status: "To Do",
-    dueDate: "2026-10-27",
-    assignedTo: "Harpreet Singh",
-    zone: "Zone A (12 Acres)",
-    crop: "PBW 826 Wheat",
-    instructions: "Apply 45 kg/acre urea top dressing right after evening drip cycle.",
-    description: "First critical nitrogen split to promote tillering and vegetative growth.",
-  },
-  {
-    id: "task-2",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    title: "Inspect Canal Gate Valve & Filter Mesh",
-    category: "Irrigation & Water Management",
-    priority: "Medium",
-    status: "To Do",
-    dueDate: "2026-10-29",
-    assignedTo: "Jaswinder Singh",
-    zone: "Zone B North Canal",
-    crop: "General Irrigation",
-    instructions: "Clean sand filter screen and check hydraulic actuator pressure.",
-    description: "Routine bi-weekly flush of filtration manifold before next watering.",
-  },
-  {
-    id: "task-3",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    title: "Moisture Probe & IoT Recalibration",
-    category: "Soil Testing & Field Scouting",
-    priority: "High",
-    status: "In Progress",
-    dueDate: "2026-10-28",
-    assignedTo: "Dr. Sharma",
-    zone: "Zone A North Parcel",
-    crop: "PBW 826 Wheat",
-    instructions: "Check LoRa telemetry sensor node #3 battery and calibrate dielectric permittivity.",
-    description: "Soil moisture readings have a 4% variance against manual tensiometer.",
-  },
-  {
-    id: "task-4",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    title: "First Post-Sowing Irrigation Cycle",
-    category: "Irrigation & Water Management",
-    priority: "Urgent",
-    status: "Completed",
-    dueDate: "2026-10-25",
-    assignedTo: "Harpreet Singh",
-    zone: "Zone A & B",
-    crop: "PBW 826 Wheat",
-    instructions: "Apply 35mm net depth across drip network via solar pump.",
-    description: "Crown root initiation stage moisture replenishment.",
-    completedDate: "2026-10-25",
-  },
-  {
-    id: "task-5",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    title: "Preventative Mancozeb Blight Spray",
-    category: "Pest & Disease Spraying",
-    priority: "Medium",
-    status: "Completed",
-    dueDate: "2026-10-24",
-    assignedTo: "Gurmukh Ram",
-    zone: "South Parcel (8 Acres)",
-    crop: "Kufri Pukhraj Potato",
-    instructions: "Mix 2.5g Mancozeb per liter of water. Spray using hollow cone nozzle.",
-    description: "Preventative early blight cover ahead of forecasted morning dew.",
-    completedDate: "2026-10-24",
-  },
-  {
-    id: "task-6",
-    farmId: "farm-2",
-    farmName: "Malwa Golden Fields (Sangrur)",
-    title: "Mustard Aphid Field Scouting",
-    category: "Soil Testing & Field Scouting",
-    priority: "Medium",
-    status: "To Do",
-    dueDate: "2026-10-31",
-    assignedTo: "Navdeep Singh",
-    zone: "Block C Mustard Strip",
-    crop: "Giriraj Mustard",
-    instructions: "Sample 20 plants randomly along diagonal transect for aphid colonies.",
-    description: "Early detection threshold for foliar insecticide timing.",
-  },
-  {
-    id: "task-7",
-    farmId: "farm-2",
-    farmName: "Malwa Golden Fields (Sangrur)",
-    title: "Tractor 50-Hour Lubrication & Grease",
-    category: "Machinery & Equipment Service",
-    priority: "Low",
-    status: "In Progress",
-    dueDate: "2026-11-02",
-    assignedTo: "Gurmukh Ram",
-    zone: "Equipment Yard",
-    instructions: "Grease 3-point linkage, PTO spline, and check hydraulic reservoir dipstick.",
-    description: "Scheduled preventive maintenance for Mahindra 475 DI.",
-  },
-  {
-    id: "task-8",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    title: "Seedbed Preparation for Late Rabi Wheat",
-    category: "Sowing & Seedbed Prep",
-    priority: "High",
-    status: "To Do",
-    dueDate: "2026-11-05",
-    assignedTo: "Harnek Singh",
-    zone: "Zone C Fallow Field",
-    crop: "HD 3086 Wheat",
-    instructions: "Run 2 passes with rotavator followed by laser levelling.",
-    description: "Prepare fine tilth for zero-till drill seeding.",
-  },
-];
+export const INITIAL_TASKS: FarmTask[] = [];
 
 export interface FarmEquipment {
   id: string;
@@ -1012,94 +563,9 @@ export const EQUIPMENT_CATEGORIES = [
   "General Farm Implement",
 ];
 
-export const INITIAL_EQUIPMENT: FarmEquipment[] = [
-  {
-    id: "eq-1",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    name: "John Deere 5050D Tractor (50 HP)",
-    category: "Tractor (4WD / 2WD)",
-    modelNumber: "JD-5050D-2024",
-    operator: "Harnek Singh",
-    status: "Operational",
-    runtimeHours: 842,
-    nextServiceDate: "2026-11-20",
-    fuelEfficiency: "3.8 L/hr (Optimal)",
-    lastServiceDate: "2026-09-15",
-  },
-  {
-    id: "eq-2",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    name: "Solar Submersible Drip Pump (7.5 HP)",
-    category: "Solar / Submersible Tubewell Pump",
-    modelNumber: "TATA-SOLAR-7.5HP",
-    operator: "Automated (Timer)",
-    status: "Operational",
-    runtimeHours: 1240,
-    nextServiceDate: "2026-12-15",
-    fuelEfficiency: "6.2 kW Peak (Solar)",
-    lastServiceDate: "2026-10-01",
-  },
-  {
-    id: "eq-3",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    name: "Shaktiman 7-ft Rotary Tiller (Rotavator)",
-    category: "Rotavator / Rotary Tiller",
-    modelNumber: "SHAKTI-7FT-HD",
-    operator: "Jaswinder Singh",
-    status: "Service Due",
-    runtimeHours: 310,
-    nextServiceDate: "2026-10-30",
-    fuelEfficiency: "PTO Driven",
-    lastServiceDate: "2026-08-10",
-  },
-  {
-    id: "eq-4",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    name: "Mahindra 475 DI Sarpanch Tractor",
-    category: "Tractor (4WD / 2WD)",
-    modelNumber: "MAH-475DI-2021",
-    operator: "Gurmukh Ram",
-    status: "Problem Reported",
-    runtimeHours: 1420,
-    nextServiceDate: "2026-11-05",
-    fuelEfficiency: "4.2 L/hr",
-    lastServiceDate: "2026-07-20",
-  },
-  {
-    id: "eq-5",
-    farmId: "farm-2",
-    farmName: "Malwa Golden Fields (Sangrur)",
-    name: "Fieldking Hydraulic Disc Harrow (14 Disc)",
-    category: "Hydraulic Disc Harrow",
-    modelNumber: "FK-HD-14",
-    operator: "Gurmukh Ram",
-    status: "Operational",
-    runtimeHours: 180,
-    nextServiceDate: "2026-12-01",
-    fuelEfficiency: "Towed Implement",
-    lastServiceDate: "2026-09-01",
-  },
-];
+export const INITIAL_EQUIPMENT: FarmEquipment[] = [];
 
-export const INITIAL_EQUIPMENT_ISSUES: EquipmentIssueReport[] = [
-  {
-    id: "issue-1",
-    equipmentId: "eq-4",
-    equipmentName: "Mahindra 475 DI Sarpanch Tractor",
-    farmId: "farm-1",
-    farmName: "Khetivo Green Acres (Samrala)",
-    issueType: "Hydraulic Leak",
-    severity: "High",
-    description: "Hydraulic lift pressure drops while lifting heavy rotary implement in field.",
-    reportedBy: "Gurmukh Ram",
-    reportedDate: "2026-10-25",
-    status: "Open",
-  },
-];
+export const INITIAL_EQUIPMENT_ISSUES: EquipmentIssueReport[] = [];
 
 export interface GrowthStageMilestone {
   id: string;
@@ -1704,166 +1170,7 @@ export const EXPENSE_CATEGORIES = [
   "Packaging & Transport",
 ];
 
-export const INITIAL_TRANSACTIONS: FarmTransaction[] = [
-  // PRODUCTION (Gross Yield & Revenue)
-  {
-    id: "tx-p1",
-    farmId: "farm-1",
-    farmName: "Samrala Model Farm",
-    type: "production",
-    title: "Wheat (HD-3086) Grain Harvest Sale",
-    category: "Grain Mandi Sale (APMC)",
-    amount: 225000,
-    date: "2026-10-24",
-    quantity: "90 Quintals @ ₹2,500/Qtl",
-    status: "Cleared",
-    reference: "Mandi Gate Pass #MND-8812",
-    crop: "Wheat",
-  },
-  {
-    id: "tx-p2",
-    farmId: "farm-1",
-    farmName: "Samrala Model Farm",
-    type: "production",
-    title: "Early Potato (Kufri Pukhraj) Dispatch to Wholesale",
-    category: "Wholesale Market Dispatch",
-    amount: 120000,
-    date: "2026-10-18",
-    quantity: "150 Bags (7.5 Tonnes)",
-    status: "Cleared",
-    reference: "Challan #WHL-302",
-    crop: "Potato",
-  },
-  {
-    id: "tx-p3",
-    farmId: "farm-2",
-    farmName: "Sangrur Agri Parcel",
-    type: "production",
-    title: "Mustard Green Fodder & Early Cut Realization",
-    category: "Contract Silage & Dairy Supply",
-    amount: 45000,
-    date: "2026-10-20",
-    quantity: "4 Acres Harvest",
-    status: "Cleared",
-    reference: "Dairy Coop Receipt #DC-109",
-    crop: "Mustard",
-  },
-
-  // LOSSES (Crop Damage & Spoilage)
-  {
-    id: "tx-l1",
-    farmId: "farm-1",
-    farmName: "Samrala Model Farm",
-    type: "loss",
-    title: "Unseasonal Rain Lodging & Drainage Damage",
-    category: "Weather: Unseasonal Rain & Hail",
-    amount: 18500,
-    date: "2026-10-22",
-    quantity: "1.8 Acres Affected",
-    status: "Claimed",
-    reference: "PMFBY Survey #SRV-901",
-    crop: "Wheat",
-    notes: "Lodging in low-lying parcel zone B following storm",
-  },
-  {
-    id: "tx-l2",
-    farmId: "farm-1",
-    farmName: "Samrala Model Farm",
-    type: "loss",
-    title: "Potato Early Blight & Tuber Spoilage Sorting Loss",
-    category: "Disease: Leaf Blight & Rot",
-    amount: 7200,
-    date: "2026-10-25",
-    quantity: "8 Bags Discarded",
-    status: "Recorded",
-    reference: "Storage Log #SL-44",
-    crop: "Potato",
-    notes: "Fungal leaf lesion leading to soft tuber rot during sorting",
-  },
-
-  // EXPENSES (Input Costs & Operational Outflow)
-  {
-    id: "tx-e1",
-    farmId: "farm-1",
-    farmName: "Samrala Model Farm",
-    type: "expense",
-    title: "Certified Wheat Seed (HD-3086) - 24 Bags",
-    category: "Seeds & Nursery",
-    amount: 28800,
-    date: "2026-10-12",
-    quantity: "24 Bags (40 kg each)",
-    status: "Cleared",
-    reference: "Bill #INV-9821",
-    crop: "Wheat",
-  },
-  {
-    id: "tx-e2",
-    farmId: "farm-1",
-    farmName: "Samrala Model Farm",
-    type: "expense",
-    title: "IFFCO Neem Coated Urea & Basal DAP (30 Bags)",
-    category: "Fertilizers & Nutrients",
-    amount: 19400,
-    date: "2026-10-14",
-    quantity: "30 Bags",
-    status: "Cleared",
-    reference: "Bill #VCH-4412",
-    crop: "Wheat",
-  },
-  {
-    id: "tx-e3",
-    farmId: "farm-1",
-    farmName: "Samrala Model Farm",
-    type: "expense",
-    title: "High Speed Diesel (HSD) for Tractor (200 L)",
-    category: "Diesel & Equipment Fuel",
-    amount: 18450,
-    date: "2026-10-16",
-    quantity: "200 Litres",
-    status: "Cleared",
-    reference: "HPCL Pump Cash Receipt",
-  },
-  {
-    id: "tx-e4",
-    farmId: "farm-1",
-    farmName: "Samrala Model Farm",
-    type: "expense",
-    title: "Seasonal Field Labor (Sowing & Bed Leveling)",
-    category: "Seasonal Labor Wages",
-    amount: 24000,
-    date: "2026-10-17",
-    quantity: "8 Workers, 6 Days",
-    status: "Cleared",
-    reference: "Labor Muster #4",
-  },
-  {
-    id: "tx-e5",
-    farmId: "farm-2",
-    farmName: "Sangrur Agri Parcel",
-    type: "expense",
-    title: "Pusa Mustard Certified Seeds (80 kg)",
-    category: "Seeds & Nursery",
-    amount: 14200,
-    date: "2026-10-15",
-    quantity: "80 kg",
-    status: "Cleared",
-    reference: "Kisan Store #51",
-    crop: "Mustard",
-  },
-  {
-    id: "tx-e6",
-    farmId: "farm-2",
-    farmName: "Sangrur Agri Parcel",
-    type: "expense",
-    title: "Sprinkler Pump Motor Rewinding",
-    category: "Machinery Spares & Repairs",
-    amount: 8600,
-    date: "2026-10-21",
-    quantity: "1 Motor Repair",
-    status: "Cleared",
-    reference: "Bhawanigarh Electricals",
-  },
-];
+export const INITIAL_TRANSACTIONS: FarmTransaction[] = [];
 
 const SOIL_TYPES = [
   "Alluvial Loam (Deep & Fertile)",
@@ -1899,114 +1206,7 @@ const OWNERSHIP_OPTIONS = [
 ];
 
 // Default initial farms data
-export const INITIAL_FARMS: FarmData[] = [
-    {
-      id: "farm-1",
-      name: "Khetivo Green Acres",
-      address: "Village Samrala, GT Road",
-      district: "Ludhiana",
-      state: "Punjab",
-      pinCode: "141114",
-      totalArea: 28,
-      areaUnit: "Acres",
-      ownership: "Self-Owned (Individual Farmer)",
-      latitude: 30.8385,
-      longitude: 76.1927,
-      soilType: "Alluvial Loam (Deep & Fertile)",
-      irrigationType: "Drip / Micro-Irrigation (Sub-surface/Surface)",
-      waterSource: "Deep Tubewell / Borewell",
-      cropTemplate: "Wheat (18 Ac) & Potato (10 Ac)",
-      crops: [
-        {
-          id: "crop-1-1",
-          name: "Wheat",
-          variety: "HD-3086 / Sharbati",
-          area: 18,
-          areaUnit: "Acres",
-          season: "Rabi",
-          stage: "Crown Root Initiation & Tillering",
-          stageStep: 2,
-          currentDay: 28,
-          totalDays: 135,
-          health: "Healthy (95% NDVI)",
-          sownDate: "Oct 24, 2026",
-          nextMilestone: "1st Nitrogen Top-Dressing (Day 35)",
-          harvestDate: "Late March 2027",
-          color: "#278449",
-        },
-        {
-          id: "crop-1-2",
-          name: "Potato",
-          variety: "Kufri Pukhraj (Certified)",
-          area: 10,
-          areaUnit: "Acres",
-          season: "Rabi",
-          stage: "Tuber Bulking & Canopy Closure",
-          stageStep: 3,
-          currentDay: 42,
-          totalDays: 90,
-          health: "Optimal (92% NDVI)",
-          sownDate: "Oct 10, 2026",
-          nextMilestone: "Late Blight Preventive Spray (Day 48)",
-          harvestDate: "Mid Jan 2027",
-          color: "#D97706",
-        },
-      ],
-    },
-    {
-      id: "farm-2",
-      name: "Malwa Golden Fields",
-      address: "Village Bhawanigarh, Patiala Road",
-      district: "Sangrur",
-      state: "Punjab",
-      pinCode: "148026",
-      totalArea: 24,
-      areaUnit: "Acres",
-      ownership: "Ancestral / Joint Family Land",
-      latitude: 30.2458,
-      longitude: 75.8421,
-      soilType: "Red & Yellow Sandy Loam",
-      irrigationType: "Sprinkler System (Overhead/Center Pivot)",
-      waterSource: "Farm Pond / Rainwater Harvesting Tank",
-      cropTemplate: "Mustard (16 Ac) & Barseem Fodder (8 Ac)",
-      crops: [
-        {
-          id: "crop-2-1",
-          name: "Mustard / Sarson",
-          variety: "Pusa Jai Kisan",
-          area: 16,
-          areaUnit: "Acres",
-          season: "Rabi",
-          stage: "Vegetative & Budding Stage",
-          stageStep: 2,
-          currentDay: 35,
-          totalDays: 120,
-          health: "Vigorous (96% NDVI)",
-          sownDate: "Oct 18, 2026",
-          nextMilestone: "Foliar Boron & Sulphur Spray (Day 42)",
-          harvestDate: "Late Feb 2027",
-          color: "#F9B21B",
-        },
-        {
-          id: "crop-2-2",
-          name: "Green Fodder",
-          variety: "Barseem (African Tall)",
-          area: 8,
-          areaUnit: "Acres",
-          season: "Rabi",
-          stage: "1st Cutting Cycle & Regrowth",
-          stageStep: 2,
-          currentDay: 50,
-          totalDays: 150,
-          health: "Lush (98% NDVI)",
-          sownDate: "Oct 02, 2026",
-          nextMilestone: "Post-harvest light sprinkler irrigation",
-          harvestDate: "Continuous Cutting",
-          color: "#16A34A",
-        },
-      ],
-    },
-];
+export const INITIAL_FARMS: FarmData[] = [];
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -2053,11 +1253,11 @@ export default function DashboardPage() {
   const [gpsDetectedNotice, setGpsDetectedNotice] = useState(false);
   const [recentlyAutoFilled, setRecentlyAutoFilled] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [userPhone, setUserPhone] = useState("+91 98140-54321");
-  const [settingsFarmerName, setSettingsFarmerName] = useState("Jaswinder Singh");
-  const [settingsEmail, setSettingsEmail] = useState("jaswinder.agro@khetivo.com");
-  const [settingsPhone, setSettingsPhone] = useState("+91 98140-54321");
-  const [settingsMandi, setSettingsMandi] = useState("Khanna Mandi, Ludhiana");
+  const [userPhone, setUserPhone] = useState("");
+  const [settingsFarmerName, setSettingsFarmerName] = useState("");
+  const [settingsEmail, setSettingsEmail] = useState("");
+  const [settingsPhone, setSettingsPhone] = useState("");
+  const [settingsMandi, setSettingsMandi] = useState("Local APMC Mandi");
   const [settingsDefaultUnit, setSettingsDefaultUnit] = useState<LandAreaUnit>("Acres");
   const [settingsLanguage, setSettingsLanguage] = useState("en");
   const [settingsMoistureDeficit, setSettingsMoistureDeficit] = useState("30");
@@ -2074,6 +1274,40 @@ export default function DashboardPage() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteAccountError, setDeleteAccountError] = useState("");
 
+  // Reusable Custom Delete Confirmation Modal State
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    itemName?: string;
+    itemType?: string;
+    description: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void | Promise<void>;
+  } | null>(null);
+  const [isDeletingItem, setIsDeletingItem] = useState(false);
+
+  const requestDeleteConfirmation = (config: {
+    title: string;
+    itemName?: string;
+    itemType?: string;
+    description?: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void | Promise<void>;
+  }) => {
+    setDeleteConfirmModal({
+      isOpen: true,
+      title: config.title,
+      itemName: config.itemName,
+      itemType: config.itemType,
+      description: config.description || "Are you sure you want to delete this record? This action cannot be undone.",
+      confirmText: config.confirmText || "Delete",
+      cancelText: config.cancelText || "Cancel",
+      onConfirm: config.onConfirm,
+    });
+  };
+
   // Active Admin Broadcasts & Crop Templates Sync
   const [activeCropTemplates, setActiveCropTemplates] = useState<CropMasterTemplate[]>(CROP_TEMPLATES);
   const [activeAdminBroadcasts, setActiveAdminBroadcasts] = useState<any[]>(DEFAULT_FARMER_BROADCASTS);
@@ -2087,94 +1321,307 @@ export default function DashboardPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // 0. Connect and synchronize with Appwrite Cloud Database
-    const initAppwrite = async () => {
+    // Load active logged-in farmer details from localStorage
+    try {
+      const uName = localStorage.getItem("khetivo_user_name");
+      const uPhone = localStorage.getItem("khetivo_user_phone");
+      const uEmail = localStorage.getItem("khetivo_user_email");
+      if (uName) setSettingsFarmerName(uName);
+      if (uPhone) {
+        const clean = uPhone.startsWith("+") ? uPhone : `+91 ${uPhone}`;
+        setUserPhone(clean);
+        setSettingsPhone(clean);
+      }
+      if (uEmail) setSettingsEmail(uEmail);
+    } catch {}
+
+    // 0. Comprehensive Realtime Data Loader from Appwrite Cloud
+    const loadAllRealtimeData = async () => {
       try {
         const health = await checkAppwriteHealth();
         if (health.connected) {
           setAppwriteStatus("connected");
           if (health.database) setAppwriteDbName(health.database);
 
-          // Fetch cloud registered farms
-          const cloudFarms = await syncFarmsFromAppwrite();
-          if (cloudFarms && cloudFarms.length > 0) {
-            const mappedFarms: FarmData[] = cloudFarms.map((cf) => ({
-              id: cf.$id || `farm-${Date.now()}`,
-              name: cf.name,
-              address: cf.address || [cf.village, cf.district, cf.state].filter(Boolean).join(", "),
-              village: cf.village || "",
-              district: cf.district || "Ludhiana",
-              state: cf.state || "Punjab",
-              pinCode: cf.pinCode || "",
-              totalArea: cf.totalArea || 10,
-              areaUnit: (cf.areaUnit as LandAreaUnit) || "Acres",
-              ownership: cf.ownership || "Owned",
-              latitude: cf.latitude || 30.901,
-              longitude: cf.longitude || 75.8573,
-              soilType: cf.soilType || "Alluvial Loam",
-              irrigationType: cf.irrigationType || "Tubewell",
-              waterSource: cf.waterSource || "Groundwater",
-              crops: INITIAL_FARMS[0]?.crops || [],
-              cropTemplate: cf.cropTemplate || "",
-            }));
-            setFarms(mappedFarms);
-          } else if (cloudFarms && cloudFarms.length === 0 && INITIAL_FARMS.length > 0) {
-            // Seed first farm to Appwrite database
-            const initFarm = INITIAL_FARMS[0];
-            createFarmInAppwrite({
-              name: initFarm.name,
-              address: initFarm.address,
-              village: initFarm.village || "",
-              district: initFarm.district || "Ludhiana",
-              state: initFarm.state || "Punjab",
-              pinCode: initFarm.pinCode || "",
-              totalArea: initFarm.totalArea,
-              areaUnit: initFarm.areaUnit,
-              ownership: initFarm.ownership,
-              latitude: initFarm.latitude,
-              longitude: initFarm.longitude,
-              soilType: initFarm.soilType,
-              irrigationType: initFarm.irrigationType,
-              waterSource: initFarm.waterSource,
-              cropTemplate: initFarm.cropTemplate,
+          // Fetch all live collections in parallel from Appwrite Cloud DB
+          const [cloudFarms, cloudCrops, cloudTasks, cloudInv, cloudEq, cloudSupport, cloudFin, cloudTeam, cloudInvoices, cloudAdvisories] = await Promise.all([
+            syncFarmsFromAppwrite(),
+            syncCropsFromAppwrite(),
+            syncTasksFromAppwrite(),
+            syncInventoryFromAppwrite(),
+            syncEquipmentFromAppwrite(),
+            syncSupportFromAppwrite(),
+            syncFinancialsFromAppwrite(),
+            syncTeamFromAppwrite(),
+            syncInvoicesFromAppwrite(),
+            syncAdvisoriesFromAppwrite(),
+          ]);
+
+          // 1. Process Live Crops
+          const allCropsList: FarmCrop[] = (cloudCrops || []).map((c: any) => ({
+            id: c.$id || `crop-${Date.now()}`,
+            name: c.name,
+            variety: c.variety || "Standard",
+            area: Number(c.area) || 0,
+            areaUnit: c.areaUnit || "Acres",
+            season: c.season || "Rabi",
+            stage: c.stage || "Vegetative",
+            stageStep: Number(c.stageStep) || 1,
+            currentDay: Number(c.currentDay) || 1,
+            totalDays: Number(c.totalDays) || 120,
+            health: c.health || "Good",
+            sownDate: c.sownDate ? new Date(c.sownDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "",
+            harvestDate: c.harvestDate ? new Date(c.harvestDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "",
+            nextMilestone: c.nextMilestone || "Next Stage",
+            color: c.color || "#278449",
+            farmId: c.farmId,
+          }));
+
+          // 2. Process Live Farms
+          if (cloudFarms) {
+            const mappedFarms: FarmData[] = cloudFarms.map((cf: any) => {
+              const farmId = cf.$id || cf.id;
+              const farmCrops = allCropsList.filter((c) => c.farmId === farmId);
+              return {
+                id: farmId,
+                name: cf.name,
+                address: cf.address || [cf.village, cf.district, cf.state].filter(Boolean).join(", "),
+                village: cf.village || "",
+                district: cf.district || "",
+                state: cf.state || "",
+                pinCode: cf.pinCode || "",
+                totalArea: Number(cf.totalArea) || 0,
+                areaUnit: (cf.areaUnit as LandAreaUnit) || "Acres",
+                ownership: cf.ownership || "Owned",
+                latitude: Number(cf.latitude) || 30.901,
+                longitude: Number(cf.longitude) || 75.8573,
+                soilType: cf.soilType || "Alluvial Loam",
+                irrigationType: cf.irrigationType || "Tubewell",
+                waterSource: cf.waterSource || "Groundwater",
+                crops: farmCrops,
+                cropTemplate: cf.cropTemplate || farmCrops.map((c) => `${c.name} (${c.area} ${c.areaUnit})`).join(" & "),
+              };
             });
+            setFarms(mappedFarms);
           }
 
-          // Fetch cloud tasks
-          const cloudTasks = await syncTasksFromAppwrite();
-          if (cloudTasks && cloudTasks.length > 0) {
-            setTaskList((prev) => {
-              const prevMap = new Map(prev.map((t) => [t.id, t]));
-              cloudTasks.forEach((ct) => {
-                prevMap.set(ct.$id || ct.title, {
-                  id: ct.$id || `task-${Date.now()}`,
-                  farmId: ct.farmId,
-                  farmName: "Main Farm",
-                  title: ct.title,
-                  category: ct.category as any,
-                  priority: ct.priority as any,
-                  status: ct.status as any,
-                  dueDate: ct.dueDate ? ct.dueDate.split("T")[0] : currentDateStr,
-                  assignedTo: ct.assignedTo || "Unassigned",
-                  zone: ct.zone,
-                  crop: ct.crop,
-                  instructions: ct.instructions,
+          // 3. Process Live Tasks
+          if (cloudTasks) {
+            const mappedTasks: FarmTask[] = cloudTasks.map((ct: any) => ({
+              id: ct.$id || ct.id,
+              farmId: ct.farmId || "all",
+              farmName: ct.farmName || "Farm",
+              title: ct.title,
+              category: ct.category || "General",
+              priority: (ct.priority as any) || "Medium",
+              status: ct.status === "Pending" ? "To Do" : (ct.status as any) || "To Do",
+              dueDate: ct.dueDate ? ct.dueDate.split("T")[0] : currentDateStr,
+              assignedTo: ct.assignedTo || "Unassigned",
+              zone: ct.zone,
+              crop: ct.crop,
+              instructions: ct.instructions,
+              description: ct.description,
+            }));
+            setTaskList(mappedTasks);
+          }
+
+          // 4. Process Live Stores & Inventory
+          if (cloudInv) {
+            if (cloudInv.stores) {
+              setStores(
+                cloudInv.stores.map((s: any) => ({
+                  id: s.$id || s.id,
+                  farmId: s.farmId || "all",
+                  farmName: s.farmName || "Farm",
+                  name: s.name,
+                  type: s.type || "Godown",
+                  location: s.location,
+                  notes: s.notes,
+                }))
+              );
+            }
+            if (cloudInv.items) {
+              setInventoryItems(
+                cloudInv.items.map((it: any) => ({
+                  id: it.$id || it.id,
+                  farmId: it.farmId || "all",
+                  farmName: it.farmName || "Farm",
+                  storeId: it.storeId || "store-1",
+                  storeName: it.storeName || "Main Store",
+                  name: it.name,
+                  category: it.category || "General",
+                  batchNumber: it.batchNumber || "",
+                  purchasedDate: it.purchasedDate ? it.purchasedDate.split("T")[0] : "",
+                  expiryDate: it.expiryDate ? it.expiryDate.split("T")[0] : "",
+                  quantity: Number(it.quantity) || 0,
+                  unit: it.unit || "kg",
+                  rate: Number(it.rate) || 0,
+                  lowStockThreshold: Number(it.lowStockThreshold) || 5,
+                }))
+              );
+            }
+          }
+
+          // 5. Process Live Equipment & Reported Issues
+          if (cloudEq) {
+            if (cloudEq.equipment) {
+              setEquipmentList(
+                cloudEq.equipment.map((eq: any) => ({
+                  id: eq.$id || eq.id,
+                  farmId: eq.farmId || "all",
+                  farmName: eq.farmName || "Farm",
+                  name: eq.name,
+                  category: eq.category || "General Implement",
+                  modelNumber: eq.model,
+                  operator: eq.operator || "Unassigned",
+                  status: (eq.status as any) || "Operational",
+                  runtimeHours: Number(eq.runtimeHours) || 0,
+                  nextServiceDate: eq.nextServiceDate,
+                  nextServiceHours: eq.nextServiceHours,
+                  fuelEfficiency: eq.fuelEfficiency,
+                }))
+              );
+            }
+            if (cloudEq.issues) {
+              setEquipmentIssues(
+                cloudEq.issues.map((iss: any) => ({
+                  id: iss.$id || iss.id,
+                  equipmentId: iss.equipmentId,
+                  equipmentName: iss.equipmentName || "Equipment",
+                  farmId: iss.farmId || "all",
+                  farmName: iss.farmName || "Farm",
+                  issueType: iss.issueType || "Defect",
+                  severity: (iss.severity as any) || "Medium",
+                  description: iss.description || "",
+                  reportedBy: iss.reportedBy || "Worker",
+                  reportedDate: iss.reportedDate ? iss.reportedDate.split("T")[0] : currentDateStr,
+                  status: (iss.status as any) || "Open",
+                }))
+              );
+            }
+          }
+
+          // 6. Process Live Support Tickets & Field Visits
+          if (cloudSupport) {
+            if (cloudSupport.tickets) {
+              setSupportTickets(
+                cloudSupport.tickets.map((t: any) => ({
+                  id: t.$id || t.id,
+                  ticketNo: t.ticketNo || `TKT-${(t.$id || "").slice(-4)}`,
+                  subject: t.subject,
+                  category: t.category || "Crop Health & Pathology",
+                  farmName: t.farmName || "Farm",
+                  cropName: t.cropName || "Crop",
+                  priority: (t.priority as any) || "Normal",
+                  status: (t.status as any) || "Open",
+                  createdAt: t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-IN") : "Recent",
+                  lastReply: t.lastReply || "Dispatched to PAU agronomy helpdesk.",
+                  assignedAgronomist: t.assignedAgronomist || "Duty Agronomist",
+                  description: t.description || "",
+                  resolution: t.resolution,
+                }))
+              );
+            }
+          }
+
+          // 7. Process Live Financial Transactions
+          if (cloudFin) {
+            setTransactions(
+              cloudFin.map((tx: any) => ({
+                id: tx.$id || tx.id,
+                farmId: tx.farmId || "all",
+                farmName: tx.farmName || "Farm",
+                type: tx.type || "expense",
+                title: tx.title,
+                category: tx.category || "General",
+                amount: Number(tx.amount) || 0,
+                date: tx.date ? tx.date.split("T")[0] : currentDateStr,
+                quantity: tx.quantity,
+                status: (tx.status as any) || "Cleared",
+                reference: tx.reference,
+                crop: tx.crop,
+                notes: tx.notes,
+              }))
+            );
+          }
+
+          // 8. Process Live Team Members & Designations
+          if (cloudTeam) {
+            if (cloudTeam.members && cloudTeam.members.length > 0) {
+              setTeamMembers(
+                cloudTeam.members.map((m: any) => ({
+                  id: m.$id || m.id,
+                  name: m.name,
+                  phone: m.phone,
+                  email: m.email || "",
+                  designationId: m.designationId || "des-custom",
+                  designationTitle: m.designationTitle || "Team Member",
+                  roleCategory: m.roleCategory || "worker",
+                  farmId: m.farmId || "all",
+                  farmName: m.farmName || "Farm",
+                  status: (m.status as any) || "Active",
+                  allowedModules: m.allowedModules || ["dashboard"],
+                  joinedDate: m.joinedDate ? m.joinedDate.split("T")[0] : currentDateStr,
+                  notes: m.notes,
+                }))
+              );
+            }
+            if (cloudTeam.designations && cloudTeam.designations.length > 0) {
+              setDesignations((prev) => {
+                const prevMap = new Map(prev.map((d) => [d.id, d]));
+                cloudTeam.designations.forEach((cd: any) => {
+                  prevMap.set(cd.$id || cd.id, {
+                    id: cd.$id || cd.id,
+                    title: cd.title,
+                    description: cd.description || "",
+                    allowedModules: cd.allowedModules || ["dashboard"],
+                    color: cd.color || "#15803D",
+                  });
                 });
+                return Array.from(prevMap.values());
               });
-              return Array.from(prevMap.values());
-            });
+            }
+          }
+
+          // 9. Process Live Invoices
+          if (cloudInvoices && cloudInvoices.length > 0) {
+            setInvoices(
+              cloudInvoices.map((inv: any) => ({
+                id: inv.$id || inv.id,
+                invoiceNo: inv.invoiceNo || `KH-${(inv.$id || "").slice(-6)}`,
+                date: inv.date ? new Date(inv.date).toLocaleDateString("en-IN") : "",
+                period: inv.period || "",
+                planName: inv.planName || "Khetivo Precision",
+                amount: Number(inv.amount) || 0,
+                paymentMethod: inv.paymentMethod || "Online",
+                status: inv.status || "Paid",
+              }))
+            );
+          }
+
+          // 10. Process Live Advisories & Broadcasts
+          if (cloudAdvisories && cloudAdvisories.length > 0) {
+            setActiveAdminBroadcasts(cloudAdvisories);
           }
         } else {
           setAppwriteStatus("offline");
         }
-      } catch {
+      } catch (err) {
+        console.warn("[Realtime Sync] Error updating data from Appwrite:", err);
         setAppwriteStatus("offline");
       }
     };
 
-    initAppwrite();
+    // Load initial data
+    loadAllRealtimeData();
 
-    // 1. Load active broadcasts
+    // Subscribe to Appwrite WebSocket Realtime updates
+    const unsubscribeRealtime = subscribeToDatabaseChanges((event) => {
+      console.log("[Appwrite Realtime] Database event received:", event?.events);
+      loadAllRealtimeData();
+    });
+
+    // 1. Load active broadcasts fallback
     try {
       const saved = localStorage.getItem("khetivo_admin_broadcasts");
       if (saved) {
@@ -2183,16 +1630,10 @@ export default function DashboardPage() {
           const actives = parsed.filter((b: any) => b.status === "Active");
           if (actives.length > 0) {
             setActiveAdminBroadcasts(actives);
-          } else {
-            setActiveAdminBroadcasts(DEFAULT_FARMER_BROADCASTS);
           }
         }
-      } else {
-        setActiveAdminBroadcasts(DEFAULT_FARMER_BROADCASTS);
       }
-    } catch {
-      setActiveAdminBroadcasts(DEFAULT_FARMER_BROADCASTS);
-    }
+    } catch {}
 
     // 2. Load crop templates from admin
     const loadAdminCrops = () => {
@@ -2214,71 +1655,27 @@ export default function DashboardPage() {
 
     loadAdminCrops();
 
-    // 3. Load & sync support tickets from admin
-    const loadAdminTickets = () => {
-      try {
-        const saved = localStorage.getItem("khetivo_admin_tickets");
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setSupportTickets((prev) => {
-              const prevMap = new Map(prev.map((t) => [t.id, t]));
-              parsed.forEach((at: any) => {
-                const lastMsg = at.messages && at.messages.length > 0 ? at.messages[at.messages.length - 1] : null;
-                const formattedLastReply = lastMsg ? `${lastMsg.sender}: ${lastMsg.text}` : undefined;
-                if (prevMap.has(at.id)) {
-                  const existing = prevMap.get(at.id)!;
-                  prevMap.set(at.id, {
-                    ...existing,
-                    status: at.status === "In Progress" ? "In Review" : at.status,
-                    lastReply: formattedLastReply || existing.lastReply,
-                  });
-                } else {
-                  prevMap.set(at.id, {
-                    id: at.id,
-                    ticketNo: at.ticketCode || `TKT-${at.id.slice(-4)}`,
-                    subject: at.subject,
-                    category: "Crop Health & Pathology",
-                    farmName: at.farmName || "Main Farm",
-                    cropName: at.crop || "Wheat",
-                    priority: at.priority === "High" ? "Urgent" : at.priority === "Low" ? "Low" : "Normal",
-                    status: at.status === "In Progress" ? "In Review" : at.status || "Open",
-                    createdAt: at.createdAt || "Recent",
-                    lastReply: formattedLastReply || "Dispatched to PAU agronomy helpdesk.",
-                    assignedAgronomist: at.assignedAgronomist || "Dr. Harpreet Singh",
-                    description: at.messages?.[0]?.text || at.subject,
-                  });
-                }
-              });
-              return Array.from(prevMap.values());
-            });
-          }
-        }
-      } catch {}
-    };
-
-    loadAdminTickets();
-
-    // 4. Storage event listener for live cross-tab sync between /admin and /dashboard
+    // 3. Storage event listener for live cross-tab sync between /admin and /dashboard
     const handleStorageChange = (e: StorageEvent) => {
       if (!e.key) return;
       if (e.key === "khetivo_admin_crops") {
         loadAdminCrops();
-      } else if (e.key === "khetivo_admin_tickets") {
-        loadAdminTickets();
       } else if (e.key === "khetivo_admin_broadcasts" && e.newValue) {
         try {
           const parsed = JSON.parse(e.newValue);
           if (Array.isArray(parsed)) {
             const actives = parsed.filter((b: any) => b.status === "Active");
-            setActiveAdminBroadcasts(actives.length > 0 ? actives : DEFAULT_FARMER_BROADCASTS);
+            if (actives.length > 0) setActiveAdminBroadcasts(actives);
           }
         } catch {}
       }
     };
 
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    return () => {
+      unsubscribeRealtime();
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   // ========================================================
@@ -2295,8 +1692,8 @@ export default function DashboardPage() {
   const [fieldVisitSlot, setFieldVisitSlot] = useState("Morning (8:00 AM - 12:00 PM)");
   const [fieldVisitTier, setFieldVisitTier] = useState<"standard" | "priority">("standard");
   const [fieldVisitPaymentMode, setFieldVisitPaymentMode] = useState<"online" | "on_arrival">("online");
-  const [fieldVisitFarmerName, setFieldVisitFarmerName] = useState("Jaswinder Singh");
-  const [fieldVisitPhone, setFieldVisitPhone] = useState("+91 98140-54321");
+  const [fieldVisitFarmerName, setFieldVisitFarmerName] = useState("");
+  const [fieldVisitPhone, setFieldVisitPhone] = useState("");
   const [fieldVisitLeadCaptured, setFieldVisitLeadCaptured] = useState(false);
   const [fieldVisitSuccess, setFieldVisitSuccess] = useState<{
     visitId: string;
@@ -2312,9 +1709,9 @@ export default function DashboardPage() {
 
   const handleOpenFieldVisit = () => {
     setFieldVisitStep(1);
-    setFieldVisitFarmId(selectedFarmId !== "all" ? selectedFarmId : "farm-1");
-    setFieldVisitFarmerName(settingsFarmerName || "Jaswinder Singh");
-    setFieldVisitPhone(userPhone || "+91 98140-54321");
+    setFieldVisitFarmId(selectedFarmId !== "all" ? selectedFarmId : (farms[0]?.id || ""));
+    setFieldVisitFarmerName(settingsFarmerName || "");
+    setFieldVisitPhone(userPhone || settingsPhone || "");
     setFieldVisitLeadCaptured(false);
     setFieldVisitSuccess(null);
     setIsFieldVisitModalOpen(true);
@@ -2531,8 +1928,8 @@ export default function DashboardPage() {
     const assignedFarm = farms.find((f) => f.id === recordFarmId) || farms[0];
     const newTx: FarmTransaction = {
       id: `tx-${Date.now()}`,
-      farmId: assignedFarm.id,
-      farmName: assignedFarm.name,
+      farmId: assignedFarm ? assignedFarm.id : "all",
+      farmName: assignedFarm ? assignedFarm.name : "All Holdings",
       type: recordType,
       title: recordTitle.trim(),
       category: recordCategory,
@@ -2547,10 +1944,38 @@ export default function DashboardPage() {
 
     setTransactions((prev) => [newTx, ...prev]);
     setRecordModalOpen(false);
+
+    // Persist transaction to Appwrite Cloud Database
+    createFinancialTransactionInAppwrite({
+      farmId: newTx.farmId,
+      type: newTx.type,
+      title: newTx.title,
+      category: newTx.category,
+      amount: newTx.amount,
+      date: newTx.date,
+      quantity: newTx.quantity,
+      crop: newTx.crop,
+      notes: newTx.notes,
+    }).then((created) => {
+      if (created && created.$id) {
+        setTransactions((prev) => prev.map((t) => (t.id === newTx.id ? { ...t, id: created.$id } : t)));
+      }
+    });
   };
 
   const handleDeleteTransaction = (id: string) => {
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    const targetTx = transactions.find((t) => t.id === id);
+    requestDeleteConfirmation({
+      title: "Delete Financial Entry",
+      itemType: targetTx?.type ? targetTx.type.toUpperCase() : "Finance",
+      itemName: targetTx ? `${targetTx.title} (₹${targetTx.amount.toLocaleString("en-IN")})` : "Transaction Record",
+      description: "Are you sure you want to delete this financial record? It will be permanently removed from your income and expense ledger.",
+      confirmText: "Yes, Delete Entry",
+      onConfirm: async () => {
+        setTransactions((prev) => prev.filter((t) => t.id !== id));
+        await deleteFinancialTransactionInAppwrite(id);
+      },
+    });
   };
 
   // Safe date formatter for inventory & equipment dates
@@ -2644,8 +2069,8 @@ export default function DashboardPage() {
     const targetFarm = farms.find((f) => f.id === storeFarmId) || farms[0];
     const newStore: FarmStore = {
       id: `store-${Date.now()}`,
-      farmId: targetFarm.id,
-      farmName: targetFarm.name,
+      farmId: targetFarm ? targetFarm.id : "all",
+      farmName: targetFarm ? targetFarm.name : "Main Farm",
       name: storeNameInput.trim(),
       type: storeTypeInput.trim() || "General Godown",
       location: storeLocationInput.trim() || undefined,
@@ -2654,6 +2079,19 @@ export default function DashboardPage() {
     setStores((prev) => [...prev, newStore]);
     setItemStoreId(newStore.id);
     setAddStoreModalOpen(false);
+
+    // Save to Appwrite Cloud
+    createFarmStoreInAppwrite({
+      farmId: newStore.farmId,
+      name: newStore.name,
+      type: newStore.type,
+      location: newStore.location,
+      notes: newStore.notes,
+    }).then((created) => {
+      if (created && created.$id) {
+        setStores((prev) => prev.map((s) => (s.id === newStore.id ? { ...s, id: created.$id } : s)));
+      }
+    });
   };
 
   // Open Add Item Modal (matches user screenshot)
@@ -2717,6 +2155,11 @@ export default function DashboardPage() {
       unit: newItem.unit,
       rate: newItem.rate,
       lowStockThreshold: newItem.lowStockThreshold,
+    }).then((created) => {
+      if (created && (created.$id || (created as any).id)) {
+        const realId = created.$id || (created as any).id;
+        setInventoryItems((prev) => prev.map((item) => (item.id === newItem.id ? { ...item, id: realId } : item)));
+      }
     });
   };
 
@@ -2823,9 +2266,17 @@ export default function DashboardPage() {
   };
 
   const handleDeleteItem = (id: string) => {
-    if (confirm("Are you sure you want to delete this inventory item?")) {
-      setInventoryItems((prev) => prev.filter((i) => i.id !== id));
-    }
+    const targetItem = inventoryItems.find((i) => i.id === id);
+    requestDeleteConfirmation({
+      title: "Delete Inventory Item",
+      itemType: targetItem?.category || "Inventory",
+      itemName: targetItem?.name || "Inventory Item",
+      description: "Are you sure you want to delete this inventory item? Stock levels, batch history, and low-stock alerts for this product will be permanently removed.",
+      confirmText: "Yes, Delete Item",
+      onConfirm: () => {
+        setInventoryItems((prev) => prev.filter((i) => i.id !== id));
+      },
+    });
   };
 
   // Stable reference date for SSR/prerender to satisfy Next.js 16
@@ -2928,6 +2379,11 @@ export default function DashboardPage() {
       zone: newTask.zone,
       crop: newTask.crop,
       instructions: newTask.instructions,
+    }).then((created) => {
+      if (created && (created.$id || (created as any).id)) {
+        const realId = created.$id || (created as any).id;
+        setTaskList((prev) => prev.map((t) => (t.id === newTask.id ? { ...t, id: realId } : t)));
+      }
     });
   };
 
@@ -2968,10 +2424,18 @@ export default function DashboardPage() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    if (confirm("Are you sure you want to delete this farm task?")) {
-      deleteTaskFromAppwrite(taskId);
-      setTaskList((prev) => prev.filter((t) => t.id !== taskId));
-    }
+    const targetTask = taskList.find((t) => t.id === taskId);
+    requestDeleteConfirmation({
+      title: "Delete Farm Task",
+      itemType: targetTask?.category || "Task",
+      itemName: targetTask?.title || "Farm Task",
+      description: "Are you sure you want to delete this farm task? It will be removed from your activity schedule, calendar view, and assigned staff queue.",
+      confirmText: "Yes, Delete Task",
+      onConfirm: async () => {
+        await deleteTaskFromAppwrite(taskId);
+        setTaskList((prev) => prev.filter((t) => t.id !== taskId));
+      },
+    });
   };
 
   const getTaskDueStatus = (dueDate: string, isCompleted: boolean) => {
@@ -3065,6 +2529,11 @@ export default function DashboardPage() {
       status: newEq.status,
       runtimeHours: newEq.runtimeHours,
       fuelEfficiency: newEq.fuelEfficiency,
+    }).then((created) => {
+      if (created && (created.$id || (created as any).id)) {
+        const realId = created.$id || (created as any).id;
+        setEquipmentList((prev) => prev.map((eq) => (eq.id === newEq.id ? { ...eq, id: realId } : eq)));
+      }
     });
   };
 
@@ -3146,9 +2615,17 @@ export default function DashboardPage() {
   };
 
   const handleDeleteEquipment = (id: string) => {
-    if (confirm("Are you sure you want to remove this equipment record?")) {
-      setEquipmentList((prev) => prev.filter((eq) => eq.id !== id));
-    }
+    const targetEq = equipmentList.find((eq) => eq.id === id);
+    requestDeleteConfirmation({
+      title: "Delete Equipment Record",
+      itemType: targetEq?.category || "Machinery",
+      itemName: targetEq?.name || "Equipment Record",
+      description: "Are you sure you want to remove this equipment from your machinery roster? Runtime hours, fuel efficiency telemetry, and maintenance records will be removed.",
+      confirmText: "Yes, Remove Equipment",
+      onConfirm: () => {
+        setEquipmentList((prev) => prev.filter((eq) => eq.id !== id));
+      },
+    });
   };
 
   // ===================== REPORTS & ANALYTICS STATES =====================
@@ -3304,6 +2781,11 @@ export default function DashboardPage() {
       category: newTicket.category,
       priority: newTicket.priority,
       description: newTicket.description,
+    }).then((created) => {
+      if (created && (created.$id || (created as any).id)) {
+        const realId = created.$id || (created as any).id;
+        setSupportTickets((prev) => prev.map((tick) => (tick.id === newTicket.id ? { ...tick, id: realId } : tick)));
+      }
     });
 
     // Sync ticket into admin portal khetivo_admin_tickets
@@ -3312,19 +2794,19 @@ export default function DashboardPage() {
         const adminTicketRecord = {
           id: newId,
           ticketCode: generatedTicketNo,
-          clientName: "Jaswinder Singh Brar",
-          phone: "+91 98140-54321",
+          clientName: settingsFarmerName || "Farmer",
+          phone: settingsPhone || userPhone || "",
           farmName: assignedFarmName,
           subject: newTicketSubject.trim(),
           category: "Agronomy Advice",
           crop: newTicketCrop.trim() || "All Holding",
           priority: newTicketPriority === "Urgent" ? "High" : newTicketPriority === "Normal" ? "Medium" : "Low",
           status: "Open",
-          assignedAgronomist: "Dr. Harpreet Singh (PAU Duty Agronomist)",
+          assignedAgronomist: "PAU Duty Agronomist",
           createdAt: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
           messages: [
             {
-              sender: "Jaswinder Singh Brar (Farmer)",
+              sender: `${settingsFarmerName || "Farmer"} (Farmer)`,
               text: newTicketDescription.trim(),
               time: "Just now",
             },
@@ -3365,7 +2847,7 @@ export default function DashboardPage() {
               messages: [
                 ...(t.messages || []),
                 {
-                  sender: "Jaswinder Singh Brar (Farmer)",
+                  sender: `${settingsFarmerName || "Farmer"} (Farmer)`,
                   text: ticketReplyInput.trim(),
                   time: "Just now",
                 },
@@ -3499,12 +2981,27 @@ export default function DashboardPage() {
   const handleDeleteDesignation = (id: string, title: string) => {
     const assignedCount = teamMembers.filter((m) => m.designationId === id).length;
     if (assignedCount > 0) {
-      alert(`Cannot delete '${title}' because ${assignedCount} staff member(s) are currently assigned to it. Please reassign them first.`);
+      requestDeleteConfirmation({
+        title: "Role Reassignment Required",
+        itemType: "Restricted Role",
+        itemName: title,
+        description: `Cannot delete '${title}' because ${assignedCount} active staff member(s) are currently assigned to it. Please reassign their roles first.`,
+        confirmText: "Understood",
+        cancelText: "Close",
+        onConfirm: () => {},
+      });
       return;
     }
-    if (confirm(`Are you sure you want to delete the '${title}' designation?`)) {
-      setDesignations((prev) => prev.filter((d) => d.id !== id));
-    }
+    requestDeleteConfirmation({
+      title: "Delete Staff Designation",
+      itemType: "Custom Role",
+      itemName: title,
+      description: `Are you sure you want to delete the '${title}' designation? This role will no longer be available when assigning modules to staff.`,
+      confirmText: "Yes, Delete Role",
+      onConfirm: () => {
+        setDesignations((prev) => prev.filter((d) => d.id !== id));
+      },
+    });
   };
 
   // Handlers for Team Members
@@ -3594,15 +3091,37 @@ export default function DashboardPage() {
         notes: memberFormNotes.trim() || undefined,
       };
       setTeamMembers((prev) => [newMember, ...prev]);
+
+      // Save to Appwrite Cloud
+      createTeamMemberInAppwrite({
+        farmId: memberFormFarmId,
+        name: newMember.name,
+        phone: newMember.phone,
+        email: newMember.email,
+        designationTitle: newMember.designationTitle,
+        roleCategory: "worker",
+      }).then((created) => {
+        if (created && created.$id) {
+          setTeamMembers((prev) => prev.map((m) => (m.id === newMember.id ? { ...m, id: created.$id } : m)));
+        }
+      });
     }
 
     setIsTeamModalOpen(false);
   };
 
   const handleDeleteTeamMember = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to remove ${name} from your farm team?`)) {
-      setTeamMembers((prev) => prev.filter((m) => m.id !== id));
-    }
+    const targetMember = teamMembers.find((m) => m.id === id);
+    requestDeleteConfirmation({
+      title: "Remove Team Member",
+      itemType: targetMember?.designationTitle || "Staff",
+      itemName: name,
+      description: `Are you sure you want to remove ${name} from your farm team? They will immediately lose access to all modules and work rosters.`,
+      confirmText: "Yes, Remove Member",
+      onConfirm: () => {
+        setTeamMembers((prev) => prev.filter((m) => m.id !== id));
+      },
+    });
   };
 
   const handleExportCSV = (filename: string, headers: string[], rows: (string | number)[][]) => {
@@ -3649,10 +3168,13 @@ export default function DashboardPage() {
   };
 
   const handleResetSettings = () => {
-    setSettingsFarmerName("Jaswinder Singh");
-    setSettingsPhone("+91 98140-54321");
-    setSettingsEmail("jaswinder.agro@khetivo.com");
-    setSettingsMandi("Khanna Mandi, Ludhiana");
+    const uName = typeof window !== "undefined" ? localStorage.getItem("khetivo_user_name") || "" : "";
+    const uPhone = typeof window !== "undefined" ? localStorage.getItem("khetivo_user_phone") || "" : "";
+    const uEmail = typeof window !== "undefined" ? localStorage.getItem("khetivo_user_email") || "" : "";
+    setSettingsFarmerName(uName);
+    setSettingsPhone(uPhone ? (uPhone.startsWith("+") ? uPhone : `+91 ${uPhone}`) : "");
+    setSettingsEmail(uEmail);
+    setSettingsMandi("Local APMC Mandi");
     setSettingsDefaultUnit("Acres");
     setSettingsLanguage("en");
     setSettingsMoistureDeficit("30");
@@ -3661,7 +3183,7 @@ export default function DashboardPage() {
     setSettingsSmsAlerts(true);
     setSettingsServiceReminders(true);
     setSettingsAutoIrrigationNotice(true);
-    setSettingsToast("Settings reset to system defaults.");
+    setSettingsToast("Settings reset to user profile values.");
     setTimeout(() => setSettingsToast(null), 3000);
   };
 
@@ -3909,35 +3431,54 @@ export default function DashboardPage() {
     }))
   );
 
-  const currentFarmRaw = farms.find((f) => f.id === selectedFarmId) || farms[0];
+  const fallbackEmptyFarm: FarmData = {
+    id: "no-farm",
+    name: "No Farm Registered",
+    address: "Please register your first farm",
+    district: "",
+    state: "",
+    pinCode: "",
+    totalArea: 0,
+    areaUnit: "Acres",
+    ownership: "Owned",
+    latitude: 30.901,
+    longitude: 75.8573,
+    soilType: "Alluvial Loam",
+    irrigationType: "Standard",
+    waterSource: "Groundwater",
+    crops: [],
+    cropTemplate: "",
+  };
+
+  const currentFarmRaw = farms.find((f) => f.id === selectedFarmId) || farms[0] || fallbackEmptyFarm;
 
   const currentFarm: FarmData = isAllFarms
     ? {
         id: "all",
-        name: "All Farms (Consolidated)",
-        address: "Ludhiana & Sangrur Clusters, Punjab",
-        district: "All Districts",
-        state: "Punjab",
-        pinCode: "141001 / 148026",
+        name: farms.length > 0 ? "All Farms (Consolidated)" : "No Farms Registered",
+        address: farms.length > 0 ? "Consolidated Farm Holdings" : "Please register your farm",
+        district: farms.length > 0 ? "Consolidated Holdings" : "",
+        state: farms[0]?.state || "Punjab",
+        pinCode: "",
         totalArea: totalCombinedArea,
-        areaUnit: "Acres",
+        areaUnit: farms[0]?.areaUnit || "Acres",
         ownership: `${farms.length} Registered Farms`,
-        latitude: 30.542,
-        longitude: 76.017,
-        soilType: "Alluvial & Sandy Loam",
-        irrigationType: "Solar Drip (28 Ac) + Sprinklers (24 Ac)",
-        waterSource: "Tubewell & Rainwater Harvesting Tank",
-        cropTemplate: "Wheat (18 Ac), Potato (10 Ac), Mustard (16 Ac), Fodder (8 Ac)",
+        latitude: farms[0]?.latitude || 30.901,
+        longitude: farms[0]?.longitude || 75.8573,
+        soilType: farms[0]?.soilType || "Alluvial Loam",
+        irrigationType: farms[0]?.irrigationType || "Standard",
+        waterSource: farms[0]?.waterSource || "Groundwater",
+        cropTemplate: allFlattenedCrops.length > 0 ? allFlattenedCrops.map((c) => `${c.name} (${c.area} ${c.areaUnit})`).join(", ") : "No active crops",
         crops: allFlattenedCrops,
       }
-    : currentFarmRaw;
+    : (currentFarmRaw || fallbackEmptyFarm);
 
   const activeCrops: FarmCrop[] = isAllFarms
     ? allFlattenedCrops
-    : (currentFarm.crops || []).map((c) => ({
+    : (currentFarm?.crops || []).map((c) => ({
         ...c,
-        farmId: currentFarm.id,
-        farmName: currentFarm.name,
+        farmId: currentFarm?.id,
+        farmName: currentFarm?.name,
       }));
 
   const handleOpenSetup = () => {
@@ -4180,7 +3721,7 @@ export default function DashboardPage() {
         const savedClients = localStorage.getItem("khetivo_admin_clients");
         if (savedClients) {
           const parsedClients: any[] = JSON.parse(savedClients);
-          const targetClient = parsedClients.find((c: any) => c.name?.includes("Jaswinder")) || parsedClients[0];
+          const targetClient = (settingsFarmerName && parsedClients.find((c: any) => c.name?.includes(settingsFarmerName))) || parsedClients[0];
           if (targetClient) {
             const newAdminHolding = {
               id: newFarm.id,
@@ -4524,11 +4065,11 @@ export default function DashboardPage() {
           <div className="p-2.5 rounded-xl bg-white border border-[#E5ECE7] flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-8 h-8 rounded-full bg-[#E7F3EB] text-[#0C4B32] border border-[#C6E2D0] flex items-center justify-center font-semibold text-xs shrink-0">
-                JS
+                {(settingsFarmerName || "KF").split(" ").filter(Boolean).map(n => n[0]).slice(0, 2).join("").toUpperCase() || "KF"}
               </div>
               <div className="truncate">
                 <div className="text-xs font-semibold text-[#26352D] truncate">
-                  Jaswinder Singh
+                  {settingsFarmerName || "Khetivo Farmer"}
                 </div>
                 <div className="text-[11px] text-[#55685D] truncate">
                   Farm Administrator
@@ -4718,56 +4259,90 @@ export default function DashboardPage() {
                   );
                 })()}
 
-                {/* 2. SMART ALERT (Simple & Sober Notice) */}
-                {isAllFarms ? (
-                  <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
-                      <span className="text-amber-950">
-                        <strong>Irrigation Notice:</strong> Samrala Zone B soil moisture is low (26%). Sangrur farm is normal (38%).
-                      </span>
+                {/* 2. SMART ALERT (Real-time dynamic from Appwrite tasks/inventory) */}
+                {(() => {
+                  const urgentTask = scopedTasks.find((t) => t.priority === "Urgent" && t.status !== "Completed");
+                  const highTask = scopedTasks.find((t) => t.priority === "High" && t.status !== "Completed");
+                  const urgentLowStock = scopedInventoryItems.find((i) => i.quantity <= i.lowStockThreshold);
+
+                  if (urgentTask) {
+                    return (
+                      <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
+                          <span className="text-amber-950">
+                            <strong>Urgent Task Pending:</strong> {urgentTask.title} {urgentTask.crop ? `(${urgentTask.crop})` : ""} is due.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("tasks")}
+                          className="text-xs font-semibold text-amber-900 hover:underline shrink-0 cursor-pointer self-start sm:self-auto"
+                        >
+                          View Task →
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  if (urgentLowStock) {
+                    return (
+                      <div className="p-3.5 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <AlertTriangle className="w-4 h-4 text-orange-700 shrink-0" />
+                          <span className="text-orange-950">
+                            <strong>Low Inventory Alert:</strong> {urgentLowStock.name} is down to {urgentLowStock.quantity} {urgentLowStock.unit} (threshold: {urgentLowStock.lowStockThreshold} {urgentLowStock.unit}).
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("inventory")}
+                          className="text-xs font-semibold text-orange-900 hover:underline shrink-0 cursor-pointer self-start sm:self-auto"
+                        >
+                          Restock Now →
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  if (highTask) {
+                    return (
+                      <div className="p-3.5 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <CheckCircle2 className="w-4 h-4 text-blue-700 shrink-0" />
+                          <span className="text-blue-950">
+                            <strong>Scheduled Activity:</strong> {highTask.title} is assigned to {highTask.assignedTo}.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("tasks")}
+                          className="text-xs font-semibold text-blue-900 hover:underline shrink-0 cursor-pointer self-start sm:self-auto"
+                        >
+                          Manage Schedule →
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-3.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                        <span className="text-emerald-950">
+                          <strong>Farm Operations Active:</strong> All field activities, crops, and storage records are up to date.
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("tasks")}
+                        className="text-xs font-semibold text-emerald-900 hover:underline shrink-0 cursor-pointer self-start sm:self-auto"
+                      >
+                        Add Task →
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("tasks")}
-                      className="text-xs font-semibold text-amber-900 hover:underline shrink-0 cursor-pointer self-start sm:self-auto"
-                    >
-                      View Task →
-                    </button>
-                  </div>
-                ) : selectedFarmId === "farm-1" ? (
-                  <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
-                      <span className="text-amber-950">
-                        <strong>Irrigation Notice:</strong> Zone B soil moisture is at 26%. A 45-minute solar drip cycle is recommended.
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("tasks")}
-                      className="text-xs font-semibold text-amber-900 hover:underline shrink-0 cursor-pointer self-start sm:self-auto"
-                    >
-                      Start Drip Task →
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-3.5 rounded-xl bg-[#F0FDF4] border border-[#BBF7D0] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
-                      <span className="text-emerald-950">
-                        <strong>Conditions Optimal:</strong> Soil moisture is at 38%. Ideal foliar spraying window until 12:00 PM today.
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("crops")}
-                      className="text-xs font-semibold text-emerald-900 hover:underline shrink-0 cursor-pointer self-start sm:self-auto"
-                    >
-                      View Crops →
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* 3. MAIN 2-COLUMN INTUITIVE LAYOUT */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -4940,7 +4515,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    {/* INVENTORY STATUS (Needful Only) */}
+                    {/* INVENTORY STATUS (Real-time dynamic from Appwrite DB) */}
                     <div className="bg-white rounded-2xl border border-[#E5ECE7] p-5 shadow-xs space-y-3.5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -4959,37 +4534,39 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="divide-y divide-[#E5ECE7] text-xs">
-                        <div className="py-2 flex items-center justify-between">
-                          <div>
-                            <span className="font-medium text-[#26352D]">Urea 46% N (IFFCO)</span>
-                            <div className="text-[11px] text-[#55685D]">{isAllFarms ? "Combined Stores" : `${currentFarm.name} Store`}</div>
+                        {scopedInventoryItems.length === 0 ? (
+                          <div className="py-4 text-center text-[#55685D]">
+                            <p className="font-medium text-[#26352D]">No Inventory Items</p>
+                            <p className="text-[11px] mt-0.5">No seeds, fertilizers, or supplies recorded yet.</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAddItemModalOpen(true);
+                                setActiveTab("inventory");
+                              }}
+                              className="mt-2 text-[11px] font-semibold text-[#0C4B32] hover:underline cursor-pointer"
+                            >
+                              + Add Inventory Item
+                            </button>
                           </div>
-                          <span className="font-semibold text-emerald-800">
-                            {isAllFarms ? "56 Bags" : selectedFarmId === "farm-2" ? "18 Bags" : "38 Bags"}
-                          </span>
-                        </div>
-
-                        <div className="py-2 flex items-center justify-between">
-                          <div>
-                            <span className="font-medium text-[#26352D]">DAP Fertilizer</span>
-                            <div className="text-[11px] text-amber-800">Reorder recommended</div>
-                          </div>
-                          <span className="font-semibold text-amber-800">
-                            {isAllFarms ? "9 Bags (Low)" : selectedFarmId === "farm-2" ? "3 Bags (Low)" : "6 Bags (Low)"}
-                          </span>
-                        </div>
-
-                        <div className="py-2 flex items-center justify-between">
-                          <div>
-                            <span className="font-medium text-[#26352D]">
-                              {selectedFarmId === "farm-2" ? "Sprinkler Nozzles" : "16mm Drip Line"}
-                            </span>
-                            <div className="text-[11px] text-[#55685D]">Irrigation Hardware</div>
-                          </div>
-                          <span className="font-semibold text-[#26352D]">
-                            {isAllFarms ? "650m + 45 Sprinklers" : selectedFarmId === "farm-2" ? "45 Units" : "650m"}
-                          </span>
-                        </div>
+                        ) : (
+                          scopedInventoryItems.slice(0, 3).map((item) => {
+                            const isLow = item.quantity <= item.lowStockThreshold;
+                            return (
+                              <div key={item.id} className="py-2 flex items-center justify-between">
+                                <div className="min-w-0 pr-2">
+                                  <span className="font-medium text-[#26352D] truncate block">{item.name}</span>
+                                  <div className="text-[11px] text-[#55685D] truncate">
+                                    {item.storeName || "Store"} • {item.category}
+                                  </div>
+                                </div>
+                                <span className={"font-semibold shrink-0 " + (isLow ? "text-amber-800" : "text-emerald-800")}>
+                                  {item.quantity} {item.unit} {isLow ? "(Low)" : ""}
+                                </span>
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
 
@@ -8623,32 +8200,79 @@ export default function DashboardPage() {
                               </div>
                             </div>
 
-                            {/* Bar Chart Container */}
+                            {/* Bar Chart Container (Dynamic from Appwrite Transactions) */}
                             <div className="pt-4 pb-2">
                               {(() => {
-                                const monthlyData = [
-                                  { month: "May", inflow: 180, outflow: 75 },
-                                  { month: "Jun", inflow: 240, outflow: 110 },
-                                  { month: "Jul", inflow: 310, outflow: 95 },
-                                  { month: "Aug", inflow: 290, outflow: 120 },
-                                  { month: "Sep", inflow: 420, outflow: 140 },
-                                  { month: "Oct", inflow: 516, outflow: 121 },
-                                ];
-                                const maxVal = 600;
+                                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                                const monthlyMap = new Map<string, { inflow: number; outflow: number }>();
+
+                                // Initialize recent 6 months
+                                const now = new Date();
+                                const recentMonths: string[] = [];
+                                for (let i = 5; i >= 0; i--) {
+                                  const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                                  const key = monthNames[d.getMonth()];
+                                  recentMonths.push(key);
+                                  monthlyMap.set(key, { inflow: 0, outflow: 0 });
+                                }
+
+                                reportScopedTransactions.forEach((tx) => {
+                                  if (!tx.date) return;
+                                  const txDate = new Date(tx.date);
+                                  const mKey = monthNames[txDate.getMonth()];
+                                  if (monthlyMap.has(mKey)) {
+                                    const entry = monthlyMap.get(mKey)!;
+                                    if (tx.type === "production") {
+                                      entry.inflow += tx.amount;
+                                    } else {
+                                      entry.outflow += tx.amount;
+                                    }
+                                  }
+                                });
+
+                                const monthlyData = recentMonths.map((m) => ({
+                                  month: m,
+                                  inflow: Math.round((monthlyMap.get(m)?.inflow || 0) / 1000),
+                                  outflow: Math.round((monthlyMap.get(m)?.outflow || 0) / 1000),
+                                }));
+
+                                const maxVal = Math.max(
+                                  ...monthlyData.map((d) => Math.max(d.inflow, d.outflow)),
+                                  100
+                                );
+
+                                const hasAnyData = reportScopedTransactions.length > 0;
+
+                                if (!hasAnyData) {
+                                  return (
+                                    <div className="h-48 flex flex-col items-center justify-center text-center p-6 bg-[#FBFDFB] rounded-xl border border-dashed border-[#DCE6DE]">
+                                      <Receipt className="w-8 h-8 text-[#889B90] mb-2 opacity-50" />
+                                      <p className="text-xs font-semibold text-[#26352D]">No Financial Inflow / Outflow Data</p>
+                                      <p className="text-[11px] text-[#55685D] mt-0.5">Record harvest sales or operational expenses to see monthly telemetry.</p>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenRecordModal("production")}
+                                        className="mt-3 text-xs font-semibold text-[#0C4B32] hover:underline cursor-pointer"
+                                      >
+                                        + Record First Entry
+                                      </button>
+                                    </div>
+                                  );
+                                }
 
                                 return (
                                   <div className="space-y-2">
                                     <div className="h-48 flex items-end justify-between gap-3 sm:gap-6 pt-4 border-b border-[#E5ECE7]">
                                       {monthlyData.map((d) => {
-                                        const inflowH = (d.inflow / maxVal) * 100;
-                                        const outflowH = (d.outflow / maxVal) * 100;
+                                        const inflowH = Math.min(100, (d.inflow / maxVal) * 100);
+                                        const outflowH = Math.min(100, (d.outflow / maxVal) * 100);
                                         return (
                                           <div key={d.month} className="flex-1 flex flex-col items-center h-full justify-end group">
                                             <div className="w-full flex items-end justify-center gap-1 sm:gap-1.5 h-full">
                                               {/* Inflow Bar */}
                                               <div
-                                                style={{ height: `${inflowH}%` }}
-                                                title={`Inflow: ₹${d.inflow}k`}
+                                                style={{ height: Math.max(4, inflowH) + "%" }}
+                                                title={"Inflow: ₹" + d.inflow + "k"}
                                                 className="w-1/2 max-w-[20px] bg-[#0C4B32] hover:bg-[#083624] rounded-t-md transition-all duration-300 relative group/bar"
                                               >
                                                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 bg-[#26352D] text-white text-[9px] font-bold px-1 py-0.5 rounded shadow pointer-events-none whitespace-nowrap transition-opacity">
@@ -8657,8 +8281,8 @@ export default function DashboardPage() {
                                               </div>
                                               {/* Outflow Bar */}
                                               <div
-                                                style={{ height: `${outflowH}%` }}
-                                                title={`Outflow: ₹${d.outflow}k`}
+                                                style={{ height: Math.max(4, outflowH) + "%" }}
+                                                title={"Outflow: ₹" + d.outflow + "k"}
                                                 className="w-1/2 max-w-[20px] bg-[#E06D53] hover:bg-[#c95b42] rounded-t-md transition-all duration-300 relative group/bar"
                                               >
                                                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 bg-[#26352D] text-white text-[9px] font-bold px-1 py-0.5 rounded shadow pointer-events-none whitespace-nowrap transition-opacity">
@@ -8675,7 +8299,7 @@ export default function DashboardPage() {
                                     </div>
                                     <div className="flex items-center justify-between text-[10px] text-[#889B90] pt-1">
                                       <span>Scale: ₹ Thousands (INR)</span>
-                                      <span>Peak realization: Oct (Harvest Settlement)</span>
+                                      <span>Real-time cloud database ledger</span>
                                     </div>
                                   </div>
                                 );
@@ -8683,41 +8307,65 @@ export default function DashboardPage() {
                             </div>
                           </div>
 
-                          {/* Expense Breakdown Distribution (5 cols) */}
+                          {/* Expense Breakdown Distribution (5 cols) - Dynamic */}
                           <div className="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl border border-[#E5ECE7] shadow-xs space-y-4 flex flex-col justify-between">
                             <div>
                               <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-[#26352D]">Expense Allocation</h3>
                                 <span className="text-[10px] font-semibold text-[#55685D] bg-[#F4F8F4] px-2 py-0.5 rounded-full border border-[#E5ECE7]">
-                                  5 Cost Centers
+                                  Cost Centers
                                 </span>
                               </div>
                               <p className="text-xs text-[#55685D] mt-0.5">Categorized operational farm outflow</p>
                             </div>
 
-                            <div className="space-y-3.5 my-auto">
-                              {[
-                                { name: "Seeds & Certified Nursery", amount: 28800, pct: 30, color: "bg-[#0C4B32]" },
-                                { name: "Labor & Field Sowing Wages", amount: 24000, pct: 25, color: "bg-[#278449]" },
-                                { name: "Fertilizers & Nutrients", amount: 19400, pct: 20, color: "bg-[#F9B21B]" },
-                                { name: "Diesel & Machine Fuel", amount: 18450, pct: 19, color: "bg-blue-600" },
-                                { name: "Machinery Spares & Repairs", amount: 8600, pct: 6, color: "bg-purple-600" },
-                              ].map((item) => (
-                                <div key={item.name} className="space-y-1">
-                                  <div className="flex items-center justify-between text-xs">
-                                    <span className="font-semibold text-[#26352D] truncate">{item.name}</span>
-                                    <span className="font-bold text-[#0C4B32] shrink-0">₹{item.amount.toLocaleString("en-IN")}</span>
+                            {(() => {
+                              const expenseTx = reportScopedTransactions.filter((t) => t.type === "expense" || t.type === "loss");
+                              const catMap = new Map<string, number>();
+                              expenseTx.forEach((tx) => {
+                                const cat = tx.category || "General";
+                                catMap.set(cat, (catMap.get(cat) || 0) + tx.amount);
+                              });
+
+                              const totalExp = Array.from(catMap.values()).reduce((a, b) => a + b, 0);
+
+                              const colorPalette = ["bg-[#0C4B32]", "bg-[#278449]", "bg-[#F9B21B]", "bg-blue-600", "bg-purple-600", "bg-rose-600"];
+
+                              const items = Array.from(catMap.entries()).map(([name, amount], idx) => ({
+                                name,
+                                amount,
+                                pct: totalExp > 0 ? Math.round((amount / totalExp) * 100) : 0,
+                                color: colorPalette[idx % colorPalette.length],
+                              }));
+
+                              if (items.length === 0) {
+                                return (
+                                  <div className="p-6 my-auto text-center text-xs text-[#55685D] bg-[#FBFDFB] rounded-xl border border-dashed border-[#DCE6DE]">
+                                    No categorized expenses found in the selected period.
                                   </div>
-                                  <div className="w-full h-2 rounded-full bg-[#E5ECE7] overflow-hidden">
-                                    <div
-                                      style={{ width: `${item.pct}%` }}
-                                      className={`h-full rounded-full ${item.color} transition-all duration-500`}
-                                    />
-                                  </div>
-                                  <div className="text-[10px] text-[#889B90] text-right">{item.pct}% of total expense</div>
+                                );
+                              }
+
+                              return (
+                                <div className="space-y-3.5 my-auto">
+                                  {items.map((item) => (
+                                    <div key={item.name} className="space-y-1">
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="font-semibold text-[#26352D] truncate">{item.name}</span>
+                                        <span className="font-bold text-[#0C4B32] shrink-0">₹{item.amount.toLocaleString("en-IN")}</span>
+                                      </div>
+                                      <div className="w-full h-2 rounded-full bg-[#E5ECE7] overflow-hidden">
+                                        <div
+                                          style={{ width: item.pct + "%" }}
+                                          className={"h-full rounded-full transition-all duration-500 " + item.color}
+                                        />
+                                      </div>
+                                      <div className="text-[10px] text-[#889B90] text-right">{item.pct}% of total expense</div>
+                                    </div>
+                                  ))}
                                 </div>
-                              ))}
-                            </div>
+                              );
+                            })()}
 
                             <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#E5ECE7] text-xs flex items-center justify-between">
                               <span className="text-[#55685D]">Average Cost per Acre</span>
@@ -8756,23 +8404,30 @@ export default function DashboardPage() {
                           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E5ECE7] shadow-xs">
                             <span className="text-[11px] font-semibold text-[#55685D] block">Projected Yield</span>
                             <div className="text-xl sm:text-2xl font-bold text-[#26352D] mt-1">
-                              1,420 Quintals
+                              {activeCrops.length === 0 ? "0 Quintals" : (Math.round(activeCrops.reduce((sum, c) => sum + (c.area * 20), 0))).toLocaleString("en-IN") + " Quintals"}
                             </div>
-                            <span className="text-[10px] text-[#55685D] mt-1 inline-block">Expected total harvest</span>
+                            <span className="text-[10px] text-[#55685D] mt-1 inline-block">{activeCrops.length === 0 ? "No active crops" : "Estimated @ 20 Qtl/acre"}</span>
                           </div>
 
                           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E5ECE7] shadow-xs">
-                            <span className="text-[11px] font-semibold text-[#55685D] block">Canopy Health (NDVI)</span>
+                            <span className="text-[11px] font-semibold text-[#55685D] block">Crop Health Index</span>
                             <div className="text-xl sm:text-2xl font-bold text-[#0C4B32] mt-1">
-                              95.4% Vigorous
+                              {activeCrops.length === 0 ? "N/A" : (Math.round((activeCrops.filter(c => c.health === "Good" || c.health === "Excellent").length / activeCrops.length) * 100)) + "% Optimal"}
                             </div>
                             <span className="text-[10px] text-emerald-700 font-semibold mt-1 inline-block">
-                              Optimal biomass index
+                              {activeCrops.length === 0 ? "Add crop holdings" : activeCrops.filter(c => c.health === "Good" || c.health === "Excellent").length + "/" + activeCrops.length + " healthy batches"}
                             </span>
                           </div>
                         </div>
 
                         {/* Crop Area & Lifecycle Progress Charts */}
+                        {activeCrops.length === 0 ? (
+                          <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-[#DCE6DE]">
+                            <Sprout className="w-8 h-8 text-[#889B90] mx-auto mb-2 opacity-50" />
+                            <p className="text-xs font-semibold text-[#26352D]">No Active Crops Recorded</p>
+                            <p className="text-[11px] text-[#55685D] mt-0.5">Add your farm parcels and crops in the Crops module to generate acreage and growth telemetry.</p>
+                          </div>
+                        ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                           {/* Acreage Distribution Bar Chart (6 cols) */}
                           <div className="lg:col-span-6 bg-white p-5 sm:p-6 rounded-2xl border border-[#E5ECE7] shadow-xs space-y-4">
@@ -8842,6 +8497,7 @@ export default function DashboardPage() {
                             </div>
                           </div>
                         </div>
+                        )}
                       </div>
                     )}
 
@@ -8861,12 +8517,12 @@ export default function DashboardPage() {
                           </div>
 
                           <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E5ECE7] shadow-xs">
-                            <span className="text-[11px] font-semibold text-[#55685D] block">Chemical Safety Score</span>
+                            <span className="text-[11px] font-semibold text-[#55685D] block">Inventory Health</span>
                             <div className="text-xl sm:text-2xl font-bold text-emerald-700 mt-1">
-                              98% Compliant
+                              {scopedInventoryItems.length === 0 ? "0 SKUs" : (Math.max(0, scopedInventoryItems.length - lowStockCount - expiringSoonCount)) + " / " + scopedInventoryItems.length + " Good"}
                             </div>
                             <span className="text-[10px] text-emerald-800 font-semibold mt-1 inline-block">
-                              Green & Yellow label standards
+                              {scopedInventoryItems.length === 0 ? "No inventory tracked" : "Adequate stock & validity"}
                             </span>
                           </div>
 
@@ -8898,6 +8554,13 @@ export default function DashboardPage() {
                             <p className="text-xs text-[#55685D] mt-0.5">Real-time inventory levels across store facilities</p>
                           </div>
 
+                          {scopedInventoryItems.length === 0 ? (
+                            <div className="p-8 text-center bg-[#FBFDFB] rounded-xl border border-dashed border-[#DCE6DE]">
+                              <Package className="w-8 h-8 text-[#889B90] mx-auto mb-2 opacity-50" />
+                              <p className="text-xs font-semibold text-[#26352D]">No Inventory Items Tracked</p>
+                              <p className="text-[11px] text-[#55685D] mt-0.5">Record items in the Inventory module to track stock levels, reorder thresholds, and valuations.</p>
+                            </div>
+                          ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                             {scopedInventoryItems.slice(0, 6).map((item) => {
                               const ratio = Math.min(100, Math.round((item.quantity / (item.lowStockThreshold * 2.5)) * 100));
@@ -8925,6 +8588,7 @@ export default function DashboardPage() {
                               );
                             })}
                           </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -8980,6 +8644,13 @@ export default function DashboardPage() {
                             <p className="text-xs text-[#55685D] mt-0.5">Recorded operational hours per registered machine</p>
                           </div>
 
+                          {scopedEquipment.length === 0 ? (
+                            <div className="p-8 text-center bg-[#FBFDFB] rounded-xl border border-dashed border-[#DCE6DE]">
+                              <Wrench className="w-8 h-8 text-[#889B90] mx-auto mb-2 opacity-50" />
+                              <p className="text-xs font-semibold text-[#26352D]">No Machinery or Equipment Registered</p>
+                              <p className="text-[11px] text-[#55685D] mt-0.5">Register tractors, pumps, and harvesters in the Equipment module to view runtime telemetry.</p>
+                            </div>
+                          ) : (
                           <div className="space-y-4 pt-2">
                             {scopedEquipment.map((eq) => {
                               const maxH = 1500;
@@ -9005,6 +8676,7 @@ export default function DashboardPage() {
                               );
                             })}
                           </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -9028,7 +8700,13 @@ export default function DashboardPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#E5ECE7]">
-                            {reportScopedTransactions
+                            {reportScopedTransactions.length === 0 ? (
+                              <tr>
+                                <td colSpan={7} className="px-5 py-8 text-center text-xs text-[#55685D] bg-[#FBFDFB]">
+                                  No financial records available in the selected date range.
+                                </td>
+                              </tr>
+                            ) : reportScopedTransactions
                               .filter((tx) => {
                                 if (!reportSearch.trim()) return true;
                                 const q = reportSearch.toLowerCase();
@@ -9102,7 +8780,13 @@ export default function DashboardPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#E5ECE7]">
-                            {activeCrops
+                            {activeCrops.length === 0 ? (
+                              <tr>
+                                <td colSpan={8} className="px-5 py-8 text-center text-xs text-[#55685D] bg-[#FBFDFB]">
+                                  No crops recorded yet. Add crops to generate performance telemetry.
+                                </td>
+                              </tr>
+                            ) : activeCrops
                               .filter((c) => {
                                 if (isAllFarms && reportFarmFilter !== "all" && c.farmId !== reportFarmFilter) return false;
                                 if (!reportSearch.trim()) return true;
@@ -9162,7 +8846,13 @@ export default function DashboardPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#E5ECE7]">
-                            {scopedInventoryItems
+                            {scopedInventoryItems.length === 0 ? (
+                              <tr>
+                                <td colSpan={8} className="px-5 py-8 text-center text-xs text-[#55685D] bg-[#FBFDFB]">
+                                  No inventory items found. Add items to view stock valuations.
+                                </td>
+                              </tr>
+                            ) : scopedInventoryItems
                               .filter((item) => {
                                 if (isAllFarms && reportFarmFilter !== "all" && item.farmId !== reportFarmFilter) return false;
                                 if (!reportSearch.trim()) return true;
@@ -9236,7 +8926,13 @@ export default function DashboardPage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#E5ECE7]">
-                            {scopedEquipment
+                            {scopedEquipment.length === 0 ? (
+                              <tr>
+                                <td colSpan={7} className="px-5 py-8 text-center text-xs text-[#55685D] bg-[#FBFDFB]">
+                                  No machinery or equipment recorded.
+                                </td>
+                              </tr>
+                            ) : scopedEquipment
                               .filter((eq) => {
                                 if (isAllFarms && reportFarmFilter !== "all" && eq.farmId !== reportFarmFilter) return false;
                                 if (!reportSearch.trim()) return true;
@@ -13894,6 +13590,93 @@ export default function DashboardPage() {
       )}
 
       {/* ===================== DELETE ACCOUNT CONFIRMATION MODAL ===================== */}
+      {/* ===================== CUSTOM REUSABLE DELETE CONFIRMATION MODAL ===================== */}
+      {deleteConfirmModal && deleteConfirmModal.isOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150"
+          onClick={() => !isDeletingItem && setDeleteConfirmModal(null)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-[#E5ECE7] p-5 sm:p-6 relative animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              disabled={isDeletingItem}
+              onClick={() => setDeleteConfirmModal(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-[#55685D] hover:text-[#26352D] hover:bg-[#F4F8F4] transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Header Icon + Title */}
+            <div className="flex items-start gap-3.5 mb-2.5">
+              <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 border border-red-200 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="pt-0.5 min-w-0 pr-6">
+                <h3 className="text-base sm:text-lg font-bold text-[#26352D] tracking-tight">
+                  {deleteConfirmModal.title}
+                </h3>
+                {deleteConfirmModal.itemType && (
+                  <span className="inline-block text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md bg-red-50 text-red-700 mt-1 border border-red-100">
+                    {deleteConfirmModal.itemType}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Item Card preview if available */}
+            {deleteConfirmModal.itemName && (
+              <div className="my-3.5 p-3 rounded-xl bg-[#F8FAF8] border border-[#E5ECE7] flex items-center gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <div className="min-w-0 text-xs">
+                  <span className="text-[#55685D] block text-[11px]">Selected Record:</span>
+                  <span className="font-semibold text-[#26352D] truncate block">
+                    {deleteConfirmModal.itemName}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Warning description */}
+            <p className="text-xs text-[#55685D] leading-relaxed mb-5">
+              {deleteConfirmModal.description}
+            </p>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2.5 pt-2 border-t border-[#E5ECE7]">
+              <button
+                type="button"
+                disabled={isDeletingItem}
+                onClick={() => setDeleteConfirmModal(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-[#DCE6DE] text-xs font-semibold text-[#55685D] hover:bg-[#F4F8F4] hover:text-[#26352D] transition-colors cursor-pointer text-center disabled:opacity-50"
+              >
+                {deleteConfirmModal.cancelText || "Cancel"}
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingItem}
+                onClick={async () => {
+                  try {
+                    setIsDeletingItem(true);
+                    await deleteConfirmModal.onConfirm();
+                  } finally {
+                    setIsDeletingItem(false);
+                    setDeleteConfirmModal(null);
+                  }
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{isDeletingItem ? "Deleting..." : (deleteConfirmModal.confirmText || "Delete")}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {deleteAccountModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"

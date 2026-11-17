@@ -1,7 +1,10 @@
 /**
- * Khetivo Appwrite Cloud Synchronization Service
- * Handles transparent two-way synchronization between client UI and Appwrite database
+ * Khetivo Appwrite Cloud Synchronization & Realtime Service
+ * Handles transparent two-way synchronization and WebSocket realtime subscriptions
+ * between the React client and the Appwrite Cloud Database.
  */
+
+import { getClientAppwrite, APPWRITE_CONFIG } from "./appwriteConfig";
 
 export interface CloudFarm {
   $id?: string;
@@ -91,6 +94,38 @@ export interface CloudEquipment {
 }
 
 // ---------------------------------------------------------------------------
+// Realtime Subscriptions (Appwrite WebSockets)
+// ---------------------------------------------------------------------------
+export function subscribeToDatabaseChanges(callback: (event: any) => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  try {
+    const client = getClientAppwrite();
+    const channels = [
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.FARMS}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.FARM_CROPS}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.TASKS}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.INVENTORY_ITEMS}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.FARM_STORES}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT_ISSUES}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.SUPPORT_TICKETS}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.FIELD_VISITS}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.FINANCIAL_TRANSACTIONS}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.TEAM_MEMBERS}.documents`,
+    ];
+
+    const unsubscribe = client.subscribe(channels, (response) => {
+      callback(response);
+    });
+
+    return unsubscribe;
+  } catch (err) {
+    console.warn("[Appwrite Realtime] Subscription error:", err);
+    return () => {};
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Health Check
 // ---------------------------------------------------------------------------
 export async function checkAppwriteHealth(): Promise<{
@@ -163,7 +198,7 @@ export async function deleteFarmInAppwrite(farmId: string): Promise<boolean> {
 // ---------------------------------------------------------------------------
 export async function syncTasksFromAppwrite(farmId?: string): Promise<CloudTask[] | null> {
   try {
-    const url = farmId ? `/api/appwrite/tasks?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/tasks";
+    const url = farmId && farmId !== "all" ? `/api/appwrite/tasks?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/tasks";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -220,7 +255,7 @@ export async function deleteTaskFromAppwrite(taskId: string): Promise<boolean> {
 // ---------------------------------------------------------------------------
 export async function syncCropsFromAppwrite(farmId?: string): Promise<CloudCrop[] | null> {
   try {
-    const url = farmId ? `/api/appwrite/crops?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/crops";
+    const url = farmId && farmId !== "all" ? `/api/appwrite/crops?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/crops";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -251,7 +286,7 @@ export async function createCropInAppwrite(crop: CloudCrop): Promise<CloudCrop |
 // ---------------------------------------------------------------------------
 export async function syncInventoryFromAppwrite(farmId?: string): Promise<{ items: CloudInventoryItem[]; stores: any[] } | null> {
   try {
-    const url = farmId ? `/api/appwrite/inventory?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/inventory";
+    const url = farmId && farmId !== "all" ? `/api/appwrite/inventory?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/inventory";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -273,6 +308,20 @@ export async function createInventoryItemInAppwrite(item: CloudInventoryItem): P
     return data.success ? data.item : null;
   } catch (err) {
     console.warn("[AppwriteSync] Error saving inventory item:", err);
+    return null;
+  }
+}
+
+export async function createFarmStoreInAppwrite(store: { farmId: string; name: string; type?: string; location?: string; notes?: string }): Promise<any | null> {
+  try {
+    const res = await fetch("/api/appwrite/inventory", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "store", ...store }),
+    });
+    const data = await res.json();
+    return data.success ? data.store : null;
+  } catch (err) {
     return null;
   }
 }
@@ -319,7 +368,7 @@ export async function restockItemInAppwrite(itemId: string, addedQuantity: numbe
 // ---------------------------------------------------------------------------
 export async function syncEquipmentFromAppwrite(farmId?: string): Promise<{ equipment: CloudEquipment[]; issues: any[] } | null> {
   try {
-    const url = farmId ? `/api/appwrite/equipment?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/equipment";
+    const url = farmId && farmId !== "all" ? `/api/appwrite/equipment?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/equipment";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -369,6 +418,18 @@ export async function reportEquipmentProblemInAppwrite(problem: {
 // ---------------------------------------------------------------------------
 // Support & Field Visits
 // ---------------------------------------------------------------------------
+export async function syncSupportFromAppwrite(userId?: string): Promise<{ tickets: any[]; fieldVisits: any[] } | null> {
+  try {
+    const url = userId ? `/api/appwrite/support?userId=${encodeURIComponent(userId)}` : "/api/appwrite/support";
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { tickets: data.tickets || [], fieldVisits: data.fieldVisits || [] };
+  } catch (err) {
+    return null;
+  }
+}
+
 export async function createSupportTicketInAppwrite(ticket: {
   farmName: string;
   cropName: string;
@@ -412,6 +473,121 @@ export async function bookFieldVisitInAppwrite(visit: {
     return data.success ? data.fieldVisit : null;
   } catch (err) {
     console.warn("[AppwriteSync] Error booking field visit:", err);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Financial Transactions
+// ---------------------------------------------------------------------------
+export async function syncFinancialsFromAppwrite(farmId?: string): Promise<any[] | null> {
+  try {
+    const url = farmId && farmId !== "all" ? `/api/appwrite/financials?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/financials";
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.transactions || [];
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function createFinancialTransactionInAppwrite(tx: {
+  farmId: string;
+  type: string;
+  title: string;
+  category: string;
+  amount: number;
+  date?: string;
+  quantity?: string;
+  crop?: string;
+  notes?: string;
+}): Promise<any | null> {
+  try {
+    const res = await fetch("/api/appwrite/financials", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tx),
+    });
+    const data = await res.json();
+    return data.success ? data.transaction : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function deleteFinancialTransactionInAppwrite(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/appwrite/financials?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error deleting financial transaction:", err);
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Team
+// ---------------------------------------------------------------------------
+export async function syncTeamFromAppwrite(farmId?: string): Promise<{ members: any[]; designations: any[] } | null> {
+  try {
+    const url = farmId && farmId !== "all" ? `/api/appwrite/team?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/team";
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { members: data.members || [], designations: data.designations || [] };
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function createTeamMemberInAppwrite(member: {
+  farmId: string;
+  name: string;
+  phone: string;
+  email?: string;
+  roleCategory?: string;
+  designationTitle?: string;
+}): Promise<any | null> {
+  try {
+    const res = await fetch("/api/appwrite/team", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(member),
+    });
+    const data = await res.json();
+    return data.success ? data.member : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Invoices
+// ---------------------------------------------------------------------------
+export async function syncInvoicesFromAppwrite(): Promise<any[] | null> {
+  try {
+    const res = await fetch("/api/appwrite/invoices");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.invoices || [];
+  } catch (err) {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Advisories
+// ---------------------------------------------------------------------------
+export async function syncAdvisoriesFromAppwrite(): Promise<any[] | null> {
+  try {
+    const res = await fetch("/api/appwrite/advisories");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.advisories || [];
+  } catch (err) {
     return null;
   }
 }
