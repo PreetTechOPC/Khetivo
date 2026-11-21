@@ -563,30 +563,36 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* 3. HERO SECTION                                                           */}
       {/* ========================================================================= */}
-      <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-28 border-b border-[var(--color-border)] bg-gradient-to-b from-[var(--color-background)] via-[var(--color-surface)] to-[var(--color-background)]">
-        {/* Decorative background glow */}
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-[var(--color-secondary)]/5 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative overflow-hidden pt-10 pb-16 lg:pt-16 lg:pb-24 border-b border-[var(--color-border)] bg-gradient-to-b from-[#F4F8F4] via-white to-[#F4F8F4]">
+        {/* Decorative background grid and organic glowing orbs */}
+        <div className="absolute inset-0 bg-[radial-gradient(#0C4B32_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] pointer-events-none" />
+        <div className="absolute top-12 left-1/4 w-[500px] h-[350px] bg-[#278449]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-20 right-10 w-[450px] h-[400px] bg-[#F9B21B]/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-10 items-center">
             {/* Left Hero Copy */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
               {/* Trust Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] shadow-xs">
-                <span className="w-2 h-2 rounded-full bg-[var(--color-secondary)] animate-pulse" />
-                <span className="text-xs font-bold text-[var(--color-primary)]">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#DCE6DE] shadow-xs">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#278449] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#0C4B32]" />
+                </span>
+                <span className="text-xs font-semibold text-[#0C4B32]">
                   Next-Gen Indian Agriculture & Farm OS
                 </span>
-                <span className="text-xs text-[var(--color-text-muted)]">• 45,000+ Active Acres</span>
+                <span className="text-xs text-[#64748B] hidden sm:inline">• 45,000+ Active Acres</span>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-[var(--color-primary)] leading-[1.18]">
-                Stop Farming on Guesswork. Grow More, Spend Less & Earn Peak Mandi Prices.
+              <h1 className="text-3xl sm:text-4xl lg:text-[2.9rem] font-bold tracking-tight text-[#0C4B32] leading-[1.16]">
+                Stop Farming on Guesswork.{" "}
+                <span className="text-[#278449]">Grow More,</span> Spend Less & Earn Peak Mandi Prices.
               </h1>
 
               {/* Supporting Subheadline */}
-              <p className="text-base sm:text-lg text-[var(--color-text-muted)] max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
+              <p className="text-base sm:text-lg text-[#55685D] max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
                 Khetivo gives Indian farmers scientific superpowers: know the exact day and minutes to irrigate, scan leaf diseases with AI in 5 seconds, follow package of practices, and track live APMC mandi rates — directly in your hands.
               </p>
 
@@ -598,110 +604,142 @@ export default function Home() {
                     setDemoSubmitted(false);
                     setDemoModalOpen(true);
                   }}
-                  className="btn btn-primary text-sm sm:text-base px-6 py-3.5 w-full sm:w-auto shadow-sm"
+                  className="btn btn-primary text-sm sm:text-base px-6 py-3.5 w-full sm:w-auto shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                   <Calendar className="w-4 h-4" />
                   <span>Request a Free Field Demo</span>
                 </button>
                 <Link
                   href="/dashboard"
-                  className="btn btn-outline text-sm sm:text-base px-6 py-3.5 w-full sm:w-auto inline-flex items-center gap-2 justify-center"
+                  className="btn btn-outline text-sm sm:text-base px-6 py-3.5 w-full sm:w-auto inline-flex items-center gap-2 justify-center bg-white hover:bg-[#F4F8F4] transition-colors"
                 >
-                  <Sprout className="w-4 h-4 text-[var(--color-secondary)]" />
+                  <Sprout className="w-4 h-4 text-[#278449]" />
                   <span>Explore Farmer Dashboard</span>
+                  <ArrowRight className="w-4 h-4 text-[#278449] ml-0.5" />
                 </Link>
               </div>
 
               {/* Key Trust Metrics */}
-              <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-[var(--color-border)]">
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-[var(--color-primary)]">
+              <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-[#DCE6DE]">
+                <div className="p-3 rounded-xl bg-white/70 border border-[#E5ECE7] text-left">
+                  <div className="text-2xl font-extrabold text-[#0C4B32]">
                     38%
                   </div>
-                  <p className="text-xs text-[var(--color-text-muted)] font-normal mt-0.5">
+                  <p className="text-xs text-[#55685D] font-medium mt-0.5">
                     Water & Fuel Saved
                   </p>
                 </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-[var(--color-secondary)]">
+                <div className="p-3 rounded-xl bg-white/70 border border-[#E5ECE7] text-left">
+                  <div className="text-2xl font-extrabold text-[#278449]">
                     +26%
                   </div>
-                  <p className="text-xs text-[var(--color-text-muted)] font-normal mt-0.5">
+                  <p className="text-xs text-[#55685D] font-medium mt-0.5">
                     Average Yield Boost
                   </p>
                 </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-[var(--color-primary)]">
+                <div className="p-3 rounded-xl bg-white/70 border border-[#E5ECE7] text-left">
+                  <div className="text-2xl font-extrabold text-[#0C4B32]">
                     ₹18,400
                   </div>
-                  <p className="text-xs text-[var(--color-text-muted)] font-normal mt-0.5">
+                  <p className="text-xs text-[#55685D] font-medium mt-0.5">
                     Saved / Acre / Year
                   </p>
                 </div>
-                <div className="text-left">
-                  <div className="text-2xl font-bold text-[var(--color-accent)] flex items-center gap-1">
-                    4.8 <Star className="w-4 h-4 fill-[var(--color-accent)] text-[var(--color-accent)]" />
+                <div className="p-3 rounded-xl bg-white/70 border border-[#E5ECE7] text-left">
+                  <div className="text-2xl font-extrabold text-[#D97706] flex items-center gap-1">
+                    4.8 <Star className="w-4 h-4 fill-[#F9B21B] text-[#F9B21B]" />
                   </div>
-                  <p className="text-xs text-[var(--color-text-muted)] font-normal mt-0.5">
+                  <p className="text-xs text-[#55685D] font-medium mt-0.5">
                     12,000+ Farmer Reviews
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Right Hero Visual: Authentic Indian Farmer + Modern Smartphone Showing ONLY the Khetivo Icon */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-md sm:max-w-lg">
-                {/* Farmer Photo Card - Bright, Natural Sunlight, 100% Unobscured */}
-                <div className="relative rounded-[32px] overflow-hidden border border-[#DCE6DE] shadow-xl bg-white group">
+            {/* Right Hero Visual: Harmonious Composition with Real App Telemetry Card */}
+            <div className="lg:col-span-5 relative mt-4 lg:mt-0">
+              <div className="relative mx-auto max-w-[440px] sm:max-w-[480px]">
+                {/* Decorative Backdrop Glow */}
+                <div className="absolute -inset-3 bg-gradient-to-tr from-[#0C4B32]/15 via-[#278449]/10 to-[#F9B21B]/15 rounded-[36px] blur-xl -z-10" />
+
+                {/* Farmer Photo Main Card */}
+                <div className="relative rounded-[28px] overflow-hidden border border-[#DCE6DE] shadow-2xl bg-white group">
                   <Image
                     src="/hero-farmer.jpg"
                     alt="Proud Indian farmer in wheat field using Khetivo"
                     width={640}
                     height={720}
-                    className="w-full h-[400px] sm:h-[460px] object-cover object-top transition-transform duration-700 group-hover:scale-[1.02]"
+                    className="w-full h-[420px] sm:h-[480px] object-cover object-[center_top] transition-transform duration-700 group-hover:scale-[1.02]"
                     priority
                   />
 
-                  {/* Soft bottom subtle green tint only for edge blending */}
-                  <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#0C4B32]/35 via-transparent to-transparent pointer-events-none" />
+                  {/* Gradient overlay for soft text contrast at base */}
+                  <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
+
+                  {/* Verified Farmer Badge in photo */}
+                  <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/80 shadow-md">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[11px] font-bold text-[#0C4B32]">Live Farm Telemetry</span>
+                  </div>
                 </div>
 
-                {/* Floating Modern Smartphone Mockup: Shows ONLY the Khetivo Icon, Nothing Else! */}
-                <div className="absolute -bottom-6 -right-3 sm:-right-6 w-44 sm:w-52 bg-[#0A1F15] border-[3px] border-[#1D4A32] rounded-[38px] p-2 sm:p-2.5 shadow-2xl z-20 transition-transform duration-300 hover:scale-[1.03]">
-                  {/* Dynamic Island / Speaker Notch */}
-                  <div className="w-16 h-3 bg-black/90 rounded-full mx-auto mb-2 border border-white/10" />
-
-                  {/* Phone Screen: Shows ONLY the Khetivo App Icon */}
-                  <div className="bg-gradient-to-b from-[#0C4B32] via-[#0E5538] to-[#083523] rounded-[28px] aspect-[9/16] flex flex-col items-center justify-center p-3 relative overflow-hidden shadow-inner">
-                    {/* Soft ambient glow behind icon */}
-                    <div className="absolute w-28 h-28 rounded-full bg-emerald-400/20 blur-xl pointer-events-none" />
-
-                    {/* Khetivo App Icon - Large, Crisp, Centered */}
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-2xl border border-white/30 transform transition-transform duration-300 hover:scale-105 z-10 bg-[#0C4B32]">
-                      <Image
-                        src="/khetivo-app-icon.png"
-                        alt="Khetivo App Icon"
-                        width={96}
-                        height={96}
-                        className="w-full h-full object-cover"
-                        priority
-                      />
+                {/* Floating Modern App Card: Real Dashboard Intelligence Preview */}
+                <div className="absolute -bottom-6 -right-2 sm:-right-5 w-[210px] sm:w-[240px] bg-white rounded-2xl p-3.5 shadow-2xl border border-[#DCE6DE] z-20 space-y-2.5 transition-transform duration-300 hover:-translate-y-1">
+                  {/* Card Header: App Brand + Status */}
+                  <div className="flex items-center justify-between border-b border-[#E5ECE7] pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#0C4B32] p-1 flex items-center justify-center shrink-0">
+                        <Image
+                          src="/khetivo-app-icon.png"
+                          alt="Khetivo"
+                          width={24}
+                          height={24}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-bold text-[#26352D] leading-tight">Khetivo OS</div>
+                        <div className="text-[9px] text-[#278449] font-semibold">Active Sensor Sync</div>
+                      </div>
                     </div>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
                   </div>
 
-                  {/* Home Bar Indicator */}
-                  <div className="w-16 h-1 bg-white/40 rounded-full mx-auto mt-2" />
+                  {/* Soil Moisture & Advisory Metric */}
+                  <div className="bg-[#F4F8F4] rounded-xl p-2.5 border border-[#DCE6DE] space-y-1">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-[#55685D] font-medium flex items-center gap-1">
+                        <Droplets className="w-3 h-3 text-[#2563EB]" /> Root Moisture
+                      </span>
+                      <span className="font-bold text-[#0C4B32]">38% Optimal</span>
+                    </div>
+                    <div className="w-full bg-[#DCE6DE] h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-[#278449] h-full rounded-full w-[65%]" />
+                    </div>
+                    <p className="text-[9px] text-[#26352D] font-medium pt-0.5">
+                      Next drip window: <span className="text-[#0C4B32] font-bold">Today, 4:30 PM</span>
+                    </p>
+                  </div>
+
+                  {/* Mandi Rate Micro-Pill */}
+                  <div className="flex items-center justify-between bg-amber-50/80 border border-amber-200/80 rounded-lg px-2 py-1 text-[10px]">
+                    <span className="text-amber-900 font-medium">Wheat (PBW 826)</span>
+                    <span className="font-bold text-amber-900 flex items-center gap-0.5">
+                      ₹2,425/Qtl <TrendingUp className="w-2.5 h-2.5 text-emerald-600" />
+                    </span>
+                  </div>
                 </div>
 
-                {/* Floating Testimonial Pill - Balanced at bottom-left */}
-                <div className="hidden sm:flex items-center gap-3 bg-white/95 backdrop-blur-md border border-[#DCE6DE] rounded-2xl px-4 py-2.5 shadow-xl absolute -bottom-4 -left-4 sm:-left-6 z-20">
-                  <div className="w-9 h-9 rounded-xl bg-[#0C4B32] text-white text-xs flex items-center justify-center font-bold shrink-0">
+                {/* Floating Farmer Testimonial Card - Bottom Left */}
+                <div className="hidden sm:flex items-center gap-3 bg-white/95 backdrop-blur-md border border-[#DCE6DE] rounded-2xl px-3.5 py-2.5 shadow-xl absolute -bottom-4 -left-3 sm:-left-6 z-20 max-w-[240px]">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0C4B32] to-[#278449] text-white text-xs flex items-center justify-center font-bold shrink-0 shadow-sm">
                     GS
                   </div>
-                  <div className="text-xs">
-                    <p className="font-bold text-[#26352D]">Gurpreet Singh • 32 Ac (Ludhiana)</p>
-                    <p className="text-[11px] text-emerald-700 font-medium">&ldquo;Saved 4 tubewell cycles this month.&rdquo;</p>
+                  <div className="text-xs min-w-0">
+                    <p className="font-bold text-[#26352D] truncate">Gurpreet Singh • 32 Ac</p>
+                    <p className="text-[11px] text-[#278449] font-semibold leading-tight">
+                      Saved 4 tubewell cycles
+                    </p>
                   </div>
                 </div>
               </div>
