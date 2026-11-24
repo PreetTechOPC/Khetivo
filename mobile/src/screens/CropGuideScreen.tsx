@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { colors } from '../theme/colors';
 import { initialFarms, Farm, Crop } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
+import { useAlert } from '../context/AlertContext';
 
 interface CropGuideScreenProps {
   onBack: () => void;
@@ -312,6 +312,7 @@ interface ActiveCropData {
 }
 
 export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack }) => {
+  const { showWarning, showSuccess } = useAlert();
   const [crops, setCrops] = useState<ActiveCropData[]>([
     {
       id: 'crop-1',
@@ -455,7 +456,7 @@ export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack }) => {
 
   const handleAddCropSubmit = () => {
     if (!modalArea.trim() || isNaN(Number(modalArea)) || Number(modalArea) <= 0) {
-      Alert.alert('Required', 'Please enter a valid allocated area in acres.');
+      showWarning('Required Field', 'Please enter a valid allocated area in acres.');
       return;
     }
 
@@ -486,7 +487,7 @@ export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack }) => {
     setSelectedCropIndex(crops.length);
     setAddCropModalOpen(false);
     setOpenDropdown(null);
-    Alert.alert('Crop Added', `${newCrop.name} (${newCrop.variety}) successfully added to ${targetFarm.name}.`);
+    showSuccess('Crop Added', `${newCrop.name} (${newCrop.variety}) successfully added to ${targetFarm.name}.`);
   };
 
   return (

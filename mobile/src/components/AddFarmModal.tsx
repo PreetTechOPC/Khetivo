@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Alert,
   Platform,
   KeyboardAvoidingView,
   Linking,
@@ -17,6 +16,7 @@ import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { Farm, Crop } from '../data/mockData';
 import { DatePickerModal } from './DatePickerModal';
+import { useAlert } from '../context/AlertContext';
 
 export const LAND_MEASUREMENT_UNITS = [
   'Acres',
@@ -183,6 +183,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
   onClose,
   onAddFarm,
 }) => {
+  const { showSuccess, showWarning, showError } = useAlert();
   // Step state (1: Identity & Area, 2: Location & Map, 3: Select Crops, 4: Sowing Schedule)
   const [setupStep, setSetupStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -273,7 +274,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
       setLongitude(75.8573);
       setLocatingGps(false);
       setGpsAutoDetected(true);
-      Alert.alert(
+      showSuccess(
         'GPS Auto-Detected',
         'Coordinates synced: 30.90100°N, 75.85730°E (Gill Rd, Ludhiana, Punjab)'
       );
@@ -283,7 +284,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
   const handleOpenInGoogleMaps = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
     Linking.openURL(url).catch(() => {
-      Alert.alert('Cannot Open Maps', 'Please check internet connection or installed apps.');
+      showError('Cannot Open Maps', 'Please check internet connection or installed apps.');
     });
   };
 
@@ -391,7 +392,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
     setAreaUnit('Acres');
     setOwnership('Self-Owned (Individual Farmer)');
     setErrorMsg('');
-    Alert.alert(
+    showSuccess(
       'Farm Setup Complete!',
       `"${newFarm.name}" (${newFarm.totalArea} ${newFarm.areaUnit}) registered with ${builtCrops.length} crop(s).`
     );
@@ -1134,7 +1135,7 @@ export const AddFarmModal: React.FC<AddFarmModalProps> = ({
                                   prev.filter((id) => id !== tmpl.id)
                                 );
                               } else {
-                                Alert.alert('Notice', 'At least 1 crop template must remain selected.');
+                                showWarning('Notice', 'At least 1 crop template must remain selected.');
                               }
                             } else {
                               setSelectedCropTemplates((prev) => [...prev, tmpl.id]);

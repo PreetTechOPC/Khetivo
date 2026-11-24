@@ -215,3 +215,43 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
+// DELETE: Delete store or inventory item
+export async function DELETE(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const { searchParams } = new URL(req.url);
+    const storeId = searchParams.get("storeId");
+    const itemId = searchParams.get("itemId");
+
+    if (storeId) {
+      await databases.deleteDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.COLLECTIONS.FARM_STORES,
+        storeId
+      );
+      return NextResponse.json({ success: true, message: "Store deleted" });
+    }
+
+    if (itemId) {
+      await databases.deleteDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.COLLECTIONS.INVENTORY_ITEMS,
+        itemId
+      );
+      return NextResponse.json({ success: true, message: "Item deleted" });
+    }
+
+    return NextResponse.json(
+      { success: false, message: "storeId or itemId is required" },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    console.error("[Appwrite delete inventory error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to delete" },
+      { status: 500 }
+    );
+  }
+}
+
+

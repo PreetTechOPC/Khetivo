@@ -8,10 +8,10 @@ import {
   Linking,
   TextInput,
   Modal,
-  Alert,
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAlert } from '../context/AlertContext';
 
 interface SupportScreenProps {
   onBack: () => void;
@@ -101,6 +101,7 @@ const faqs = [
 ];
 
 export const SupportScreen: React.FC<SupportScreenProps> = ({ onBack }) => {
+  const { showInfo, showWarning, showSuccess } = useAlert();
   const [tickets, setTickets] = useState<SupportTicket[]>(initialTickets);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
@@ -119,7 +120,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({ onBack }) => {
 
   const handleCall = () => {
     Linking.openURL('tel:18005438486').catch(() => {
-      Alert.alert('Helpline', 'Dialing 1800-KHETIVO (1800-543-8486)');
+      showInfo('Khetivo Helpline', 'Toll-free Kisan helpline: 1800-KHETIVO (1800-543-8486)');
     });
   };
 
@@ -127,13 +128,13 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({ onBack }) => {
     Linking.openURL(
       'https://wa.me/919876543210?text=Hello%20Khetivo%20Agronomist,%20I%20need%20expert%20diagnosis%20for%20my%20crop'
     ).catch(() => {
-      Alert.alert('WhatsApp', 'Connecting to Dr. Harpreet Singh at +91 98765-43210');
+      showInfo('Agronomist WhatsApp', 'Connecting to Dr. Harpreet Singh at +91 98765-43210');
     });
   };
 
   const handleQuickAsk = () => {
     if (!askQuestion.trim()) {
-      Alert.alert('Required', 'Please describe your crop question or problem.');
+      showWarning('Required Field', 'Please describe your crop question or problem.');
       return;
     }
     const created: SupportTicket = {
@@ -152,12 +153,12 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({ onBack }) => {
     };
     setTickets([created, ...tickets]);
     setAskQuestion('');
-    Alert.alert('Question Submitted', `Ticket #${created.ticketNo} logged. Agronomist assigned.`);
+    showSuccess('Question Submitted', `Ticket #${created.ticketNo} logged. An agronomist will review your query.`);
   };
 
   const handleCreateTicket = () => {
     if (!modalSubject.trim() || !modalDesc.trim()) {
-      Alert.alert('Required', 'Please provide a ticket subject and description.');
+      showWarning('Required Field', 'Please provide a ticket subject and description.');
       return;
     }
     const created: SupportTicket = {
@@ -178,7 +179,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({ onBack }) => {
     setIsModalOpen(false);
     setModalSubject('');
     setModalDesc('');
-    Alert.alert('Ticket Created', `Support Ticket #${created.ticketNo} created.`);
+    showSuccess('Ticket Created', `Support Ticket #${created.ticketNo} created successfully.`);
   };
 
   return (

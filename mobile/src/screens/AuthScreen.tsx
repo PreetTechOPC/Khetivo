@@ -7,22 +7,27 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { colors } from '../theme/colors';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { useAlert } from '../context/AlertContext';
 import {
   loginWithGoogle,
   loginWithEmail,
   registerWithEmail,
+  sendPasswordRecovery,
 } from '../services/appwrite';
 
 interface AuthScreenProps {
-  onLoginSuccess: (user: { name: string; email: string; phone?: string; id?: string }) => void;
+  onLoginSuccess: (
+    user: { name: string; email: string; phone?: string; id?: string },
+    isNewSignUp?: boolean
+  ) => void;
   onBack?: () => void;
   initialMode?: 'signin' | 'signup';
 }
@@ -32,6 +37,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   onBack,
   initialMode = 'signin',
 }) => {
+  const { showAlert, showError, showSuccess, showWarning } = useAlert();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [authLoading, setAuthLoading] = useState<'google' | 'submit' | null>(null);
   const loading = authLoading !== null;
@@ -45,6 +51,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Forgot password modal state
+  const [forgotModalVisible, setForgotModalVisible] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
 
   // Validation errors
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -94,23 +106,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         if (mode === 'signin') {
           const user = await loginWithEmail(identifier.trim(), password);
           setAuthLoading(null);
-          Alert.alert(
-            'Welcome Back!',
-            `Logged in successfully as ${user.name}.`,
-            [
-              {
-                text: 'Go to Dashboard',
-                onPress: () => {
-                  onLoginSuccess({
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone || '+91 98140-54321',
-                    id: user.id,
-                  });
-                },
-              },
-            ]
-          );
+          onLoginSuccess({
+            name: user.name,
+            email: user.email,
+            phone: user.phone || '+91 98140-54321',
+            id: user.id,
+          });
           return;
         } else {
           const user = await registerWithEmail(
@@ -120,63 +121,52 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             phoneNumber.trim() ? `+91 ${phoneNumber.trim()}` : undefined
           );
           setAuthLoading(null);
-          Alert.alert(
-            'Account Created!',
-            `Welcome to Khetivo, ${user.name}! Your account has been registered via Appwrite.`,
-            [
+          showAlert({
+            title: 'Account Created!',
+            message: `Welcome to Khetivo, ${user.name}! Please review our farmer subscription plans to activate your holdings.`,
+            type: 'success',
+            buttons: [
               {
-                text: 'Go to Dashboard',
+                text: 'View Plans',
+                style: 'default',
                 onPress: () => {
-                  onLoginSuccess({
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone || '+91 98140-54321',
-                    id: user.id,
-                  });
+                  onLoginSuccess(
+                    {
+                      name: user.name,
+                      email: user.email,
+                      phone: user.phone || '+91 98140-54321',
+                      id: user.id,
+                    },
+                    true
+                  );
                 },
               },
-            ]
-          );
+            ],
+          });
           return;
         }
       } catch (err: any) {
+        setAuthLoading(null);
         const errorMsg = err?.message || 'Authentication failed';
         console.warn('Appwrite email auth warning:', errorMsg);
-        if (
-          errorMsg.toLowerCase().includes('credential') ||
-          errorMsg.toLowerCase().includes('already exists') ||
-          errorMsg.toLowerCase().includes('password')
-        ) {
-          setAuthLoading(null);
-          Alert.alert(mode === 'signin' ? 'Sign In Failed' : 'Registration Failed', errorMsg);
-          return;
-        }
-        // Fallback to local profile for network or server unavailability
+        showError(mode === 'signin' ? 'Sign In Failed' : 'Registration Failed', errorMsg);
+        return;
       }
     }
 
-    // Demo/Offline Farmer ID login (e.g. KV-1042)
-    setTimeout(() => {
-      setAuthLoading(null);
-      const displayName = fullName.trim() || (identifier.includes('@') ? identifier.split('@')[0] : 'Mohan Lal');
-      Alert.alert(
-        mode === 'signin' ? 'Welcome Back!' : 'Account Created!',
-        `Logged in successfully as ${displayName}.`,
-        [
-          {
-            text: 'Go to Dashboard',
-            onPress: () => {
-              onLoginSuccess({
-                name: displayName,
-                email: identifier.includes('@') ? identifier : `${identifier.toLowerCase()}@khetivo.farm`,
-                phone: phoneNumber ? `+91 ${phoneNumber}` : '+91 98140-54321',
-                id: identifier.startsWith('KV-') ? identifier : 'KV-FARM-1042',
-              });
-            },
-          },
-        ]
-      );
-    }, 600);
+    // Farmer ID or Local account login (e.g. KV-1042)
+    setAuthLoading(null);
+    const displayName = fullName.trim() || (identifier.includes('@') ? identifier.split('@')[0] : 'Mohan Lal');
+    const isSignup = mode === 'signup';
+    onLoginSuccess(
+      {
+        name: displayName,
+        email: identifier.includes('@') ? identifier : `${identifier.toLowerCase()}@khetivo.farm`,
+        phone: phoneNumber ? `+91 ${phoneNumber}` : '+91 98140-54321',
+        id: identifier.startsWith('KV-') ? identifier : 'KV-FARM-1042',
+      },
+      isSignup
+    );
   };
 
   const handleGoogleLogin = async () => {
@@ -190,12 +180,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         return;
       }
 
-      Alert.alert(
-        'Google Sign In Successful',
-        `Welcome to Khetivo, ${user.name}! Signed in via Appwrite with ${user.email}.`,
-        [
+      showAlert({
+        title: 'Google Sign In Successful',
+        message: `Welcome to Khetivo, ${user.name}! Signed in via Appwrite with ${user.email}.`,
+        type: 'success',
+        buttons: [
           {
             text: 'Continue to Dashboard',
+            style: 'default',
             onPress: () => {
               onLoginSuccess({
                 name: user.name,
@@ -205,12 +197,12 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               });
             },
           },
-        ]
-      );
+        ],
+      });
     } catch (error: any) {
       setAuthLoading(null);
       console.error('Appwrite Google Sign-In Error:', error);
-      Alert.alert(
+      showError(
         'Google Authentication',
         error?.message || 'Unable to complete Google sign-in with Appwrite. Please verify your connection and try again.'
       );
@@ -218,26 +210,28 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   };
 
   const handleForgotPassword = () => {
-    Alert.prompt
-      ? Alert.prompt(
-          'Reset Password',
-          'Enter your registered Gmail or Farmer ID to receive a password reset link.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Send Link',
-              onPress: (val) => {
-                Alert.alert('Reset Link Sent', `A recovery link has been sent to ${val || 'your registered account'}.`);
-              },
-            },
-          ],
-          'plain-text',
-          identifier
-        )
-      : Alert.alert(
-          'Reset Password',
-          'A password reset link has been dispatched to your registered contact channel.'
-        );
+    setForgotEmail(identifier.includes('@') ? identifier : '');
+    setForgotSuccess(false);
+    setForgotModalVisible(true);
+  };
+
+  const handleSendResetEmail = async () => {
+    const emailToReset = forgotEmail.trim();
+    if (!emailToReset || !/\S+@\S+\.\S+/.test(emailToReset)) {
+      showWarning('Invalid Email', 'Please enter a valid email address to receive password reset instructions.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      await sendPasswordRecovery(emailToReset);
+      setForgotLoading(false);
+      setForgotSuccess(true);
+    } catch (err: any) {
+      setForgotLoading(false);
+      const msg = err?.message || 'Could not send reset email. Please try again.';
+      showError('Reset Request', msg);
+    }
   };
 
   return (
@@ -262,20 +256,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             resizeMode="contain"
           />
 
-          <TouchableOpacity
-            onPress={() =>
-              onLoginSuccess({
-                name: 'Guest Farmer',
-                email: 'guest@khetivo.farm',
-                phone: '+91 98000-00000',
-                id: 'KV-GUEST-001',
-              })
-            }
-            style={styles.skipBtn}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.skipBtnText}>Skip</Text>
-          </TouchableOpacity>
+          <View style={{ width: 36 }} />
         </View>
 
         <ScrollView
@@ -599,6 +580,96 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             </Text>
           </View>
         </ScrollView>
+
+        {/* FORGOT PASSWORD MODAL */}
+        <Modal
+          visible={forgotModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setForgotModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalHeaderIconCircle}>
+                  <Ionicons name="key-outline" size={22} color={colors.primary} />
+                </View>
+                <TouchableOpacity
+                  onPress={() => setForgotModalVisible(false)}
+                  style={styles.modalCloseBtn}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.modalTitle}>Reset Your Password</Text>
+              <Text style={styles.modalSub}>
+                Enter the email address registered with your Khetivo farm account. We’ll send you a secure password reset link.
+              </Text>
+
+              {forgotSuccess ? (
+                <View style={styles.successBox}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+                  <Text style={styles.successTitle}>Recovery Email Sent!</Text>
+                  <Text style={styles.successSub}>
+                    Please check your inbox ({forgotEmail}) for instructions to reset your password.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.modalPrimaryBtn}
+                    onPress={() => setForgotModalVisible(false)}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.modalPrimaryBtnText}>Back to Sign In</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.modalForm}>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Registered Email Address</Text>
+                    <View style={styles.inputContainer}>
+                      <Ionicons name="mail-outline" size={18} color="#55685D" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.textInput}
+                        placeholder="farmer@khetivo.farm"
+                        placeholderTextColor="#9CA3AF"
+                        value={forgotEmail}
+                        onChangeText={setForgotEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.modalPrimaryBtn, forgotLoading && styles.submitBtnDisabled]}
+                    onPress={handleSendResetEmail}
+                    disabled={forgotLoading}
+                    activeOpacity={0.85}
+                  >
+                    {forgotLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <>
+                        <Text style={styles.modalPrimaryBtnText}>Send Reset Link</Text>
+                        <Feather name="send" size={15} color="#FFFFFF" />
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setForgotModalVisible(false)}
+                    style={styles.modalCancelBtn}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </View>
+        </Modal>
       </View>
     </KeyboardAvoidingView>
   );
@@ -927,6 +998,100 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: colors.textMuted,
     textAlign: 'center',
+  },
+
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalHeaderIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primaryTint,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseBtn: {
+    padding: 6,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  modalSub: {
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  modalForm: {
+    gap: 14,
+  },
+  modalPrimaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.primary,
+    paddingVertical: 13,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  modalPrimaryBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalCancelBtn: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  modalCancelBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  successBox: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  successTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  successSub: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 12,
   },
 });
 

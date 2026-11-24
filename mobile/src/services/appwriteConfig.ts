@@ -4,7 +4,7 @@
  */
 
 export const APPWRITE_CONFIG = {
-  ENDPOINT: 'https://cloud.appwrite.io/v1',
+  ENDPOINT: 'https://fra.cloud.appwrite.io/v1',
   PROJECT_ID: '6ae72036002d13f9c902',
   DATABASE_ID: 'khetivo_main',
   STORAGE_BUCKET_ID: 'khetivo_storage',

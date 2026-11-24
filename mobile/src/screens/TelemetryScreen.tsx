@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { colors } from '../theme/colors';
 import { Crop, Farm, initialCrops } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAlert } from '../context/AlertContext';
 
 interface TelemetryScreenProps {
   farm: Farm;
@@ -15,26 +16,29 @@ export const TelemetryScreen: React.FC<TelemetryScreenProps> = ({
   crops = initialCrops,
   onBack,
 }) => {
+  const { showAlert, showSuccess } = useAlert();
   const [motorRunning, setMotorRunning] = useState(false);
   const [timerDuration, setTimerDuration] = useState('45 Mins');
   const [selectedCrop, setSelectedCrop] = useState(crops[0]);
 
   const handleToggleMotor = () => {
     if (!motorRunning) {
-      Alert.alert(
-        'Start Tubewell Motor',
-        `Start 10HP Submersible motor for ${selectedCrop.name} with ${timerDuration} auto-cutoff?`,
-        [
+      showAlert({
+        title: 'Start Tubewell Motor',
+        message: `Start 10HP Submersible motor for ${selectedCrop.name} with ${timerDuration} auto-cutoff?`,
+        type: 'warning',
+        buttons: [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Start Motor',
+            style: 'default',
             onPress: () => setMotorRunning(true),
           },
-        ]
-      );
+        ],
+      });
     } else {
       setMotorRunning(false);
-      Alert.alert('Tubewell Stopped', 'The motor has been turned off safely.');
+      showSuccess('Tubewell Stopped', 'The motor has been turned off safely.');
     }
   };
 

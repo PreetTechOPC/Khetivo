@@ -15,7 +15,7 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { CropGuideScreen } from './src/screens/CropGuideScreen';
 import { TasksScreen } from './src/screens/TasksScreen';
 import { InventoryScreen } from './src/screens/InventoryScreen';
-import { LedgerScreen } from './src/screens/LedgerScreen';
+import { LedgerScreen, FinancialTransaction } from './src/screens/LedgerScreen';
 import { EquipmentScreen } from './src/screens/EquipmentScreen';
 import { ParcelsScreen } from './src/screens/ParcelsScreen';
 import { TeamScreen } from './src/screens/TeamScreen';
@@ -28,32 +28,46 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { MoreScreen } from './src/screens/MoreScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { TutorialModal } from './src/components/TutorialModal';
-import { getCurrentUser, logout } from './src/services/appwrite';
+import { AlertProvider } from './src/context/AlertContext';
+import {
+  getCurrentUser,
+  logout,
+  fetchFarmsFromDB,
+  createFarmInDB,
+  fetchTransactionsFromDB,
+  createTransactionInDB,
+  deleteTransactionInDB,
+} from './src/services/appwrite';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
 export default function App() {
   const [farms, setFarms] = useState<Farm[]>(initialFarms);
   const [activeFarmId, setActiveFarmId] = useState<string>('farm-1');
-  const [currentScreen, setCurrentScreen] = useState<string>('home');
+  const [currentScreen, setCurrentScreen] = useState<string>('auth');
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     email: string;
     phone?: string;
     id?: string;
-  }>({
-    name: 'Mohan Lal',
-    email: 'mohan.lal@khetivo.farm',
-    phone: '+91 98140-54321',
-    id: 'KV-FARM-1042',
-  });
+  } | null>(null);
   const [farmModalVisible, setFarmModalVisible] = useState(false);
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [openAddFarmDirectly, setOpenAddFarmDirectly] = useState(false);
+  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
 
-  // Restore authenticated Appwrite session on application mount
+  // Restore authenticated Appwrite session and load data on application mount
   useEffect(() => {
+    // Initial fetch of financial transactions from Appwrite DB
+    fetchTransactionsFromDB()
+      .then((txs) => {
+        if (txs && txs.length > 0) {
+          setTransactions(txs);
+        }
+      })
+      .catch((e) => console.log('Appwrite financials load notice:', e));
+
     getCurrentUser()
-      .then((user) => {
+      .then(async (user) => {
         if (user) {
           setCurrentUser({
             name: user.name,
@@ -61,10 +75,31 @@ export default function App() {
             phone: user.phone || '+91 98140-54321',
             id: user.id,
           });
+          setCurrentScreen('home');
+
+          // Load live farms and transactions from Appwrite Database
+          try {
+            const [dbFarms, dbTxs] = await Promise.all([
+              fetchFarmsFromDB(user.id),
+              fetchTransactionsFromDB(),
+            ]);
+            if (dbFarms && dbFarms.length > 0) {
+              setFarms(dbFarms);
+              setActiveFarmId(dbFarms[0].id);
+            }
+            if (dbTxs && dbTxs.length > 0) {
+              setTransactions(dbTxs);
+            }
+          } catch (e) {
+            console.log('Appwrite sync fallback:', e);
+          }
+        } else {
+          setCurrentScreen('auth');
         }
       })
       .catch((err) => {
         console.log('Appwrite session status:', err);
+        setCurrentScreen('auth');
       });
   }, []);
 
@@ -74,20 +109,24 @@ export default function App() {
     } catch (e) {
       console.warn('Logout notice:', e);
     }
-    setCurrentUser({
-      name: 'Mohan Lal',
-      email: 'mohan.lal@khetivo.farm',
-      phone: '+91 98140-54321',
-      id: 'KV-FARM-1042',
-    });
-    setCurrentScreen('home');
+    setCurrentUser(null);
+    setCurrentScreen('auth');
   };
 
-  const currentFarm = farms.find((f) => f.id === activeFarmId) || farms[0];
+  const currentFarm = farms.find((f) => f.id === activeFarmId) || farms[0] || initialFarms[0];
 
-  const handleAddFarm = (newFarm: Farm) => {
+  const handleAddFarm = async (newFarm: Farm) => {
     setFarms((prev) => [newFarm, ...prev]);
     setActiveFarmId(newFarm.id);
+
+    // Sync new farm to Appwrite Database if user is logged in
+    if (currentUser?.id) {
+      try {
+        await createFarmInDB(newFarm, currentUser.id);
+      } catch (e) {
+        console.warn('Sync new farm to Appwrite notice:', e);
+      }
+    }
   };
 
   const renderScreen = () => {
@@ -101,7 +140,34 @@ export default function App() {
       case 'ledger':
       case 'stats':
       case 'expenses':
-        return <LedgerScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <LedgerScreen
+            onBack={() => setCurrentScreen('home')}
+            transactions={transactions}
+            userId={currentUser?.id}
+            onAddTransaction={async (newTx) => {
+              setTransactions((prev) => [newTx, ...prev]);
+              try {
+                const created = await createTransactionInDB(newTx, currentUser?.id || 'usr_default_farmer');
+                if (created && created.id) {
+                  setTransactions((prev) =>
+                    prev.map((t) => (t.id === newTx.id ? { ...t, id: created.id } : t))
+                  );
+                }
+              } catch (e) {
+                console.warn('Sync transaction to Appwrite error:', e);
+              }
+            }}
+            onDeleteTransaction={async (id) => {
+              setTransactions((prev) => prev.filter((t) => t.id !== id));
+              try {
+                await deleteTransactionInDB(id);
+              } catch (e) {
+                console.warn('Delete transaction from Appwrite error:', e);
+              }
+            }}
+          />
+        );
       case 'equipment':
         return <EquipmentScreen onBack={() => setCurrentScreen('home')} />;
       case 'parcels':
@@ -135,14 +201,20 @@ export default function App() {
       case 'reports':
         return <ReportsScreen farm={currentFarm} onBack={() => setCurrentScreen('home')} />;
       case 'subscription':
-        return <SubscriptionScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <SubscriptionScreen
+            onBack={() => setCurrentScreen('home')}
+            onContinueToHome={() => setCurrentScreen('home')}
+          />
+        );
       case 'settings':
         return (
           <SettingsScreen
             onBack={() => setCurrentScreen('home')}
-            currentUser={currentUser}
+            currentUser={currentUser || { name: 'Farmer', email: '', id: '' }}
             onLogout={handleLogout}
             onNavigateToAuth={() => setCurrentScreen('auth')}
+            onNavigateToSubscription={() => setCurrentScreen('subscription')}
           />
         );
       case 'auth':
@@ -152,11 +224,15 @@ export default function App() {
         return (
           <AuthScreen
             initialMode={currentScreen === 'signup' ? 'signup' : 'signin'}
-            onLoginSuccess={(user) => {
+            onLoginSuccess={(user, isNewSignUp) => {
               setCurrentUser(user);
-              setCurrentScreen('home');
+              if (isNewSignUp) {
+                setCurrentScreen('subscription');
+              } else {
+                setCurrentScreen('home');
+              }
             }}
-            onBack={() => setCurrentScreen('home')}
+            onBack={currentUser ? () => setCurrentScreen('home') : undefined}
           />
         );
       case 'more':
@@ -164,18 +240,31 @@ export default function App() {
           <MoreScreen
             onNavigate={(screen) => setCurrentScreen(screen)}
             onOpenTutorial={() => setTutorialVisible(true)}
+            onLogout={handleLogout}
           />
         );
       case 'home':
       default:
+        if (!currentUser) {
+          return (
+            <AuthScreen
+              initialMode="signin"
+              onLoginSuccess={(user) => {
+                setCurrentUser(user);
+                setCurrentScreen('home');
+              }}
+            />
+          );
+        }
         return (
           <HomeScreen
             currentFarm={currentFarm}
             farms={farms}
-            farmerName={currentUser.name}
+            farmerName={currentUser?.name || 'Farmer'}
             onSelectFarm={() => setFarmModalVisible(true)}
             onNavigate={(screen) => setCurrentScreen(screen)}
             onOpenTutorial={() => setTutorialVisible(true)}
+            transactions={transactions}
           />
         );
     }
@@ -183,11 +272,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-        <StatusBar style="dark" />
-        <View style={styles.container}>
-        {/* Main Active Screen */}
-        <View style={styles.screenContainer}>{renderScreen()}</View>
+      <AlertProvider>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+          <StatusBar style="dark" />
+          <View style={styles.container}>
+          {/* Main Active Screen */}
+          <View style={styles.screenContainer}>{renderScreen()}</View>
 
         {/* ========================================================================= */}
         {/* MOBILE BOTTOM NAVIGATION BAR (Symmetrical 5-Tab Bar matching branding)    */}
@@ -385,6 +475,7 @@ export default function App() {
         />
       </View>
     </SafeAreaView>
+    </AlertProvider>
   </SafeAreaProvider>
   );
 }

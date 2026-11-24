@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,9 +14,15 @@ import { colors } from '../theme/colors';
 import { initialFarms } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
+import { useAlert } from '../context/AlertContext';
+import { createTransactionInDB, deleteTransactionInDB } from '../services/appwrite';
 
 interface LedgerScreenProps {
   onBack: () => void;
+  transactions?: FinancialTransaction[];
+  onAddTransaction?: (tx: FinancialTransaction) => void;
+  onDeleteTransaction?: (id: string) => void;
+  userId?: string;
 }
 
 export interface FinancialTransaction {
@@ -161,8 +166,19 @@ const INITIAL_TRANSACTIONS: FinancialTransaction[] = [
   },
 ];
 
-export const LedgerScreen: React.FC<LedgerScreenProps> = ({ onBack }) => {
-  const [transactions, setTransactions] = useState<FinancialTransaction[]>(INITIAL_TRANSACTIONS);
+export const LedgerScreen: React.FC<LedgerScreenProps> = ({
+  onBack,
+  transactions: propTransactions,
+  onAddTransaction,
+  onDeleteTransaction,
+  userId = 'usr_default_farmer',
+}) => {
+  const { showDeleteConfirm, showWarning, showSuccess } = useAlert();
+  const [internalTransactions, setInternalTransactions] = useState<FinancialTransaction[]>(INITIAL_TRANSACTIONS);
+  const transactions = propTransactions !== undefined ? propTransactions : internalTransactions;
+  const setTransactions = (updater: React.SetStateAction<FinancialTransaction[]>) => {
+    setInternalTransactions(updater);
+  };
   const [filterType, setFilterType] = useState<'all' | 'production' | 'loss' | 'expense'>('all');
   const [farmFilter, setFarmFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -244,31 +260,33 @@ export const LedgerScreen: React.FC<LedgerScreenProps> = ({ onBack }) => {
   };
 
   const handleDeleteTransaction = (id: string) => {
-    Alert.alert(
+    showDeleteConfirm(
       'Delete Record',
       'Are you sure you want to remove this financial transaction from farm records?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            setTransactions(transactions.filter((tx) => tx.id !== id));
-          },
-        },
-      ]
+      async () => {
+        if (onDeleteTransaction) {
+          onDeleteTransaction(id);
+        } else {
+          setTransactions(transactions.filter((tx) => tx.id !== id));
+          try {
+            await deleteTransactionInDB(id);
+          } catch (e) {
+            console.warn('Appwrite delete transaction error:', e);
+          }
+        }
+      }
     );
   };
 
-  const handleSaveTransaction = () => {
+  const handleSaveTransaction = async () => {
     if (!recordAmount.trim()) {
-      Alert.alert('Required', 'Please enter transaction amount.');
+      showWarning('Required Field', 'Please enter transaction amount.');
       return;
     }
 
     const amt = parseFloat(recordAmount);
     if (isNaN(amt) || amt <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a valid positive amount.');
+      showWarning('Invalid Amount', 'Please enter a valid positive amount.');
       return;
     }
 
@@ -290,10 +308,22 @@ export const LedgerScreen: React.FC<LedgerScreenProps> = ({ onBack }) => {
       notes: recordNotes.trim() || undefined,
     };
 
-    setTransactions([newTx, ...transactions]);
+    if (onAddTransaction) {
+      onAddTransaction(newTx);
+    } else {
+      setTransactions([newTx, ...transactions]);
+      try {
+        const created = await createTransactionInDB(newTx, userId);
+        if (created && created.id) {
+          setTransactions((prev) => prev.map((t) => (t.id === newTx.id ? { ...t, id: created.id } : t)));
+        }
+      } catch (e) {
+        console.warn('Appwrite create transaction error:', e);
+      }
+    }
     resetForm();
     setModalOpen(false);
-    Alert.alert('Saved', 'Financial entry recorded successfully in farm ledger.');
+    showSuccess('Saved', 'Financial entry recorded successfully in farm ledger.');
   };
 
   const selectedFarm = initialFarms.find((f) => f.id === recordFarmId) || initialFarms[0];

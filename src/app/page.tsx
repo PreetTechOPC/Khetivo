@@ -81,11 +81,12 @@ export default function Home() {
   const [otpValues, setOtpValues] = useState<string[]>(["", "", "", "", "", ""]);
   const [otpTimer, setOtpTimer] = useState<number>(60);
   const [otpError, setOtpError] = useState<string>("");
+  const [otpDispatchedPhone, setOtpDispatchedPhone] = useState<string>("");
 
   // OTP Countdown timer
   React.useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (authStep === "otp" && otpTimer > 0) {
+    if (otpTimer > 0) {
       timer = setInterval(() => {
         setOtpTimer((prev) => (prev > 0 ? prev - 1 : 0));
       }, 1000);
@@ -93,7 +94,78 @@ export default function Home() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [authStep, otpTimer]);
+  }, [otpTimer]);
+
+  // Auto-send OTP when 10-digit phone number is entered during signup
+  React.useEffect(() => {
+    if (authMode !== "signup") return;
+    const clean = sanitizePhone(authPhone);
+    if (clean.length === 10) {
+      if (otpDispatchedPhone === clean) return; // already triggered for this number
+
+      // Check if already verified
+      if (isPhoneAlreadyVerified(clean)) {
+        setAuthPhoneError(`Phone number +91 ${clean} has already completed one-time OTP verification. Please sign in directly.`);
+        setAlreadyVerifiedNotice(true);
+        return;
+      }
+
+      setAuthPhoneError("");
+      setAlreadyVerifiedNotice(false);
+      setOtpError("");
+      setOtpValues(["", "", "", "", "", ""]);
+      setAuthLoading(true);
+
+      sendRealOtpApi(clean).then((res) => {
+        setAuthLoading(false);
+        setOtpDispatchedPhone(clean);
+        if (!res.success) {
+          setAuthPhoneError(res.message);
+          if (res.alreadyVerified) setAlreadyVerifiedNotice(true);
+        } else {
+          setOtpTimer(60);
+          setTimeout(() => {
+            const firstBox = document.getElementById("auth-otp-inline-0");
+            firstBox?.focus();
+          }, 100);
+        }
+      });
+    } else {
+      // If user deletes or changes digits below 10, reset dispatched tracker if different
+      if (otpDispatchedPhone && clean.length < 10) {
+        setOtpDispatchedPhone("");
+      }
+    }
+  }, [authPhone, authMode, otpDispatchedPhone]);
+
+  const handleInlineOtpChange = (index: number, val: string) => {
+    if (!/^\d*$/.test(val)) return;
+    const newOtp = [...otpValues];
+    if (val.length > 1) {
+      const chars = val.replace(/\D/g, "").slice(0, 6).split("");
+      chars.forEach((c, i) => {
+        if (i < 6) newOtp[i] = c;
+      });
+      setOtpValues(newOtp);
+      const focusIndex = Math.min(chars.length, 5);
+      const nextInput = document.getElementById(`auth-otp-inline-${focusIndex}`);
+      nextInput?.focus();
+      return;
+    }
+    newOtp[index] = val;
+    setOtpValues(newOtp);
+    if (val && index < 5) {
+      const nextInput = document.getElementById(`auth-otp-inline-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleInlineOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otpValues[index] && index > 0) {
+      const prevInput = document.getElementById(`auth-otp-inline-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
 
   const handleOtpChange = (index: number, val: string) => {
     if (!/^\d*$/.test(val)) return;
@@ -298,20 +370,52 @@ export default function Home() {
       return;
     }
 
-    setAuthLoading(true);
-    const res = await sendRealOtpApi(clean);
-    setAuthLoading(false);
-
-    if (!res.success) {
-      setAuthPhoneError(res.message);
-      if (res.alreadyVerified) setAlreadyVerifiedNotice(true);
+    if (!authFullName.trim()) {
+      setAuthPhoneError("Please enter your full name.");
       return;
     }
 
-    setAuthStep("otp");
-    setOtpTimer(60);
-    setOtpValues(["", "", "", "", "", ""]);
+    if (!authEmail.trim()) {
+      setAuthPhoneError("Please enter your Gmail / Email ID.");
+      return;
+    }
+
+    if (!authPassword || authPassword.length < 6) {
+      setAuthPhoneError("Password must be at least 6 characters.");
+      return;
+    }
+
+    const enteredOtp = otpValues.join("");
+    if (enteredOtp.length < 6) {
+      setOtpError("Please enter the 6-digit verification code sent to your mobile number.");
+      return;
+    }
+
     setOtpError("");
+    setAuthLoading(true);
+
+    const result = await verifyRealOtpApi(clean, enteredOtp, {
+      name: authFullName.trim(),
+      email: authEmail.trim(),
+      password: authPassword,
+    });
+
+    setAuthLoading(false);
+
+    if (!result.success) {
+      setOtpError(result.message);
+      if (result.alreadyVerified) {
+        setAlreadyVerifiedNotice(true);
+      }
+      return;
+    }
+
+    setAuthSuccess(true);
+    setAuthSuccessMsg("Account Created & Verified Successfully! Welcome to Khetivo.");
+    setTimeout(() => {
+      setAuthModalOpen(false);
+      router.push("/dashboard");
+    }, 700);
   };
 
   // Pricing toggle: monthly vs annual
@@ -2334,6 +2438,58 @@ export default function Home() {
                         )}
                       </div>
 
+                      {/* INLINE OTP VERIFICATION CODE FIELD (Appears right after contact number and before Gmail/Email) */}
+                      {sanitizePhone(authPhone).length === 10 && !alreadyVerifiedNotice && (
+                        <div className="p-3 bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl space-y-2.5 transition-all">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-semibold text-[#26352D] flex items-center gap-1.5">
+                              <span>Enter 6-Digit Verification Code</span>
+                              {authLoading && (
+                                <span className="text-[10px] text-[#0C4B32] font-normal animate-pulse">
+                                  (Sending OTP...)
+                                </span>
+                              )}
+                            </label>
+                            {otpTimer > 0 ? (
+                              <span className="text-[10px] text-[#55685D]">
+                                Resend in <strong className="text-[#0C4B32] font-bold">{otpTimer}s</strong>
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={handleResendOtp}
+                                className="text-[10px] font-bold text-[#0C4B32] hover:underline cursor-pointer"
+                              >
+                                Resend Code
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex justify-between gap-1.5">
+                            {otpValues.map((digit, i) => (
+                              <input
+                                key={`inline-${i}`}
+                                id={`auth-otp-inline-${i}`}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={digit}
+                                onChange={(e) => handleInlineOtpChange(i, e.target.value)}
+                                onKeyDown={(e) => handleInlineOtpKeyDown(i, e)}
+                                className="w-10 h-11 text-center text-base font-bold bg-white rounded-lg border border-[#DCE6DE] focus:border-[#0C4B32] focus:ring-1 focus:ring-[#0C4B32] outline-none text-[#26352D]"
+                              />
+                            ))}
+                          </div>
+
+                          {otpError && (
+                            <p className="text-red-600 text-[10px] font-medium">{otpError}</p>
+                          )}
+                          <p className="text-[10px] text-[#55685D] leading-tight">
+                            SMS sent to <span className="font-semibold text-[#26352D]">+91 {sanitizePhone(authPhone)}</span>. OTP is valid for 10 minutes.
+                          </p>
+                        </div>
+                      )}
+
                       <div>
                         <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
                           Gmail / Email ID
@@ -2376,7 +2532,11 @@ export default function Home() {
                         disabled={authLoading}
                         className="w-full btn btn-primary py-2.5 text-xs justify-center font-bold shadow-xs cursor-pointer"
                       >
-                        {authLoading ? "Sending Real OTP..." : "Get OTP Verification Code"}
+                        {authLoading
+                          ? "Processing..."
+                          : sanitizePhone(authPhone).length === 10
+                          ? "Verify & Create Account"
+                          : "Create Account"}
                       </button>
                     </>
                   ) : (

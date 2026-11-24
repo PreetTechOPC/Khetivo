@@ -48,6 +48,7 @@ import {
   ShieldCheck,
   AlertTriangle,
   Clock,
+  Eye,
   Phone,
   MessageSquare,
   Filter,
@@ -106,10 +107,21 @@ import {
   deleteFinancialTransactionInAppwrite,
   syncTeamFromAppwrite,
   createTeamMemberInAppwrite,
+  deleteTeamMemberInAppwrite,
   syncInvoicesFromAppwrite,
   syncAdvisoriesFromAppwrite,
+  syncSubscriptionFromAppwrite,
+  updateSubscriptionInAppwrite,
+  syncCropTemplatesFromAppwrite,
   CloudFarm,
 } from "@/lib/appwriteSync";
+import { getCurrentUserId } from "@/lib/currentSession";
+
+declare global {
+  interface Window {
+    Razorpay?: any;
+  }
+}
 
 interface NavItem {
   id: string;
@@ -321,7 +333,95 @@ export const APP_MODULES: AppModuleDef[] = [
   { id: "settings", label: "Settings", description: "Farmer profile, currency, SMS alerts & unit preferences", category: "Farm Admin" },
 ];
 
-export const INITIAL_TEAM_MEMBERS: TeamMember[] = [];
+export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: "tm-1",
+    name: "Jaswinder Singh",
+    phone: "+91 98140-54321",
+    email: "jaswinder@khetivo.farm",
+    designationId: "des-1",
+    designationTitle: "Owner & Farm Administrator",
+    roleCategory: "admin",
+    farmId: "all",
+    farmName: "All Holdings",
+    status: "Active",
+    allowedModules: [
+      "dashboard",
+      "weather",
+      "tasks",
+      "inventory",
+      "equipment",
+      "crops",
+      "expenses",
+      "reports",
+      "my-farms",
+      "team",
+      "settings",
+    ],
+    joinedDate: "2024-01-15",
+    notes: "Primary account owner with unrestricted system administrative access.",
+  },
+  {
+    id: "tm-2",
+    name: "Harpreet Singh",
+    phone: "+91 98721-12345",
+    email: "harpreet.field@khetivo.farm",
+    designationId: "des-2",
+    designationTitle: "Field Supervisor & Operations Lead",
+    roleCategory: "supervisor",
+    farmId: "farm-1",
+    farmName: "Khetivo Green Acres (Samrala)",
+    status: "Active",
+    allowedModules: ["dashboard", "weather", "tasks", "inventory", "equipment", "crops"],
+    joinedDate: "2024-06-10",
+    notes: "Supervises sowing schedules, field worker shifts, and irrigation routines.",
+  },
+  {
+    id: "tm-3",
+    name: "Gurmukh Ram",
+    phone: "+91 98882-67890",
+    email: "gurmukh.ram@khetivo.farm",
+    designationId: "des-4",
+    designationTitle: "Tractor & Heavy Machinery Driver",
+    roleCategory: "operator",
+    farmId: "farm-1",
+    farmName: "Khetivo Green Acres (Samrala)",
+    status: "Active",
+    allowedModules: ["dashboard", "tasks", "equipment"],
+    joinedDate: "2024-09-01",
+    notes: "Main operator for John Deere 5050D and laser leveler.",
+  },
+  {
+    id: "tm-4",
+    name: "Dr. R. K. Sharma",
+    phone: "+91 94170-98765",
+    email: "dr.sharma@pau.edu",
+    designationId: "des-3",
+    designationTitle: "Consulting Agronomist (Crop Advisor)",
+    roleCategory: "agronomist",
+    farmId: "all",
+    farmName: "All Holdings",
+    status: "Active",
+    allowedModules: ["dashboard", "weather", "crops", "reports"],
+    joinedDate: "2025-02-14",
+    notes: "Advises on IPM pest scouting, nutrient dosage, and spray windows.",
+  },
+  {
+    id: "tm-5",
+    name: "Balwinder Kaur",
+    phone: "+91 98765-43210",
+    email: "balwinder.store@khetivo.farm",
+    designationId: "des-5",
+    designationTitle: "Store & Inventory Keeper",
+    roleCategory: "inventory",
+    farmId: "farm-1",
+    farmName: "Khetivo Green Acres (Samrala)",
+    status: "Active",
+    allowedModules: ["dashboard", "inventory", "equipment"],
+    joinedDate: "2025-05-20",
+    notes: "Logs seed dispatches, pesticide stocks, and vendor delivery challans.",
+  },
+];
 
 // ==========================================
 // SUBSCRIPTION & PLAN DEFINITIONS
@@ -999,7 +1099,7 @@ export function normalizeCropTemplate(raw: any): CropMasterTemplate {
   const defaultSoil = raw.defaultSoil || "Alluvial Loam (Deep & Fertile)";
   const defaultIrrigation = raw.defaultIrrigation || "Drip / Micro-Irrigation (Sub-surface/Surface)";
   const badge = raw.badge || `${season} Crop`;
-  const targetYieldQuintals = raw.targetYieldQuintals || "20 - 25 Qtl/Acre";
+  const targetYieldQuintals = raw.targetYieldQuintals || raw.targetYield || "20 - 25 Qtl/Acre";
   const irrigationThresholdMoisture = Number(raw.irrigationThresholdMoisture) || 40;
   const criticalIrrigationStages = Array.isArray(raw.criticalIrrigationStages) && raw.criticalIrrigationStages.length > 0
     ? raw.criticalIrrigationStages
@@ -1007,15 +1107,25 @@ export function normalizeCropTemplate(raw: any): CropMasterTemplate {
   const majorDiseases = Array.isArray(raw.majorDiseases) && raw.majorDiseases.length > 0
     ? raw.majorDiseases
     : ["Foliar Rust", "Blight Outbreak"];
-  const pauFungicidePrescription = raw.pauFungicidePrescription || "Consult PAU Package of Practices for timely application.";
-  const growthTimeline = Array.isArray(raw.growthTimeline) && raw.growthTimeline.length > 0
-    ? raw.growthTimeline
-    : DEFAULT_PAU_GROWTH_TIMELINE;
+  const pauFungicidePrescription = raw.pauFungicidePrescription || raw.pauPrescription || "Consult PAU Package of Practices for timely application.";
+
+  let growthTimeline: GrowthStageMilestone[] = DEFAULT_PAU_GROWTH_TIMELINE;
+  if (typeof raw.growthTimeline === "string" && raw.growthTimeline.trim()) {
+    try {
+      const parsed = JSON.parse(raw.growthTimeline);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        growthTimeline = parsed;
+      }
+    } catch {}
+  } else if (Array.isArray(raw.growthTimeline) && raw.growthTimeline.length > 0) {
+    growthTimeline = raw.growthTimeline;
+  }
+
   const dos = Array.isArray(raw.dos) && raw.dos.length > 0 ? raw.dos : undefined;
   const donts = Array.isArray(raw.donts) && raw.donts.length > 0 ? raw.donts : undefined;
 
   return {
-    id: String(raw.id || `cr-${Date.now()}`),
+    id: String(raw.$id || raw.id || `cr-${Date.now()}`),
     cropName,
     name,
     varieties,
@@ -1310,6 +1420,7 @@ export default function DashboardPage() {
 
   // Active Admin Broadcasts & Crop Templates Sync
   const [activeCropTemplates, setActiveCropTemplates] = useState<CropMasterTemplate[]>(CROP_TEMPLATES);
+  const [selectedCropTemplateModal, setSelectedCropTemplateModal] = useState<CropMasterTemplate | null>(null);
   const [activeAdminBroadcasts, setActiveAdminBroadcasts] = useState<any[]>(DEFAULT_FARMER_BROADCASTS);
   const [advisoryCategoryFilter, setAdvisoryCategoryFilter] = useState<string>("all");
   const [advisorySearchTerm, setAdvisorySearchTerm] = useState<string>("");
@@ -1344,7 +1455,7 @@ export default function DashboardPage() {
           if (health.database) setAppwriteDbName(health.database);
 
           // Fetch all live collections in parallel from Appwrite Cloud DB
-          const [cloudFarms, cloudCrops, cloudTasks, cloudInv, cloudEq, cloudSupport, cloudFin, cloudTeam, cloudInvoices, cloudAdvisories] = await Promise.all([
+          const [cloudFarms, cloudCrops, cloudTasks, cloudInv, cloudEq, cloudSupport, cloudFin, cloudTeam, cloudInvoices, cloudAdvisories, cloudTemplates, cloudSubscription] = await Promise.all([
             syncFarmsFromAppwrite(),
             syncCropsFromAppwrite(),
             syncTasksFromAppwrite(),
@@ -1355,7 +1466,23 @@ export default function DashboardPage() {
             syncTeamFromAppwrite(),
             syncInvoicesFromAppwrite(),
             syncAdvisoriesFromAppwrite(),
+            syncCropTemplatesFromAppwrite(),
+            syncSubscriptionFromAppwrite(),
           ]);
+
+          // Process live subscription
+          if (cloudSubscription && cloudSubscription.planTier) {
+            setActivePlanId(cloudSubscription.planTier);
+          }
+
+          // Process live crop master templates from Appwrite Cloud
+          if (cloudTemplates && Array.isArray(cloudTemplates) && cloudTemplates.length > 0) {
+            const liveNormalized = cloudTemplates.map(normalizeCropTemplate);
+            setActiveCropTemplates(liveNormalized);
+            try {
+              localStorage.setItem("khetivo_admin_crops", JSON.stringify(liveNormalized));
+            } catch {}
+          }
 
           // 1. Process Live Crops
           const allCropsList: FarmCrop[] = (cloudCrops || []).map((c: any) => ({
@@ -1635,8 +1762,8 @@ export default function DashboardPage() {
       }
     } catch {}
 
-    // 2. Load crop templates from admin
-    const loadAdminCrops = () => {
+    // 2. Load crop templates from Appwrite Cloud & admin local storage
+    const loadAdminCrops = async () => {
       try {
         const saved = localStorage.getItem("khetivo_admin_crops");
         if (saved) {
@@ -1644,12 +1771,20 @@ export default function DashboardPage() {
           if (Array.isArray(parsed) && parsed.length > 0) {
             const normalized = parsed.map(normalizeCropTemplate);
             setActiveCropTemplates(normalized);
-            return;
           }
         }
-        setActiveCropTemplates(CROP_TEMPLATES);
+
+        // Always check live Appwrite Cloud for newly published templates
+        const liveTmpls = await syncCropTemplatesFromAppwrite();
+        if (liveTmpls && Array.isArray(liveTmpls) && liveTmpls.length > 0) {
+          const liveNormalized = liveTmpls.map(normalizeCropTemplate);
+          setActiveCropTemplates(liveNormalized);
+          try {
+            localStorage.setItem("khetivo_admin_crops", JSON.stringify(liveNormalized));
+          } catch {}
+        }
       } catch {
-        setActiveCropTemplates(CROP_TEMPLATES);
+        // Safe fallback
       }
     };
 
@@ -1671,10 +1806,16 @@ export default function DashboardPage() {
       }
     };
 
+    const handleCustomCropsUpdate = () => {
+      loadAdminCrops();
+    };
+
     window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("khetivo_crops_updated", handleCustomCropsUpdate);
     return () => {
       unsubscribeRealtime();
       window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("khetivo_crops_updated", handleCustomCropsUpdate);
     };
   }, []);
 
@@ -2693,17 +2834,175 @@ export default function DashboardPage() {
   const [activePlanId, setActivePlanId] = useState<string>("enterprise");
   const [invoices, setInvoices] = useState<BillingInvoice[]>(INITIAL_INVOICES);
   const [subscriptionToast, setSubscriptionToast] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [selectedInvoiceForModal, setSelectedInvoiceForModal] = useState<BillingInvoice | null>(null);
 
-  const handleSelectPlan = (planId: string) => {
-    setActivePlanId(planId);
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (typeof window !== "undefined" && window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+      if (existingScript) {
+        existingScript.addEventListener("load", () => resolve(true));
+        existingScript.addEventListener("error", () => resolve(false));
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleSelectPlan = async (planId: string) => {
     const chosenPlan = SUBSCRIPTION_PLANS.find((p) => p.id === planId);
-    setSubscriptionToast(`Subscription plan updated to ${chosenPlan?.name || planId}.`);
-    setTimeout(() => setSubscriptionToast(null), 4000);
+    if (!chosenPlan) return;
+
+    // Free plan downgrade / selection
+    if (chosenPlan.id === "starter" || (billingCycle === "annual" ? chosenPlan.annualPrice : chosenPlan.monthlyPrice) === 0) {
+      setActivePlanId("starter");
+      setSubscriptionToast("Switched to Kisan Starter Free tier.");
+      try {
+        await updateSubscriptionInAppwrite({
+          planTier: "starter",
+          maxAcres: 5,
+          annualFee: 0,
+          paymentMethod: "Free Tier",
+        });
+      } catch (e) {
+        console.warn("Could not sync free tier:", e);
+      }
+      setTimeout(() => setSubscriptionToast(null), 4000);
+      return;
+    }
+
+    // Paid Plan via Razorpay Checkout
+    const planPrice = billingCycle === "annual" ? chosenPlan.annualPrice : chosenPlan.monthlyPrice;
+    setIsProcessingPayment(true);
+    setSubscriptionToast(`Initializing secure payment for ${chosenPlan.name}...`);
+
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded || !window.Razorpay) {
+        alert("Failed to load Razorpay payment SDK. Please check your internet connection and try again.");
+        setIsProcessingPayment(false);
+        setSubscriptionToast(null);
+        return;
+      }
+
+      const uid = getCurrentUserId() || "usr_farmer_default";
+      const orderRes = await fetch("/api/razorpay/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: planPrice,
+          currency: "INR",
+          planId: chosenPlan.id,
+          billingCycle,
+          userId: uid,
+        }),
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderData.success || !orderData.orderId) {
+        alert(orderData.message || "Failed to create payment order with Razorpay.");
+        setIsProcessingPayment(false);
+        setSubscriptionToast(null);
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_U2pWJ8lM7zk2AU",
+        amount: orderData.amount,
+        currency: orderData.currency || "INR",
+        name: "Khetivo Precision Agriculture",
+        description: `${chosenPlan.name} (${billingCycle === "annual" ? "Annual License" : "Monthly License"})`,
+        image: "/logo-icon.png",
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          setSubscriptionToast("Payment authorized! Verifying and generating tax invoice...");
+          try {
+            const verifyRes = await fetch("/api/razorpay/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                planId: chosenPlan.id,
+                billingCycle,
+                userId: uid,
+                amount: planPrice,
+                maxAcres: chosenPlan.id === "enterprise" ? 50 : 25,
+                farmerName: settingsFarmerName || "Valued Farmer",
+                userEmail: settingsEmail || "farmer@khetivo.com",
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              setActivePlanId(chosenPlan.id);
+              const newInvoice: BillingInvoice = {
+                id: verifyData.invoice?.$id || `inv-${Date.now()}`,
+                invoiceNo: verifyData.invoice?.invoiceNo || `KH-RZP-${response.razorpay_payment_id.slice(-6)}`,
+                date: new Date().toLocaleDateString("en-IN"),
+                period: billingCycle === "annual" ? "Annual License (1 Year)" : "Monthly License (1 Month)",
+                planName: chosenPlan.name,
+                amount: planPrice,
+                paymentMethod: `Razorpay (${response.razorpay_payment_id.slice(-6)})`,
+                status: "Paid",
+              };
+
+              setInvoices((prev) => [newInvoice, ...prev]);
+              setSelectedInvoiceForModal(newInvoice);
+              setSubscriptionToast(`Payment Successful! Upgraded to ${chosenPlan.name}.`);
+            } else {
+              alert(verifyData.message || "Payment signature verification failed.");
+            }
+          } catch (vErr: any) {
+            console.error("Payment verification network error:", vErr);
+            alert("Error verifying payment with server. Please contact support.");
+          } finally {
+            setIsProcessingPayment(false);
+          }
+        },
+        prefill: {
+          name: settingsFarmerName || "Khetivo Farmer",
+          email: settingsEmail || "farmer@khetivo.com",
+          contact: settingsPhone || "+919814054321",
+        },
+        theme: {
+          color: "#0C4B32",
+        },
+        modal: {
+          ondismiss: function () {
+            setIsProcessingPayment(false);
+            setSubscriptionToast(null);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (failResp: any) {
+        setIsProcessingPayment(false);
+        setSubscriptionToast(null);
+        alert(`Payment Failed: ${failResp.error?.description || "Transaction cancelled or failed"}`);
+      });
+      rzp.open();
+    } catch (err: any) {
+      console.error("Razorpay initiation error:", err);
+      setIsProcessingPayment(false);
+      setSubscriptionToast(null);
+      alert("Unable to open Razorpay checkout: " + (err.message || "Unknown error"));
+    }
   };
 
   const handleDownloadInvoice = (inv: BillingInvoice) => {
-    setSubscriptionToast(`Invoice ${inv.invoiceNo} receipt generated and downloaded.`);
-    setTimeout(() => setSubscriptionToast(null), 4000);
+    setSelectedInvoiceForModal(inv);
   };
 
   // ==========================================
@@ -3120,6 +3419,7 @@ export default function DashboardPage() {
       confirmText: "Yes, Remove Member",
       onConfirm: () => {
         setTeamMembers((prev) => prev.filter((m) => m.id !== id));
+        deleteTeamMemberInAppwrite(id);
       },
     });
   };
@@ -4236,6 +4536,84 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
+                {/* 1.2 STATS & FINANCIAL SUMMARY WIDGET (Top Placement) */}
+                <div className="bg-white rounded-2xl border border-[#E5ECE7] p-5 shadow-xs space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Receipt className="w-4 h-4 text-[#0C4B32]" />
+                      <h3 className="text-base font-bold text-[#26352D]">
+                        Stats
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("expenses")}
+                      className="text-xs font-semibold text-[#0C4B32] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>View Ledger</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Clean 3-Metric Summary Strip */}
+                  <div className="grid grid-cols-3 gap-2 text-center py-2.5 px-3 rounded-xl bg-[#F8FAF8] border border-[#E5ECE7]">
+                    <div>
+                      <div className="text-xs text-[#55685D]">Production</div>
+                      <div className="text-sm font-bold text-emerald-700 mt-0.5">
+                        +₹{totalProduction.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+                    <div className="border-x border-[#E5ECE7]">
+                      <div className="text-xs text-[#55685D]">Losses</div>
+                      <div className="text-sm font-bold text-amber-700 mt-0.5">
+                        -₹{totalLosses.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-[#55685D]">Expenses</div>
+                      <div className="text-sm font-bold text-red-600 mt-0.5">
+                        -₹{totalExpenses.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clean Recent Entry List */}
+                  {farmScopedTransactions.length > 0 && (
+                    <div className="divide-y divide-[#E5ECE7] text-xs">
+                      {farmScopedTransactions.slice(0, 1).map((tx) => (
+                        <div key={tx.id} className="py-2.5 flex items-center justify-between gap-3">
+                          <div className="truncate min-w-0">
+                            <span className="font-semibold text-[#26352D] truncate block text-sm">{tx.title}</span>
+                            <span className="text-xs text-[#55685D]">{tx.date} • {tx.category}</span>
+                          </div>
+                          <span className={`text-sm font-bold shrink-0 ${
+                            tx.type === "production" ? "text-emerald-700" : tx.type === "loss" ? "text-amber-700" : "text-red-600"
+                          }`}>
+                            {tx.type === "production" ? "+" : "-"}₹{tx.amount.toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Card Footer: Net Realization & Record Entry CTA */}
+                  <div className="pt-1 flex items-center justify-between text-xs border-t border-[#E5ECE7]">
+                    <span className="text-xs text-[#55685D]">
+                      Net: <strong className={`text-sm font-bold ${netRealization >= 0 ? "text-[#0C4B32]" : "text-red-600"}`}>
+                        {netRealization >= 0 ? "+" : ""}₹{netRealization.toLocaleString("en-IN")}
+                      </strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenRecordModal("production")}
+                      className="text-xs font-semibold text-[#0C4B32] hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Record Entry</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* 1.5 ACTIVE ADVISORY NOTICE (Simple & Sober) */}
                 {activeAdminBroadcasts.length > 0 && (() => {
                   const urgent = activeAdminBroadcasts.find((b: any) => b.priority === "High / Emergency") || activeAdminBroadcasts[0];
@@ -4567,80 +4945,6 @@ export default function DashboardPage() {
                             );
                           })
                         )}
-                      </div>
-                    </div>
-
-                    {/* PRODUCTION, LOSSES & EXPENSES (Simple & Sober) */}
-                    <div className="bg-white rounded-2xl border border-[#E5ECE7] p-5 shadow-xs space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Receipt className="w-4 h-4 text-[#0C4B32]" />
-                          <h3 className="text-sm font-bold text-[#26352D]">
-                            Stats
-                          </h3>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab("expenses")}
-                          className="text-xs font-semibold text-[#0C4B32] hover:underline cursor-pointer"
-                        >
-                          View Ledger →
-                        </button>
-                      </div>
-
-                      {/* Clean 3-Metric Summary Strip */}
-                      <div className="grid grid-cols-3 gap-2 text-xs text-center py-2 px-3 rounded-xl bg-[#F8FAF8] border border-[#E5ECE7]">
-                        <div>
-                          <div className="text-[11px] text-[#55685D]">Production</div>
-                          <div className="font-bold text-emerald-700 mt-0.5">
-                            +₹{totalProduction.toLocaleString("en-IN")}
-                          </div>
-                        </div>
-                        <div className="border-x border-[#E5ECE7]">
-                          <div className="text-[11px] text-[#55685D]">Losses</div>
-                          <div className="font-bold text-amber-700 mt-0.5">
-                            -₹{totalLosses.toLocaleString("en-IN")}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[11px] text-[#55685D]">Expenses</div>
-                          <div className="font-bold text-red-600 mt-0.5">
-                            -₹{totalExpenses.toLocaleString("en-IN")}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Clean 2-item Recent List */}
-                      <div className="divide-y divide-[#E5ECE7] text-xs">
-                        {farmScopedTransactions.slice(0, 2).map((tx) => (
-                          <div key={tx.id} className="py-2 flex items-center justify-between gap-3">
-                            <div className="truncate min-w-0">
-                              <span className="font-medium text-[#26352D] truncate block">{tx.title}</span>
-                              <span className="text-[11px] text-[#55685D]">{tx.date} • {tx.category}</span>
-                            </div>
-                            <span className={`font-semibold shrink-0 ${
-                              tx.type === "production" ? "text-emerald-700" : tx.type === "loss" ? "text-amber-700" : "text-red-600"
-                            }`}>
-                              {tx.type === "production" ? "+" : "-"}₹{tx.amount.toLocaleString("en-IN")}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="pt-1 flex items-center justify-between text-xs">
-                        <span className="text-[11px] text-[#55685D]">
-                          Net: <strong className={netRealization >= 0 ? "text-[#0C4B32]" : "text-red-600"}>
-                            {netRealization >= 0 ? "+" : ""}₹{netRealization.toLocaleString("en-IN")}
-                          </strong>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenRecordModal("production")}
-                          className="text-xs font-semibold text-[#0C4B32] hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>Record Entry</span>
-                        </button>
                       </div>
                     </div>
 
@@ -5046,6 +5350,130 @@ export default function DashboardPage() {
                     </div>
                   );
                 })()}
+
+                {/* Available Crop Master Templates Section */}
+                <div className="bg-white p-5 rounded-2xl border border-[#E5ECE7] shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5ECE7]">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#26352D] flex items-center gap-2">
+                        <Sprout className="w-4 h-4 text-[#0C4B32]" />
+                        <span>Agronomy Crop Templates</span>
+                        <span className="text-[11px] font-semibold bg-[#E7F3EB] text-[#0C4B32] px-2 py-0.5 rounded-full">
+                          {activeCropTemplates.length} Available
+                        </span>
+                      </h3>
+                      <p className="text-xs text-[#55685D] mt-0.5">
+                        University-verified crop packages and advisory timelines published by the Agronomist Admin team.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewCropFarmId(isAllFarms ? (farms[0]?.id || "farm-1") : currentFarm.id);
+                        setAddCropModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#E7F3EB] text-[#0C4B32] border border-[#C6E2D0] hover:bg-[#D4EBDC] transition-colors text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer shadow-2xs shrink-0"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Plant from Template</span>
+                    </button>
+                  </div>
+
+                  {activeCropTemplates.length === 0 ? (
+                    <div className="p-6 rounded-xl border border-dashed border-[#DCE6DE] bg-[#F8FAF8] text-center space-y-1.5">
+                      <p className="text-xs font-semibold text-[#26352D]">No Crop Templates Configured Yet</p>
+                      <p className="text-xs text-[#55685D]">
+                        Templates created in the Admin Portal will immediately appear here for all farmers.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                      {activeCropTemplates.map((tmpl) => (
+                        <div
+                          key={tmpl.id}
+                          className="p-4 rounded-xl border border-[#E5ECE7] bg-[#FBFDFB] hover:border-[#0C4B32]/40 hover:bg-white transition-all space-y-3 flex flex-col justify-between"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <h4 className="text-xs font-bold text-[#26352D]">
+                                  {tmpl.cropName || tmpl.name}
+                                </h4>
+                                <span className="text-[11px] text-[#55685D] block">
+                                  Variety: <strong className="text-[#0C4B32]">{tmpl.variety || tmpl.varieties?.[0]}</strong>
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E7F3EB] text-[#0C4B32] border border-[#C6E2D0] shrink-0">
+                                {tmpl.season}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-[11px] text-[#55685D] bg-[#F4F8F4] p-2 rounded-lg border border-[#DCE6DE]/60">
+                              <div>
+                                <span className="text-[10px] text-[#889B90] block">Duration</span>
+                                <span className="font-semibold text-[#26352D]">{tmpl.duration || `${tmpl.durationDays} Days`}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-[#889B90] block">Target Yield</span>
+                                <span className="font-semibold text-[#26352D]">{tmpl.targetYieldQuintals || "Standard"}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
+                              <span className="px-2 py-0.5 rounded-md bg-white border border-[#DCE6DE] text-[#55685D]">
+                                {tmpl.growthTimeline?.length || 0} Stages
+                              </span>
+                              {tmpl.dos && tmpl.dos.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                  {tmpl.dos.length} Do&apos;s
+                                </span>
+                              )}
+                              {tmpl.donts && tmpl.donts.length > 0 && (
+                                <span className="px-2 py-0.5 rounded-md bg-red-50 text-red-800 border border-red-200">
+                                  {tmpl.donts.length} Don&apos;ts
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="pt-2.5 border-t border-[#E5ECE7] flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCropTemplateModal(tmpl)}
+                              className="text-[11px] font-semibold text-[#0C4B32] hover:underline cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View Protocol</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewCropTemplateId(tmpl.id);
+                                const defVar = tmpl.variety || (tmpl.varieties && tmpl.varieties[0]) || "Standard Regional";
+                                setNewCropVariety(defVar);
+                                const dur = tmpl.durationDays || parseInt(tmpl.duration) || 120;
+                                setNewCropTotalDays(dur);
+                                if (tmpl.growthTimeline && tmpl.growthTimeline.length > 0) {
+                                  setNewCropStage(tmpl.growthTimeline[0].stageName);
+                                  setNewCropStageStep(1);
+                                  setNewCropCurrentDay(tmpl.growthTimeline[0].startDay || 1);
+                                }
+                                setNewCropFarmId(isAllFarms ? (farms[0]?.id || "farm-1") : currentFarm.id);
+                                setAddCropModalOpen(true);
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-[#0C4B32] text-white text-[11px] font-medium hover:bg-[#093826] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-2xs"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>Add to Farm</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -9179,10 +9607,18 @@ export default function DashboardPage() {
                             ) : (
                               <button
                                 type="button"
+                                disabled={isProcessingPayment}
                                 onClick={() => handleSelectPlan(plan.id)}
-                                className="w-full py-2 text-xs font-semibold rounded-xl bg-white hover:bg-[#F4F8F4] text-[#0C4B32] border border-[#0C4B32] transition-colors cursor-pointer"
+                                className="w-full py-2 text-xs font-semibold rounded-xl bg-white hover:bg-[#F4F8F4] text-[#0C4B32] border border-[#0C4B32] transition-colors cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
                               >
-                                Select Plan
+                                {isProcessingPayment ? (
+                                  <>
+                                    <div className="w-3.5 h-3.5 border-2 border-[#0C4B32]/30 border-t-[#0C4B32] rounded-full animate-spin" />
+                                    <span>Processing...</span>
+                                  </>
+                                ) : (
+                                  <span>Select Plan</span>
+                                )}
                               </button>
                             )}
                           </div>
@@ -9915,6 +10351,230 @@ export default function DashboardPage() {
           </button>
         </nav>
       </div>
+
+      {/* MODAL: VIEW CROP MASTER TIMELINE & PROTOCOL */}
+      {selectedCropTemplateModal && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+          onClick={() => setSelectedCropTemplateModal(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl border border-[#DCE6DE] shadow-2xl max-w-3xl w-full p-5 sm:p-6 space-y-4 my-8 animate-in fade-in zoom-in-95 text-xs max-h-[92vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between pb-3 border-b border-[#E5ECE7]">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-bold text-[#26352D] flex items-center gap-1.5">
+                    <Sprout className="w-5 h-5 text-[#0C4B32]" />
+                    <span>{selectedCropTemplateModal.cropName || selectedCropTemplateModal.name}</span>
+                  </h3>
+                  {selectedCropTemplateModal.season && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E7F3EB] text-[#0C4B32] border border-[#C6E2D0]">
+                      {selectedCropTemplateModal.season} Season
+                    </span>
+                  )}
+                  {selectedCropTemplateModal.badge && (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-[#F4F8F4] text-[#55685D] border border-[#DCE6DE]">
+                      {selectedCropTemplateModal.badge}
+                    </span>
+                  )}
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    {selectedCropTemplateModal.durationDays || selectedCropTemplateModal.duration} Days Duration
+                  </span>
+                </div>
+                <p className="text-xs text-[#55685D] mt-1">
+                  Main Variety: <strong className="text-[#0C4B32]">{selectedCropTemplateModal.variety || selectedCropTemplateModal.varieties?.[0]}</strong> • Sowing: {selectedCropTemplateModal.sowingWindow} • Expected Yield: {selectedCropTemplateModal.targetYieldQuintals}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedCropTemplateModal(null)}
+                className="p-1.5 text-[#889B90] hover:text-[#26352D] rounded-xl hover:bg-[#F4F8F4] transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Agronomic Snapshot */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-[#F8FAF8] rounded-xl border border-[#E5ECE7]">
+              <div>
+                <span className="text-[10px] text-[#889B90] uppercase tracking-wider font-bold block">
+                  Soil Type
+                </span>
+                <span className="text-xs font-semibold text-[#26352D] truncate block">
+                  {selectedCropTemplateModal.defaultSoil || "Alluvial Loam"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-[#889B90] uppercase tracking-wider font-bold block">
+                  Irrigation Method
+                </span>
+                <span className="text-xs font-semibold text-[#26352D] truncate block">
+                  {selectedCropTemplateModal.defaultIrrigation || "Drip / Micro-Irrigation"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-[#889B90] uppercase tracking-wider font-bold block">
+                  Low Moisture Alert
+                </span>
+                <span className="text-xs font-bold text-[#0C4B32]">
+                  Below {selectedCropTemplateModal.irrigationThresholdMoisture}%
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-[#889B90] uppercase tracking-wider font-bold block">
+                  Critical Water Stages
+                </span>
+                <span className="text-xs font-semibold text-[#26352D]">
+                  {selectedCropTemplateModal.criticalIrrigationStages.length} Stages Identified
+                </span>
+              </div>
+            </div>
+
+            {/* Growth Stage Timeline Breakdown */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-[#0C4B32] flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-[#278449]" />
+                  <span>Growth Stages &amp; Schedule</span>
+                </h4>
+                <span className="text-[11px] text-[#55685D]">
+                  {selectedCropTemplateModal.growthTimeline?.length || 0} Stages Configured
+                </span>
+              </div>
+
+              {selectedCropTemplateModal.growthTimeline && selectedCropTemplateModal.growthTimeline.length > 0 ? (
+                <div className="space-y-2">
+                  {selectedCropTemplateModal.growthTimeline.map((stage, idx) => (
+                    <div
+                      key={stage.id || idx}
+                      className="p-3 rounded-xl border border-[#E5ECE7] bg-[#FBFDFB] hover:border-[#278449]/50 transition-colors space-y-1.5"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-[#0C4B32] text-white flex items-center justify-center text-[10px] font-bold">
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs font-bold text-[#26352D]">{stage.stageName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-[#55685D] bg-[#F4F8F4] px-2 py-0.5 rounded-lg border border-[#DCE6DE]">
+                            Days {stage.startDay} – {stage.endDay}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                              stage.irrigationRequirement === "Critical"
+                                ? "bg-red-50 text-red-800 border border-red-200"
+                                : stage.irrigationRequirement === "Moderate"
+                                ? "bg-blue-50 text-blue-800 border border-blue-200"
+                                : stage.irrigationRequirement === "Withhold"
+                                ? "bg-amber-50 text-amber-800 border border-amber-200"
+                                : "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            }`}
+                          >
+                            <Droplets className="w-3 h-3" />
+                            <span>{stage.irrigationRequirement} Water</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {stage.recommendedActivity && (
+                        <p className="text-[11px] text-[#55685D] pl-7 leading-relaxed">
+                          {stage.recommendedActivity}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-[#889B90] italic">No growth stage timeline recorded for this crop.</p>
+              )}
+            </div>
+
+            {/* Recommended Do's and Don'ts */}
+            {((selectedCropTemplateModal.dos && selectedCropTemplateModal.dos.length > 0) || (selectedCropTemplateModal.donts && selectedCropTemplateModal.donts.length > 0)) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2">
+                  <span className="text-[11px] font-bold text-emerald-900 flex items-center gap-1.5 uppercase tracking-wide">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                    <span>Recommended Do&apos;s ({selectedCropTemplateModal.dos?.length || 0})</span>
+                  </span>
+                  <ul className="space-y-1 text-[11px] text-[#26352D]">
+                    {selectedCropTemplateModal.dos?.map((item, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-emerald-700 font-bold shrink-0">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="p-3 rounded-xl bg-red-50/70 border border-red-200 space-y-2">
+                  <span className="text-[11px] font-bold text-red-900 flex items-center gap-1.5 uppercase tracking-wide">
+                    <AlertTriangle className="w-3.5 h-3.5 text-red-700 shrink-0" />
+                    <span>Things to Avoid (Don&apos;ts) ({selectedCropTemplateModal.donts?.length || 0})</span>
+                  </span>
+                  <ul className="space-y-1 text-[11px] text-[#26352D]">
+                    {selectedCropTemplateModal.donts?.map((item, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="text-red-700 font-bold shrink-0">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Disease and PAU Prescription */}
+            <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-200 space-y-1.5">
+              <span className="text-[11px] font-bold text-amber-900 block">
+                Disease Guide &amp; Recommended Spray:
+              </span>
+              <p className="text-[11px] text-[#55685D]">
+                <strong>Risks:</strong> {selectedCropTemplateModal.majorDiseases.join(", ")}
+              </p>
+              <p className="text-[11px] font-mono text-[#0C4B32] bg-white/70 p-2 rounded-lg border border-amber-200/60">
+                {selectedCropTemplateModal.pauFungicidePrescription}
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-[#E5ECE7] flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const tmpl = selectedCropTemplateModal;
+                  setSelectedCropTemplateModal(null);
+                  setNewCropTemplateId(tmpl.id);
+                  const defVar = tmpl.variety || (tmpl.varieties && tmpl.varieties[0]) || "Standard Regional";
+                  setNewCropVariety(defVar);
+                  const dur = tmpl.durationDays || parseInt(tmpl.duration) || 120;
+                  setNewCropTotalDays(dur);
+                  if (tmpl.growthTimeline && tmpl.growthTimeline.length > 0) {
+                    setNewCropStage(tmpl.growthTimeline[0].stageName);
+                    setNewCropStageStep(1);
+                    setNewCropCurrentDay(tmpl.growthTimeline[0].startDay || 1);
+                  }
+                  setNewCropFarmId(isAllFarms ? (farms[0]?.id || "farm-1") : currentFarm.id);
+                  setAddCropModalOpen(true);
+                }}
+                className="px-4 py-2 text-xs font-semibold rounded-xl text-white bg-[#0C4B32] hover:bg-[#093826] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Plant this Crop</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedCropTemplateModal(null)}
+                className="px-4 py-2 rounded-xl border border-[#DCE6DE] text-xs font-medium text-[#55685D] hover:bg-[#F4F8F4] cursor-pointer"
+              >
+                Close Guide
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FARM SETUP FLOW MODAL (TRIGGERED ON "ADD FARM") */}
       {setupModalOpen && (

@@ -3,16 +3,17 @@ import { APPWRITE_CONFIG } from "@/lib/appwriteConfig";
 import { getServerDatabases } from "@/lib/appwriteServer";
 import { ID, Query } from "node-appwrite";
 
-
 // GET: List team members and designations
 export async function GET(req: NextRequest) {
   try {
     const databases = getServerDatabases();
     const { searchParams } = new URL(req.url);
     const farmId = searchParams.get("farmId");
+    const userId = searchParams.get("userId");
 
     const memberQueries: string[] = [Query.limit(100)];
     if (farmId && farmId !== "all") memberQueries.push(Query.equal("farmId", farmId));
+    if (userId) memberQueries.push(Query.equal("userId", userId));
 
     const [membersRes, designationsRes] = await Promise.all([
       databases.listDocuments(
@@ -58,38 +59,42 @@ export async function POST(req: NextRequest) {
         {
           title: title.trim(),
           description,
-          allowedModules: Array.isArray(allowedModules) ? allowedModules : [],
+          allowedModules,
           color,
-          isSystemDefault: Boolean(isSystemDefault),
+          isSystemDefault,
         }
       );
       return NextResponse.json({ success: true, designation: desDoc });
     }
 
-    // Default: create team member
+    // Action: create team member
     const {
-      farmId = "default_farm",
-      userId = "usr_default_farmer",
+      farmId = "all",
       name,
       phone,
       email = "",
       roleCategory = "worker",
       designationTitle = "Farm Worker",
-      status = "Active",
-      assignedParcels = "",
+      designationId = "des-custom",
+      userId = "usr_default_farmer",
       allowedModules = [],
-      joinedDate = new Date().toISOString(),
       notes = "",
     } = body;
 
-    if (!name || !phone) {
+    if (!name || !name.trim()) {
       return NextResponse.json(
-        { success: false, message: "Member name and phone number are required" },
+        { success: false, message: "Member name is required" },
+        { status: 400 }
+      );
+    }
+    if (!phone || !phone.trim()) {
+      return NextResponse.json(
+        { success: false, message: "Member phone number is required" },
         { status: 400 }
       );
     }
 
-    const doc = await databases.createDocument(
+    const memberDoc = await databases.createDocument(
       APPWRITE_CONFIG.DATABASE_ID,
       APPWRITE_CONFIG.COLLECTIONS.TEAM_MEMBERS,
       ID.unique(),
@@ -98,26 +103,55 @@ export async function POST(req: NextRequest) {
         userId,
         name: name.trim(),
         phone: phone.trim(),
-        email: email ? email.trim() : null,
-        roleCategory: roleCategory || "worker",
-        designationTitle: designationTitle || "Operator",
-        status: status || "Active",
-        assignedParcels: assignedParcels || "",
+        email: email ? email.trim() : "",
+        roleCategory,
+        designationTitle,
+        status: "Active",
         allowedModules: Array.isArray(allowedModules) ? allowedModules : [],
-        joinedDate: new Date(joinedDate).toISOString(),
+        joinedDate: new Date().toISOString(),
         notes: notes || "",
       }
     );
 
     return NextResponse.json({
       success: true,
-      message: "Team member added to Appwrite",
-      member: doc,
+      message: "Team member registered in Appwrite",
+      member: memberDoc,
     });
   } catch (error: any) {
     console.error("[Appwrite create team error]:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to save team member" },
+      { success: false, message: error.message || "Failed to create team record" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Delete team member
+export async function DELETE(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, message: "Member ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await databases.deleteDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.TEAM_MEMBERS,
+      id
+    );
+
+    return NextResponse.json({ success: true, message: "Team member deleted" });
+  } catch (error: any) {
+    console.error("[Appwrite delete team error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to delete team member" },
       { status: 500 }
     );
   }

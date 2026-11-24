@@ -5,6 +5,7 @@
  */
 
 import { getClientAppwrite, APPWRITE_CONFIG } from "./appwriteConfig";
+import { getCurrentUserId } from "./currentSession";
 
 export interface CloudFarm {
   $id?: string;
@@ -103,6 +104,7 @@ export function subscribeToDatabaseChanges(callback: (event: any) => void): () =
     const channels = [
       `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.FARMS}.documents`,
       `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.FARM_CROPS}.documents`,
+      `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.CROP_TEMPLATES}.documents`,
       `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.TASKS}.documents`,
       `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.INVENTORY_ITEMS}.documents`,
       `databases.${APPWRITE_CONFIG.DATABASE_ID}.collections.${APPWRITE_CONFIG.COLLECTIONS.FARM_STORES}.documents`,
@@ -120,7 +122,7 @@ export function subscribeToDatabaseChanges(callback: (event: any) => void): () =
 
     return unsubscribe;
   } catch (err) {
-    console.warn("[Appwrite Realtime] Subscription error:", err);
+    console.warn("[Appwrite Realtime] Subscription not available:", err);
     return () => {};
   }
 }
@@ -155,7 +157,8 @@ export async function checkAppwriteHealth(): Promise<{
 // ---------------------------------------------------------------------------
 export async function syncFarmsFromAppwrite(userId?: string): Promise<CloudFarm[] | null> {
   try {
-    const url = userId ? `/api/appwrite/farms?userId=${encodeURIComponent(userId)}` : "/api/appwrite/farms";
+    const uid = userId || getCurrentUserId();
+    const url = uid ? `/api/appwrite/farms?userId=${encodeURIComponent(uid)}` : "/api/appwrite/farms";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -168,10 +171,11 @@ export async function syncFarmsFromAppwrite(userId?: string): Promise<CloudFarm[
 
 export async function createFarmInAppwrite(farm: CloudFarm): Promise<CloudFarm | null> {
   try {
+    const uid = farm.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/farms", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(farm),
+      body: JSON.stringify({ ...farm, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.farm : null;
@@ -196,9 +200,15 @@ export async function deleteFarmInAppwrite(farmId: string): Promise<boolean> {
 // ---------------------------------------------------------------------------
 // Tasks
 // ---------------------------------------------------------------------------
-export async function syncTasksFromAppwrite(farmId?: string): Promise<CloudTask[] | null> {
+export async function syncTasksFromAppwrite(farmId?: string, userId?: string): Promise<CloudTask[] | null> {
   try {
-    const url = farmId && farmId !== "all" ? `/api/appwrite/tasks?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/tasks";
+    const uid = userId || getCurrentUserId();
+    const params = new URLSearchParams();
+    if (farmId && farmId !== "all") params.append("farmId", farmId);
+    if (uid) params.append("userId", uid);
+
+    const queryString = params.toString();
+    const url = queryString ? `/api/appwrite/tasks?${queryString}` : "/api/appwrite/tasks";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -211,10 +221,11 @@ export async function syncTasksFromAppwrite(farmId?: string): Promise<CloudTask[
 
 export async function createTaskInAppwrite(task: CloudTask): Promise<CloudTask | null> {
   try {
+    const uid = task.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(task),
+      body: JSON.stringify({ ...task, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.task : null;
@@ -253,9 +264,15 @@ export async function deleteTaskFromAppwrite(taskId: string): Promise<boolean> {
 // ---------------------------------------------------------------------------
 // Crops
 // ---------------------------------------------------------------------------
-export async function syncCropsFromAppwrite(farmId?: string): Promise<CloudCrop[] | null> {
+export async function syncCropsFromAppwrite(farmId?: string, userId?: string): Promise<CloudCrop[] | null> {
   try {
-    const url = farmId && farmId !== "all" ? `/api/appwrite/crops?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/crops";
+    const uid = userId || getCurrentUserId();
+    const params = new URLSearchParams();
+    if (farmId && farmId !== "all") params.append("farmId", farmId);
+    if (uid) params.append("userId", uid);
+
+    const queryString = params.toString();
+    const url = queryString ? `/api/appwrite/crops?${queryString}` : "/api/appwrite/crops";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -268,10 +285,11 @@ export async function syncCropsFromAppwrite(farmId?: string): Promise<CloudCrop[
 
 export async function createCropInAppwrite(crop: CloudCrop): Promise<CloudCrop | null> {
   try {
+    const uid = crop.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/crops", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(crop),
+      body: JSON.stringify({ ...crop, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.crop : null;
@@ -281,12 +299,30 @@ export async function createCropInAppwrite(crop: CloudCrop): Promise<CloudCrop |
   }
 }
 
+export async function deleteCropInAppwrite(cropId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/appwrite/crops?cropId=${encodeURIComponent(cropId)}`, {
+      method: "DELETE",
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error deleting crop:", err);
+    return false;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Inventory & Stores
 // ---------------------------------------------------------------------------
-export async function syncInventoryFromAppwrite(farmId?: string): Promise<{ items: CloudInventoryItem[]; stores: any[] } | null> {
+export async function syncInventoryFromAppwrite(farmId?: string, userId?: string): Promise<{ items: CloudInventoryItem[]; stores: any[] } | null> {
   try {
-    const url = farmId && farmId !== "all" ? `/api/appwrite/inventory?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/inventory";
+    const uid = userId || getCurrentUserId();
+    const params = new URLSearchParams();
+    if (farmId && farmId !== "all") params.append("farmId", farmId);
+    if (uid) params.append("userId", uid);
+
+    const queryString = params.toString();
+    const url = queryString ? `/api/appwrite/inventory?${queryString}` : "/api/appwrite/inventory";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -299,10 +335,11 @@ export async function syncInventoryFromAppwrite(farmId?: string): Promise<{ item
 
 export async function createInventoryItemInAppwrite(item: CloudInventoryItem): Promise<CloudInventoryItem | null> {
   try {
+    const uid = item.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/inventory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(item),
+      body: JSON.stringify({ ...item, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.item : null;
@@ -312,12 +349,13 @@ export async function createInventoryItemInAppwrite(item: CloudInventoryItem): P
   }
 }
 
-export async function createFarmStoreInAppwrite(store: { farmId: string; name: string; type?: string; location?: string; notes?: string }): Promise<any | null> {
+export async function createFarmStoreInAppwrite(store: { farmId: string; name: string; type?: string; location?: string; notes?: string; userId?: string }): Promise<any | null> {
   try {
+    const uid = store.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/inventory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "store", ...store }),
+      body: JSON.stringify({ action: "store", ...store, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.store : null;
@@ -335,12 +373,14 @@ export async function logUsageInAppwrite(usage: {
   purpose: string;
   crop?: string;
   appliedBy?: string;
+  userId?: string;
 }): Promise<boolean> {
   try {
+    const uid = usage.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/inventory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "usage", ...usage }),
+      body: JSON.stringify({ action: "usage", ...usage, userId: uid }),
     });
     return res.ok;
   } catch (err) {
@@ -366,9 +406,15 @@ export async function restockItemInAppwrite(itemId: string, addedQuantity: numbe
 // ---------------------------------------------------------------------------
 // Equipment
 // ---------------------------------------------------------------------------
-export async function syncEquipmentFromAppwrite(farmId?: string): Promise<{ equipment: CloudEquipment[]; issues: any[] } | null> {
+export async function syncEquipmentFromAppwrite(farmId?: string, userId?: string): Promise<{ equipment: CloudEquipment[]; issues: any[] } | null> {
   try {
-    const url = farmId && farmId !== "all" ? `/api/appwrite/equipment?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/equipment";
+    const uid = userId || getCurrentUserId();
+    const params = new URLSearchParams();
+    if (farmId && farmId !== "all") params.append("farmId", farmId);
+    if (uid) params.append("userId", uid);
+
+    const queryString = params.toString();
+    const url = queryString ? `/api/appwrite/equipment?${queryString}` : "/api/appwrite/equipment";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -381,10 +427,11 @@ export async function syncEquipmentFromAppwrite(farmId?: string): Promise<{ equi
 
 export async function createEquipmentInAppwrite(item: CloudEquipment): Promise<CloudEquipment | null> {
   try {
+    const uid = item.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/equipment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(item),
+      body: JSON.stringify({ ...item, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.equipment : null;
@@ -401,12 +448,14 @@ export async function reportEquipmentProblemInAppwrite(problem: {
   severity: string;
   description: string;
   reportedBy?: string;
+  userId?: string;
 }): Promise<boolean> {
   try {
+    const uid = problem.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/equipment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "issue", ...problem }),
+      body: JSON.stringify({ action: "issue", ...problem, userId: uid }),
     });
     return res.ok;
   } catch (err) {
@@ -420,7 +469,8 @@ export async function reportEquipmentProblemInAppwrite(problem: {
 // ---------------------------------------------------------------------------
 export async function syncSupportFromAppwrite(userId?: string): Promise<{ tickets: any[]; fieldVisits: any[] } | null> {
   try {
-    const url = userId ? `/api/appwrite/support?userId=${encodeURIComponent(userId)}` : "/api/appwrite/support";
+    const uid = userId || getCurrentUserId();
+    const url = uid ? `/api/appwrite/support?userId=${encodeURIComponent(uid)}` : "/api/appwrite/support";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -437,12 +487,14 @@ export async function createSupportTicketInAppwrite(ticket: {
   category: string;
   priority: string;
   description: string;
+  userId?: string;
 }): Promise<any | null> {
   try {
+    const uid = ticket.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/support", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(ticket),
+      body: JSON.stringify({ ...ticket, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.ticket : null;
@@ -462,12 +514,14 @@ export async function bookFieldVisitInAppwrite(visit: {
   timeSlot: string;
   tier: string;
   fee: number;
+  userId?: string;
 }): Promise<any | null> {
   try {
+    const uid = visit.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/support", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "field_visit", ...visit }),
+      body: JSON.stringify({ action: "field_visit", ...visit, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.fieldVisit : null;
@@ -480,9 +534,15 @@ export async function bookFieldVisitInAppwrite(visit: {
 // ---------------------------------------------------------------------------
 // Financial Transactions
 // ---------------------------------------------------------------------------
-export async function syncFinancialsFromAppwrite(farmId?: string): Promise<any[] | null> {
+export async function syncFinancialsFromAppwrite(farmId?: string, userId?: string): Promise<any[] | null> {
   try {
-    const url = farmId && farmId !== "all" ? `/api/appwrite/financials?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/financials";
+    const uid = userId || getCurrentUserId();
+    const params = new URLSearchParams();
+    if (farmId && farmId !== "all") params.append("farmId", farmId);
+    if (uid) params.append("userId", uid);
+
+    const queryString = params.toString();
+    const url = queryString ? `/api/appwrite/financials?${queryString}` : "/api/appwrite/financials";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -502,12 +562,14 @@ export async function createFinancialTransactionInAppwrite(tx: {
   quantity?: string;
   crop?: string;
   notes?: string;
+  userId?: string;
 }): Promise<any | null> {
   try {
+    const uid = tx.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/financials", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(tx),
+      body: JSON.stringify({ ...tx, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.transaction : null;
@@ -531,9 +593,15 @@ export async function deleteFinancialTransactionInAppwrite(id: string): Promise<
 // ---------------------------------------------------------------------------
 // Team
 // ---------------------------------------------------------------------------
-export async function syncTeamFromAppwrite(farmId?: string): Promise<{ members: any[]; designations: any[] } | null> {
+export async function syncTeamFromAppwrite(farmId?: string, userId?: string): Promise<{ members: any[]; designations: any[] } | null> {
   try {
-    const url = farmId && farmId !== "all" ? `/api/appwrite/team?farmId=${encodeURIComponent(farmId)}` : "/api/appwrite/team";
+    const uid = userId || getCurrentUserId();
+    const params = new URLSearchParams();
+    if (farmId && farmId !== "all") params.append("farmId", farmId);
+    if (uid) params.append("userId", uid);
+
+    const queryString = params.toString();
+    const url = queryString ? `/api/appwrite/team?${queryString}` : "/api/appwrite/team";
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -550,12 +618,16 @@ export async function createTeamMemberInAppwrite(member: {
   email?: string;
   roleCategory?: string;
   designationTitle?: string;
+  allowedModules?: string[];
+  userId?: string;
+  notes?: string;
 }): Promise<any | null> {
   try {
+    const uid = member.userId || getCurrentUserId();
     const res = await fetch("/api/appwrite/team", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(member),
+      body: JSON.stringify({ ...member, userId: uid }),
     });
     const data = await res.json();
     return data.success ? data.member : null;
@@ -564,12 +636,26 @@ export async function createTeamMemberInAppwrite(member: {
   }
 }
 
+export async function deleteTeamMemberInAppwrite(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/appwrite/team?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+    return !!data.success;
+  } catch (err) {
+    return false;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Invoices
 // ---------------------------------------------------------------------------
-export async function syncInvoicesFromAppwrite(): Promise<any[] | null> {
+export async function syncInvoicesFromAppwrite(userId?: string): Promise<any[] | null> {
   try {
-    const res = await fetch("/api/appwrite/invoices");
+    const uid = userId || getCurrentUserId();
+    const url = uid ? `/api/appwrite/invoices?userId=${encodeURIComponent(uid)}` : "/api/appwrite/invoices";
+    const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
     return data.invoices || [];
@@ -579,7 +665,7 @@ export async function syncInvoicesFromAppwrite(): Promise<any[] | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Advisories
+// Agronomy Advisories (Platform broadcasts - visible to all farmers)
 // ---------------------------------------------------------------------------
 export async function syncAdvisoriesFromAppwrite(): Promise<any[] | null> {
   try {
@@ -589,5 +675,104 @@ export async function syncAdvisoriesFromAppwrite(): Promise<any[] | null> {
     return data.advisories || [];
   } catch (err) {
     return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// User Subscription & Plans
+// ---------------------------------------------------------------------------
+export async function syncSubscriptionFromAppwrite(userId?: string): Promise<any | null> {
+  try {
+    const uid = userId || getCurrentUserId();
+    if (!uid) return null;
+    const res = await fetch(`/api/appwrite/subscription?userId=${encodeURIComponent(uid)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.subscription || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function deleteFarmStoreFromAppwrite(storeId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/appwrite/inventory?storeId=${encodeURIComponent(storeId)}`, {
+      method: "DELETE",
+    });
+    return res.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
+
+export async function updateSubscriptionInAppwrite(payload: {
+  userId?: string;
+  planTier: string;
+  maxAcres?: number;
+  acresAllocated?: number;
+  annualFee?: number;
+  paymentMethod?: string;
+}): Promise<any | null> {
+  try {
+    const uid = payload.userId || getCurrentUserId();
+    const res = await fetch("/api/appwrite/subscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...payload,
+        userId: uid,
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.subscription || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+
+
+// ---------------------------------------------------------------------------
+// Crop Master Templates (Shared between Admin & Farmer Dashboard)
+// ---------------------------------------------------------------------------
+export async function syncCropTemplatesFromAppwrite(): Promise<any[] | null> {
+  try {
+    const res = await fetch("/api/appwrite/crop-templates");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.templates || [];
+  } catch (err) {
+    console.warn("[AppwriteSync] Error fetching crop templates:", err);
+    return null;
+  }
+}
+
+export async function createCropTemplateInAppwrite(template: any): Promise<any | null> {
+  try {
+    const res = await fetch("/api/appwrite/crop-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(template),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.template || null;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error creating crop template:", err);
+    return null;
+  }
+}
+
+export async function deleteCropTemplateFromAppwrite(templateId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/appwrite/crop-templates?templateId=${encodeURIComponent(templateId)}`, {
+      method: "DELETE",
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error deleting crop template:", err);
+    return false;
   }
 }

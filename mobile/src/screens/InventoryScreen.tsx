@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { colors } from '../theme/colors';
 import { initialInventory, initialUsageLogs, InventoryItem, ItemUsageLog } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
+import { useAlert } from '../context/AlertContext';
 
 const INVENTORY_FARMS = [
   'Khetivo Green Acres',
@@ -64,6 +64,7 @@ interface InventoryScreenProps {
 }
 
 export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
+  const { showDeleteConfirm, showWarning, showError, showSuccess } = useAlert();
   const [items, setItems] = useState<InventoryItem[]>(initialInventory);
   const [usageLogs, setUsageLogs] = useState<ItemUsageLog[]>(initialUsageLogs);
   const [activeFilter, setActiveFilter] = useState<'all' | 'low_stock' | 'expiring' | 'usages'>('all');
@@ -127,16 +128,13 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
 
   // Handlers
   const handleDeleteItem = (id: string) => {
-    Alert.alert('Delete Item', 'Are you sure you want to remove this stock item from inventory?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          setItems((prev) => prev.filter((i) => i.id !== id));
-        },
-      },
-    ]);
+    showDeleteConfirm(
+      'Remove Inventory Item',
+      'Are you sure you want to remove this stock item from inventory? All associated usage logs will be preserved.',
+      () => {
+        setItems((prev) => prev.filter((i) => i.id !== id));
+      }
+    );
   };
 
   const handleOpenLogUsage = (item: InventoryItem) => {
@@ -150,11 +148,11 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
     if (!selectedItem) return;
     const qty = parseFloat(usageQty);
     if (isNaN(qty) || qty <= 0) {
-      Alert.alert('Invalid Quantity', 'Please enter a valid deduction quantity.');
+      showWarning('Invalid Quantity', 'Please enter a valid deduction quantity.');
       return;
     }
     if (qty > selectedItem.quantity) {
-      Alert.alert('Insufficient Stock', `Only ${selectedItem.quantity} ${selectedItem.unit} remaining in ${selectedItem.storeName}.`);
+      showError('Insufficient Stock', `Only ${selectedItem.quantity} ${selectedItem.unit} remaining in ${selectedItem.storeName}.`);
       return;
     }
 
@@ -181,7 +179,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
     };
     setUsageLogs([newLog, ...usageLogs]);
     setIsLogUsageModalOpen(false);
-    Alert.alert('Usage Recorded', `${qty} ${selectedItem.unit} deducted from ${selectedItem.name}.`);
+    showSuccess('Usage Recorded', `${qty} ${selectedItem.unit} deducted from ${selectedItem.name}.`);
   };
 
   const handleOpenRestock = (item: InventoryItem) => {
@@ -194,19 +192,19 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
     if (!selectedItem) return;
     const qty = parseFloat(restockQty);
     if (isNaN(qty) || qty <= 0) {
-      Alert.alert('Invalid Quantity', 'Please enter a valid restock quantity.');
+      showWarning('Invalid Quantity', 'Please enter a valid restock quantity.');
       return;
     }
     setItems((prev) =>
       prev.map((i) => (i.id === selectedItem.id ? { ...i, quantity: i.quantity + qty } : i))
     );
     setIsRestockModalOpen(false);
-    Alert.alert('Restocked', `Added ${qty} ${selectedItem.unit} to ${selectedItem.name}.`);
+    showSuccess('Restocked Successfully', `Added ${qty} ${selectedItem.unit} to ${selectedItem.name}.`);
   };
 
   const handleSaveNewItem = () => {
     if (!formName.trim() && !formBatch.trim()) {
-      Alert.alert('Required', 'Please enter Item Name.');
+      showWarning('Required Field', 'Please enter Item Name.');
       return;
     }
     const finalName = formName.trim() || 'Mancozeb 75% WP';
@@ -236,12 +234,12 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
     setFormName('');
     setFormQty('');
     setFormRate('');
-    Alert.alert('Item Added', `${newItem.name} added to ${newItem.storeName}.`);
+    showSuccess('Item Added', `${newItem.name} added to ${newItem.storeName}.`);
   };
 
   const handleSaveStore = () => {
     if (!newStoreName.trim()) {
-      Alert.alert('Required', 'Please enter Store Name.');
+      showWarning('Required Field', 'Please enter Store Name.');
       return;
     }
     const storeLabel = `${newStoreName.trim()} (${newStoreType})`;
@@ -260,7 +258,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
     setNewStoreName('');
     setNewStoreLocation('');
     setNewStoreNotes('');
-    Alert.alert('Store Created', `${storeLabel} has been created and assigned to ${newStoreFarm}.`);
+    showSuccess('Store Created', `${storeLabel} has been created and assigned to ${newStoreFarm}.`);
   };
 
   // Filtered Items

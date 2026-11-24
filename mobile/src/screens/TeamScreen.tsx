@@ -8,13 +8,13 @@ import {
   Linking,
   TextInput,
   Modal,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { initialWorkers, Worker } from '../data/mockData';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAlert } from '../context/AlertContext';
 
 interface TeamScreenProps {
   onBack: () => void;
@@ -81,6 +81,7 @@ const initialDesignations: Designation[] = [
 ];
 
 export const TeamScreen: React.FC<TeamScreenProps> = ({ onBack }) => {
+  const { showInfo, showWarning, showSuccess } = useAlert();
   const [workers, setWorkers] = useState<Worker[]>(initialWorkers);
   const [designations, setDesignations] = useState<Designation[]>(initialDesignations);
   const [subTab, setSubTab] = useState<'members' | 'designations'>('members');
@@ -113,21 +114,21 @@ export const TeamScreen: React.FC<TeamScreenProps> = ({ onBack }) => {
 
   const handleCall = (phone: string, name: string) => {
     Linking.openURL(`tel:${phone}`).catch(() => {
-      Alert.alert('Call', `Dialing ${name} at ${phone}`);
+      showInfo('Call Contact', `Dialing ${name} at ${phone}`);
     });
   };
 
   const handleAddMember = () => {
     if (!memberFormName.trim()) {
-      Alert.alert('Required Field', 'Please enter Full Name.');
+      showWarning('Required Field', 'Please enter Full Name.');
       return;
     }
     if (!memberFormPhone.trim() || memberFormPhone.trim() === '+91') {
-      Alert.alert('Required Field', 'Please enter Phone Number.');
+      showWarning('Required Field', 'Please enter Phone Number.');
       return;
     }
     if (!memberFormEmail.trim()) {
-      Alert.alert('Required Field', 'Please enter Email Address.');
+      showWarning('Required Field', 'Please enter Email Address.');
       return;
     }
     const des = designations.find((d) => d.id === memberFormDesignationId) || designations[0];
@@ -146,12 +147,12 @@ export const TeamScreen: React.FC<TeamScreenProps> = ({ onBack }) => {
     setMemberFormEmail('');
     setMemberFormNotes('');
     setMemberFormStatus('Active');
-    Alert.alert('Member Added', `${created.name} added as ${created.role} (${memberFormFarm}).`);
+    showSuccess('Member Added', `${created.name} added as ${created.role} (${memberFormFarm}).`);
   };
 
   const handleAddDesignation = () => {
     if (!newDesTitle.trim()) {
-      Alert.alert('Required', 'Please enter designation title.');
+      showWarning('Required Field', 'Please enter designation title.');
       return;
     }
     const created: Designation = {
@@ -165,7 +166,7 @@ export const TeamScreen: React.FC<TeamScreenProps> = ({ onBack }) => {
     setIsAddDesignationOpen(false);
     setNewDesTitle('');
     setNewDesDesc('');
-    Alert.alert('Role Created', `Designation "${created.title}" configured.`);
+    showSuccess('Role Created', `Designation "${created.title}" configured.`);
   };
 
   const filteredWorkers = workers.filter((w) => {

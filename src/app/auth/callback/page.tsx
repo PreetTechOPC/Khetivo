@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Sprout, CheckCircle2, AlertTriangle, ArrowRight, RotateCcw } from "lucide-react";
 import { handleAppwriteOAuthCallback } from "@/lib/appwriteAuth";
+import { account as tokenAccount } from "@/lib/appwrite";
 
 function OAuthCallbackContent() {
   const router = useRouter();
@@ -16,6 +17,8 @@ function OAuthCallbackContent() {
 
   const redirectTarget = searchParams.get("redirect") || "/dashboard";
   const errorParam = searchParams.get("error");
+  const userIdParam = searchParams.get("userId");
+  const secretParam = searchParams.get("secret");
 
   useEffect(() => {
     // If Appwrite returned error directly via query parameter
@@ -29,6 +32,15 @@ function OAuthCallbackContent() {
 
     async function processAuth() {
       try {
+        // If Appwrite returned OAuth2 token credentials (userId + secret)
+        if (userIdParam && secretParam) {
+          try {
+            await tokenAccount.createSession({ userId: userIdParam, secret: secretParam });
+          } catch (sessionErr: any) {
+            console.warn("Session token exchange note:", sessionErr);
+          }
+        }
+
         const result = await handleAppwriteOAuthCallback();
         if (!isMounted) return;
 
@@ -36,8 +48,8 @@ function OAuthCallbackContent() {
           setStatus("success");
           setFarmerName(result.user.name);
           setTimeout(() => {
-            router.push(redirectTarget);
-          }, 1000);
+            window.location.assign(redirectTarget);
+          }, 800);
         } else {
           setStatus("error");
           setErrorMessage(result.error || "Unable to complete Google sign-in via Appwrite.");
@@ -54,7 +66,7 @@ function OAuthCallbackContent() {
     return () => {
       isMounted = false;
     };
-  }, [errorParam, redirectTarget, router]);
+  }, [errorParam, redirectTarget, router, userIdParam, secretParam]);
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-[#072417] text-white">

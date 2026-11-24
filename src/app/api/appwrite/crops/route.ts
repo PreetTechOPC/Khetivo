@@ -120,3 +120,37 @@ export async function POST(req: NextRequest) {
   }
 }
 
+
+// DELETE: Delete a farm crop cycle
+export async function DELETE(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const { searchParams } = new URL(req.url);
+    const cropId = searchParams.get("cropId");
+
+    if (!cropId) {
+      return NextResponse.json(
+        { success: false, message: "cropId query parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    await databases.deleteDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.FARM_CROPS,
+      cropId
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Crop cycle deleted successfully from Appwrite",
+      cropId,
+    });
+  } catch (error: any) {
+    console.error("[Appwrite delete crop error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to delete crop" },
+      { status: 500 }
+    );
+  }
+}

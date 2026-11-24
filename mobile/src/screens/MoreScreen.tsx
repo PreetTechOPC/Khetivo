@@ -2,13 +2,26 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { colors } from '../theme/colors';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { useAlert } from '../context/AlertContext';
 
 interface MoreScreenProps {
   onNavigate: (screen: string) => void;
   onOpenTutorial: () => void;
+  onLogout?: () => void;
 }
 
-export const MoreScreen: React.FC<MoreScreenProps> = ({ onNavigate, onOpenTutorial }) => {
+export const MoreScreen: React.FC<MoreScreenProps> = ({ onNavigate, onOpenTutorial, onLogout }) => {
+  const { showDeleteConfirm } = useAlert();
+
+  const handleLogoutPress = () => {
+    if (!onLogout) return;
+    showDeleteConfirm(
+      'Log Out',
+      'Are you sure you want to log out from your farmer account? You will need to sign in again to access your farms.',
+      onLogout,
+      'Log Out'
+    );
+  };
   const dailyItems = [
     {
       id: 'advisories',
@@ -235,6 +248,24 @@ export const MoreScreen: React.FC<MoreScreenProps> = ({ onNavigate, onOpenTutori
           <Feather name="chevron-right" size={18} color={colors.primary} />
         </TouchableOpacity>
 
+        {/* LOG OUT BUTTON */}
+        {onLogout && (
+          <TouchableOpacity
+            style={styles.logoutCard}
+            onPress={handleLogoutPress}
+            activeOpacity={0.85}
+          >
+            <View style={styles.logoutIconWrap}>
+              <Ionicons name="log-out-outline" size={20} color="#DC2626" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.logoutTitle}>Log Out</Text>
+              <Text style={styles.logoutSub}>Sign out from your farmer account safely</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color="#DC2626" />
+          </TouchableOpacity>
+        )}
+
         {/* Farm OS Branding */}
         <View style={styles.footerInfo}>
           <MaterialCommunityIcons name="shield-check" size={16} color={colors.primary} />
@@ -310,6 +341,28 @@ const styles = StyleSheet.create({
   },
   tutorialTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
   tutorialSub: { fontSize: 11, color: colors.textMuted, marginTop: 1 },
+
+  logoutCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FEF2F2',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    marginTop: 10,
+  },
+  logoutIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutTitle: { fontSize: 13, fontWeight: '700', color: '#DC2626' },
+  logoutSub: { fontSize: 11, color: '#991B1B', marginTop: 1 },
 
   footerInfo: {
     flexDirection: 'row',

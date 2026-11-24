@@ -6,16 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAlert } from '../context/AlertContext';
 
 interface SettingsScreenProps {
   onBack: () => void;
   currentUser?: { name: string; email: string; phone?: string; id?: string };
   onLogout?: () => void;
   onNavigateToAuth?: () => void;
+  onNavigateToSubscription?: () => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
@@ -23,7 +24,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   currentUser,
   onLogout,
   onNavigateToAuth,
+  onNavigateToSubscription,
 }) => {
+  const { showDeleteConfirm, showSuccess } = useAlert();
   // Form State matching `src/app/dashboard/page.tsx` Settings
   const [farmerName, setFarmerName] = useState(currentUser?.name || 'Mohan Lal');
   const [phone, setPhone] = useState(currentUser?.phone || '+91 98140-54321');
@@ -40,7 +43,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const handleSave = () => {
     setToastMessage('Farm & system preferences saved successfully.');
-    Alert.alert('Settings Saved', 'Your farmer profile and system defaults have been updated.');
+    showSuccess('Settings Saved', 'Your farmer profile and system defaults have been updated.');
   };
 
   const handleReset = () => {
@@ -135,6 +138,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </View>
 
           <View style={styles.authActionBtns}>
+            {onNavigateToSubscription && (
+              <TouchableOpacity
+                style={styles.subscriptionActionBtn}
+                onPress={onNavigateToSubscription}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="shield-checkmark-outline" size={13} color="#0C4B32" />
+                <Text style={styles.subscriptionActionText}>My Subscription Plan</Text>
+              </TouchableOpacity>
+            )}
             {onNavigateToAuth && (
               <TouchableOpacity
                 style={styles.switchAccountBtn}
@@ -142,24 +155,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 activeOpacity={0.8}
               >
                 <Ionicons name="swap-horizontal" size={13} color="#0C4B32" />
-                <Text style={styles.switchAccountText}>Switch / Google</Text>
+                <Text style={styles.switchAccountText}>Switch Account</Text>
               </TouchableOpacity>
             )}
             {onLogout && (
               <TouchableOpacity
                 style={styles.logoutBtn}
                 onPress={() => {
-                  Alert.alert(
+                  showDeleteConfirm(
                     'Sign Out',
                     'Are you sure you want to sign out from your Appwrite session?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Sign Out',
-                        style: 'destructive',
-                        onPress: onLogout,
-                      },
-                    ]
+                    onLogout,
+                    'Sign Out'
                   );
                 }}
                 activeOpacity={0.8}
@@ -439,20 +446,40 @@ const styles = StyleSheet.create({
   },
   authActionBtns: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: '#F0F4F1',
   },
-  switchAccountBtn: {
+  subscriptionActionBtn: {
     flex: 1,
+    minWidth: 140,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 10,
     backgroundColor: '#E7F3EB',
+    borderWidth: 1,
+    borderColor: '#C6E2D0',
+  },
+  subscriptionActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0C4B32',
+  },
+  switchAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
   },
   switchAccountText: {
     fontSize: 12,

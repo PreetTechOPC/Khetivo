@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
 import { colors } from '../theme/colors';
 import { initialAdvisories, Advisory } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAlert } from '../context/AlertContext';
 
 interface AdvisoriesScreenProps {
   onBack: () => void;
 }
 
 export const AdvisoriesScreen: React.FC<AdvisoriesScreenProps> = ({ onBack }) => {
+  const { showSuccess } = useAlert();
   const [advisories] = useState<Advisory[]>(initialAdvisories);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'pest' | 'weather'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export const AdvisoriesScreen: React.FC<AdvisoriesScreenProps> = ({ onBack }) =>
         message: `🚨 *PAU Advisory: ${item.title}*\n${item.message}\nPrescription: ${item.actionPrescription}\nDispatched by: ${item.dispatchedBy}`,
       });
     } catch {
-      Alert.alert('Shared', 'Advisory copied to share.');
+      showSuccess('Shared', 'Advisory copied to share.');
     }
   };
 

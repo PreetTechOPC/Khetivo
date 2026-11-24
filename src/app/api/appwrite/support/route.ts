@@ -10,8 +10,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
 
-    const ticketQueries: string[] = [Query.limit(50), Query.orderDesc("$createdAt")];
-    const visitQueries: string[] = [Query.limit(50), Query.orderDesc("$createdAt")];
+    const ticketQueries: string[] = [Query.limit(100), Query.orderDesc("$createdAt")];
+    const visitQueries: string[] = [Query.limit(100), Query.orderDesc("$createdAt")];
 
     if (userId) {
       ticketQueries.push(Query.equal("userId", userId));
@@ -157,3 +157,80 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// PATCH: Update ticket status/resolution or update field visit status/specialist
+export async function PATCH(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const body = await req.json();
+    const { type = "ticket", id, status, resolution, assignedAgronomist, workflowStage, assignedSpecialist, notes } = body;
+
+    if (!id) {
+      return NextResponse.json({ success: false, message: "ID is required" }, { status: 400 });
+    }
+
+    if (type === "field_visit") {
+      const updateData: any = {};
+      if (workflowStage) updateData.workflowStage = workflowStage;
+      if (assignedSpecialist) updateData.assignedSpecialist = assignedSpecialist;
+      if (notes !== undefined) updateData.notes = notes;
+
+      const updated = await databases.updateDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.COLLECTIONS.FIELD_VISITS,
+        id,
+        updateData
+      );
+      return NextResponse.json({ success: true, message: "Field visit updated", fieldVisit: updated });
+    }
+
+    // Default: update support ticket
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (resolution !== undefined) updateData.resolution = resolution;
+    if (assignedAgronomist) updateData.assignedAgronomist = assignedAgronomist;
+
+    const updated = await databases.updateDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.SUPPORT_TICKETS,
+      id,
+      updateData
+    );
+
+    return NextResponse.json({ success: true, message: "Support ticket updated", ticket: updated });
+  } catch (error: any) {
+    console.error("[Appwrite patch support error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to update support record" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Delete ticket or field visit
+export async function DELETE(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    const type = searchParams.get("type") || "ticket";
+
+    if (!id) {
+      return NextResponse.json({ success: false, message: "id is required" }, { status: 400 });
+    }
+
+    const collectionId =
+      type === "field_visit"
+        ? APPWRITE_CONFIG.COLLECTIONS.FIELD_VISITS
+        : APPWRITE_CONFIG.COLLECTIONS.SUPPORT_TICKETS;
+
+    await databases.deleteDocument(APPWRITE_CONFIG.DATABASE_ID, collectionId, id);
+
+    return NextResponse.json({ success: true, message: "Record deleted successfully", id });
+  } catch (error: any) {
+    console.error("[Appwrite delete support error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to delete support record" },
+      { status: 500 }
+    );
+  }
+}

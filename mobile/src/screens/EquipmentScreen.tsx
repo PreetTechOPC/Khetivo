@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { colors } from '../theme/colors';
 import { initialEquipment, Equipment } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
+import { useAlert } from '../context/AlertContext';
 
 export const EQUIPMENT_CATEGORIES = [
   'Tractor (4WD / 2WD)',
@@ -37,6 +37,7 @@ interface EquipmentScreenProps {
 }
 
 export const EquipmentScreen: React.FC<EquipmentScreenProps> = ({ onBack }) => {
+  const { showWarning, showSuccess } = useAlert();
   const [fleet, setFleet] = useState<Equipment[]>(initialEquipment);
   const [filter, setFilter] = useState<'all' | 'operational' | 'service_due' | 'issues'>('all');
   const [search, setSearch] = useState('');
@@ -79,7 +80,7 @@ export const EquipmentScreen: React.FC<EquipmentScreenProps> = ({ onBack }) => {
 
   const handleRegister = () => {
     if (!eqName.trim()) {
-      Alert.alert('Required', 'Please enter equipment / machine name.');
+      showWarning('Required Field', 'Please enter equipment / machine name.');
       return;
     }
     const runtime = parseFloat(eqRuntimeHours) || 0;
@@ -100,17 +101,17 @@ export const EquipmentScreen: React.FC<EquipmentScreenProps> = ({ onBack }) => {
     setFleet([created, ...fleet]);
     setIsRegisterOpen(false);
     resetRegisterForm();
-    Alert.alert('Equipment Registered', `${created.name} added to your farm fleet.`);
+    showSuccess('Equipment Registered', `${created.name} added to your farm fleet.`);
   };
 
   const handleReportProblem = () => {
     if (!reportIssue.trim()) {
-      Alert.alert('Required', 'Please describe the problem.');
+      showWarning('Required Field', 'Please describe the problem.');
       return;
     }
     setIsReportOpen(false);
     setReportIssue('');
-    Alert.alert('Problem Reported', `Technician ticket logged for ${reportEquipment}.`);
+    showSuccess('Problem Reported', `Technician ticket logged for ${reportEquipment}.`);
   };
 
   const filteredFleet = fleet.filter((item) => {

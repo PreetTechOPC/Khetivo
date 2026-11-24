@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -15,6 +14,7 @@ import { colors } from '../theme/colors';
 import { initialTasks, Task } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
+import { useAlert } from '../context/AlertContext';
 
 const TASK_CATEGORIES = [
   'Fertilization & Nutrition',
@@ -50,6 +50,7 @@ interface TasksScreenProps {
 }
 
 export const TasksScreen: React.FC<TasksScreenProps> = ({ onBack }) => {
+  const { showDeleteConfirm, showWarning, showSuccess } = useAlert();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [taskViewMode, setTaskViewMode] = useState<'list' | 'calendar'>('list');
   const [taskFilter, setTaskFilter] = useState<'all' | 'todo' | 'in_progress' | 'completed'>('all');
@@ -98,22 +99,19 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onBack }) => {
 
   // Delete Task
   const handleDeleteTask = (id: string) => {
-    Alert.alert('Delete Task', 'Are you sure you want to delete this field task?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          setTasks((prev) => prev.filter((t) => t.id !== id));
-        },
-      },
-    ]);
+    showDeleteConfirm(
+      'Delete Task',
+      'Are you sure you want to delete this field task? This action cannot be undone.',
+      () => {
+        setTasks((prev) => prev.filter((t) => t.id !== id));
+      }
+    );
   };
 
   // Create Task
   const handleCreateTask = () => {
     if (!newTitle.trim()) {
-      Alert.alert('Required', 'Please enter task title');
+      showWarning('Required Field', 'Please enter a task title.');
       return;
     }
     const cleanPriority = newPriority.replace(' Priority', '') as 'Low' | 'Medium' | 'High' | 'Urgent';
@@ -136,7 +134,7 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onBack }) => {
     setOpenDropdown(null);
     setNewTitle('');
     setNewInstructions('');
-    Alert.alert('Success', 'Field operation scheduled.');
+    showSuccess('Task Created', 'Field operation successfully scheduled.');
   };
 
   // Compute Due Status Label & Color

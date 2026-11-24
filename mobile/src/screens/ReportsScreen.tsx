@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert,
   Share,
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { initialFarms, initialInventory, Farm } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { useAlert } from '../context/AlertContext';
 
 interface ReportsScreenProps {
   farm?: Farm;
@@ -19,6 +19,7 @@ interface ReportsScreenProps {
 }
 
 export const ReportsScreen: React.FC<ReportsScreenProps> = ({ onBack }) => {
+  const { showSuccess, showInfo } = useAlert();
   const [reportViewMode, setReportViewMode] = useState<'chart' | 'table'>('chart');
   const [reportCategory, setReportCategory] = useState<'financial' | 'crops' | 'inputs' | 'machinery'>('financial');
   const [reportTimeframe, setReportTimeframe] = useState<'season' | 'month' | 'quarter' | 'year'>('season');
@@ -59,7 +60,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({ onBack }) => {
 
   const handleExportCSV = () => {
     let filename = `khetivo_${reportCategory}_report.csv`;
-    Alert.alert('CSV Exported', `Official file "${filename}" generated and ready to share or save.`);
+    showSuccess('CSV Exported', `Official file "${filename}" generated and ready to share or save.`);
   };
 
   const handlePrint = async () => {
@@ -69,7 +70,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({ onBack }) => {
         title: 'Khetivo Farm Audit Report',
       });
     } catch {
-      Alert.alert('Print Report', 'Ready to print or save as certified PDF statement.');
+      showInfo('Print Report', 'Ready to print or save as certified PDF statement.');
     }
   };
 

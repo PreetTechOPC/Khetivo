@@ -272,193 +272,7 @@ export interface BroadcastDispatch {
 // INITIAL MOCK DATA (SOBER & AUTHENTIC AGRI CONTEXT)
 // =========================================================================
 
-const INITIAL_CLIENTS: ClientAccount[] = [
-  {
-    id: "cl-1",
-    name: "Jaswinder Singh Brar",
-    phone: "+91 98140-54321",
-    email: "jaswinder.agro@khetivo.com",
-    district: "Ludhiana",
-    state: "Punjab",
-    plan: "Pro",
-    status: "Active",
-    farms: [
-      {
-        id: "f-101",
-        name: "Main Holding (Ludhiana)",
-        district: "Ludhiana",
-        state: "Punjab",
-        totalArea: 25,
-        areaUnit: "Acres",
-        soilType: "Alluvial Loam",
-        waterSource: "Solar Tubewell (15 HP)",
-        primaryCrop: "Wheat (HD-3086)",
-      },
-      {
-        id: "f-102",
-        name: "Noorpur Bet Block",
-        district: "Ludhiana",
-        state: "Punjab",
-        totalArea: 7,
-        areaUnit: "Acres",
-        soilType: "Sandy Loam",
-        waterSource: "Canal Feeder",
-        primaryCrop: "Paddy (PR-126)",
-      },
-    ],
-    totalAcreage: 32,
-    areaUnit: "Acres",
-    joinedDate: "12 Aug 2025",
-    renewalDate: "12 Aug 2027",
-    primaryCrop: "Wheat & Paddy",
-    mandi: "Khanna Mandi, Ludhiana",
-  },
-  {
-    id: "cl-2",
-    name: "Gurpreet Singh Dhillon",
-    phone: "+91 98722-11094",
-    email: "dhillon.farms@gmail.com",
-    district: "Sangrur",
-    state: "Punjab",
-    plan: "Enterprise",
-    status: "Active",
-    farms: [
-      {
-        id: "f-201",
-        name: "Dhillon Agro Estate",
-        district: "Sangrur",
-        state: "Punjab",
-        totalArea: 85,
-        areaUnit: "Acres",
-        soilType: "Clay Loam",
-        waterSource: "Dual Solar Tubewells (25 HP)",
-        primaryCrop: "Wheat, Mustard & Potato",
-      },
-    ],
-    totalAcreage: 85,
-    areaUnit: "Acres",
-    joinedDate: "04 Jan 2025",
-    renewalDate: "04 Jan 2027",
-    primaryCrop: "Wheat, Mustard & Potato",
-    mandi: "Bhawanigarh Grain Market",
-  },
-  {
-    id: "cl-3",
-    name: "Rameshwar Dayal Sharma",
-    phone: "+91 98120-77654",
-    email: "rdsharma.karnal@yahoo.in",
-    district: "Karnal",
-    state: "Haryana",
-    plan: "Enterprise",
-    status: "Active",
-    farms: [
-      {
-        id: "f-301",
-        name: "Sharma Basmati Estate",
-        district: "Karnal",
-        state: "Haryana",
-        totalArea: 140,
-        areaUnit: "Acres",
-        soilType: "Rich Loam",
-        waterSource: "Deep Borewell + Drip Automation",
-        primaryCrop: "Basmati Paddy & Wheat",
-      },
-    ],
-    totalAcreage: 140,
-    areaUnit: "Acres",
-    joinedDate: "20 May 2025",
-    renewalDate: "20 May 2027",
-    primaryCrop: "Basmati Paddy & Wheat",
-    mandi: "Karnal Anaj Mandi",
-  },
-  {
-    id: "cl-4",
-    name: "Vikramjeet Singh Sandhu",
-    phone: "+91 94178-90321",
-    email: "sandhu.kheti@outlook.com",
-    district: "Bathinda",
-    state: "Punjab",
-    plan: "Basic",
-    status: "Renewal Due",
-    farms: [
-      {
-        id: "f-401",
-        name: "Sandhu Cotton Belt",
-        district: "Bathinda",
-        state: "Punjab",
-        totalArea: 48,
-        areaUnit: "Acres",
-        soilType: "Sandy Loam",
-        waterSource: "Submersible Pump",
-        primaryCrop: "Bt Cotton & Wheat",
-      },
-    ],
-    totalAcreage: 48,
-    areaUnit: "Acres",
-    joinedDate: "15 Oct 2025",
-    renewalDate: "30 Oct 2026",
-    primaryCrop: "Bt Cotton & Wheat",
-    mandi: "Bathinda Cotton Yard",
-  },
-  {
-    id: "cl-5",
-    name: "Harbhajan Singh Gill",
-    phone: "+91 97801-44329",
-    email: "gillfarms.moga@gmail.com",
-    district: "Moga",
-    state: "Punjab",
-    plan: "Free",
-    status: "Trial",
-    farms: [
-      {
-        id: "f-501",
-        name: "Gill Bet Farm",
-        district: "Moga",
-        state: "Punjab",
-        totalArea: 5,
-        areaUnit: "Acres",
-        soilType: "Alluvial",
-        waterSource: "Shared Tubewell",
-        primaryCrop: "Wheat (PBW-826)",
-      },
-    ],
-    totalAcreage: 5,
-    areaUnit: "Acres",
-    joinedDate: "18 Oct 2026",
-    renewalDate: "02 Nov 2026",
-    primaryCrop: "Wheat (PBW-826)",
-    mandi: "Moga Main Mandi",
-  },
-  {
-    id: "cl-6",
-    name: "Maj. Balwinder Singh (Retd)",
-    phone: "+91 94171-88902",
-    email: "balwinder.orchards@khetivo.com",
-    district: "Fazilka",
-    state: "Punjab",
-    plan: "Pro",
-    status: "Active",
-    farms: [
-      {
-        id: "f-601",
-        name: "Kinnow Royal Groves",
-        district: "Fazilka",
-        state: "Punjab",
-        totalArea: 95,
-        areaUnit: "Acres",
-        soilType: "Sandy Loam",
-        waterSource: "Canal Drip Automation",
-        primaryCrop: "Kinnow Citrus Orchards",
-      },
-    ],
-    totalAcreage: 95,
-    areaUnit: "Acres",
-    joinedDate: "10 Feb 2025",
-    renewalDate: "10 Feb 2027",
-    primaryCrop: "Kinnow Citrus",
-    mandi: "Abohar Mandi",
-  },
-];
+const INITIAL_CLIENTS: ClientAccount[] = [];
 
 const INITIAL_PLANS: PlanConfig[] = [
   {
@@ -478,7 +292,7 @@ const INITIAL_PLANS: PlanConfig[] = [
       "Standard APMC Mandi daily closing rate",
       "Community agronomy FAQ library",
     ],
-    activeSubscribers: 28,
+    activeSubscribers: 0,
     badgeColor: "bg-gray-100 text-gray-800",
   },
   {
@@ -499,7 +313,7 @@ const INITIAL_PLANS: PlanConfig[] = [
       "Automated WhatsApp frost alerts",
       "Mandi closing price SMS alert",
     ],
-    activeSubscribers: 64,
+    activeSubscribers: 0,
     badgeColor: "bg-blue-50 text-blue-800 border border-blue-200",
   },
   {
@@ -521,7 +335,7 @@ const INITIAL_PLANS: PlanConfig[] = [
       "Priority 24/7 agronomist phone helpline",
       "10% discount on on-site field visits",
     ],
-    activeSubscribers: 46,
+    activeSubscribers: 0,
     badgeColor: "bg-emerald-50 text-emerald-800 border border-emerald-200",
   },
   {
@@ -542,7 +356,7 @@ const INITIAL_PLANS: PlanConfig[] = [
       "Free 2 physical field visits per harvest cycle",
       "Direct API integrations & custom reporting",
     ],
-    activeSubscribers: 18,
+    activeSubscribers: 0,
     badgeColor: "bg-purple-50 text-purple-800 border border-purple-200",
   },
 ];
@@ -590,669 +404,93 @@ export const DEFAULT_PAU_GROWTH_TIMELINE: GrowthStageMilestone[] = [
   },
 ];
 
-const INITIAL_CROPS: CropMasterTemplate[] = [
-  {
-    id: "wheat",
-    cropName: "Wheat (Kanak)",
-    name: "Wheat (Kanak)",
-    varieties: ["HD-3086", "PBW-826", "DBW-187", "PBW-725", "Sharbati"],
-    variety: "HD-3086 / PBW-826",
-    durationDays: 140,
-    duration: "135-140 Days",
-    season: "Rabi",
-    sowingWindow: "25 Oct – 15 Nov (Rabi)",
-    defaultSoil: "Alluvial Loam (Deep & Fertile)",
-    defaultIrrigation: "Drip / Micro-Irrigation (Sub-surface/Surface)",
-    badge: "Punjab & Haryana Standard",
-    targetYieldQuintals: "22 – 26 Qtl/Acre",
-    irrigationThresholdMoisture: 30,
-    criticalIrrigationStages: [
-      "Crown Root Initiation (21 Days)",
-      "Tillering Stage (45 Days)",
-      "Late Jointing (65 Days)",
-      "Flowering & Heading (85 Days)",
-      "Milking & Grain Fill (110 Days)",
-    ],
-    growthTimeline: [
-      { id: "w-1", stageName: "Sowing & Germination", startDay: 0, endDay: 15, irrigationRequirement: "Moderate", recommendedActivity: "Basal DAP 55kg + MOP 20kg. Seed treated with Carbendazim." },
-      { id: "w-2", stageName: "Crown Root Initiation (CRI)", startDay: 20, endDay: 30, irrigationRequirement: "Critical", recommendedActivity: "Critical 1st irrigation. 1st split Urea (45kg/acre). Avoid water stagnation." },
-      { id: "w-3", stageName: "Tillering & Stem Elongation", startDay: 35, endDay: 55, irrigationRequirement: "Moderate", recommendedActivity: "2nd split Urea. Broadleaf & grassy weed herbicide application." },
-      { id: "w-4", stageName: "Booting & Heading (Ear emergence)", startDay: 60, endDay: 80, irrigationRequirement: "Critical", recommendedActivity: "Critical 3rd irrigation. Spray 0.5% Zinc Sulphate if flag leaf pale." },
-      { id: "w-5", stageName: "Flowering & Anthesis", startDay: 85, endDay: 100, irrigationRequirement: "Critical", recommendedActivity: "Scout for Yellow Rust pustules. Tilt 25% EC spray if rust spots seen." },
-      { id: "w-6", stageName: "Milking & Grain Hardening", startDay: 105, endDay: 140, irrigationRequirement: "Low", recommendedActivity: "Terminal irrigation for test weight. Stop watering 15 days before combine harvest." },
-    ],
-    majorDiseases: ["Yellow Rust (Stripe)", "Karnal Bunt", "Aphids (Chepa)", "Loose Smut"],
-    pauFungicidePrescription: "Tilt / Folicur (Propiconazole 25% EC) @ 200 ml in 200L water on first yellow rust spotting.",
-    dos: [
-      "Perform seed treatment with Carbendazim (2g/kg seed) before sowing",
-      "Ensure 1st critical irrigation at Crown Root Initiation (CRI) stage (20-25 days)",
-      "Apply balanced NPK with Zinc Sulphate (21%) for optimal tiller development",
-      "Scout flag leaves weekly during Jan-Feb for yellow rust stripe pustules"
-],
-    donts: [
-      "Do not delay first irrigation past 25 days as it permanently stunts root development",
-      "Do not apply heavy irrigation during high wind forecasts to prevent lodging",
-      "Avoid excessive nitrogen top-dressing after booting stage",
-      "Do not irrigate within 15 days before combine harvesting"
-],
-  },
-  {
-    id: "paddy",
-    cropName: "Paddy / Rice (Dhan)",
-    name: "Paddy / Rice (Dhan)",
-    varieties: ["PR-126", "PR-131", "Pusa Basmati 1121", "Pusa Basmati 1509"],
-    variety: "Pusa Basmati 1121 / PR-126",
-    durationDays: 125,
-    duration: "120-130 Days",
-    season: "Kharif",
-    sowingWindow: "15 Jun – 5 Jul (Kharif)",
-    defaultSoil: "Clay Loam (Water-retentive)",
-    defaultIrrigation: "Canal Flood / Furrow Irrigation",
-    badge: "Export Grade Aroma",
-    targetYieldQuintals: "30 – 34 Qtl/Acre",
-    irrigationThresholdMoisture: 50,
-    criticalIrrigationStages: [
-      "Transplanting Ponding (0 – 15 Days)",
-      "Tillering (25 – 40 Days)",
-      "Panicle Emergence (60 – 75 Days)",
-      "Grain Hardening (90 – 105 Days)",
-    ],
-    growthTimeline: [
-      { id: "p-1", stageName: "Nursery & Transplanting", startDay: 0, endDay: 15, irrigationRequirement: "Critical", recommendedActivity: "Maintain 4-5 cm standing water for 15 days post-transplanting to ensure seedling anchoring." },
-      { id: "p-2", stageName: "Active Tillering", startDay: 20, endDay: 45, irrigationRequirement: "Moderate", recommendedActivity: "Top-dress Urea in 2 splits with Zinc Sulphate. Alternate wetting and drying (AWD)." },
-      { id: "p-3", stageName: "Panicle Initiation & Booting", startDay: 50, endDay: 75, irrigationRequirement: "Critical", recommendedActivity: "Crucial moisture window. Monitor for Stem Borer & Leaf Folder. Amistar Top spray." },
-      { id: "p-4", stageName: "Flowering & Grain Filling", startDay: 80, endDay: 105, irrigationRequirement: "Moderate", recommendedActivity: "Maintain shallow soil saturation during milk stage. Prevent moisture stress." },
-      { id: "p-5", stageName: "Maturity & Harvest", startDay: 110, endDay: 125, irrigationRequirement: "Withhold", recommendedActivity: "Drain fields 12 days prior to combine harvesting to allow soil firming." },
-    ],
-    majorDiseases: ["Sheath Blight", "Stem Borer (Teda)", "False Smut (Haldia)", "Leaf Folder"],
-    pauFungicidePrescription: "Amistar Top (Azoxystrobin + Difenoconazole) @ 200 ml/acre for false smut & sheath blight control.",
-    dos: [
-      "Maintain 4-5 cm standing water for the first 15 days post-transplanting",
-      "Practice Alternate Wetting and Drying (AWD) after tillering to conserve groundwater",
-      "Top-dress Urea in split doses combined with Zinc Sulphate",
-      "Drain fields 10-14 days prior to combine harvesting to allow soil firming"
-],
-    donts: [
-      "Do not allow continuous deep submergence during the grain hardening stage",
-      "Avoid indiscriminate insecticide sprays that destroy predatory spiders",
-      "Do not transplant nursery seedlings older than 30 days",
-      "Never burn crop stubble; incorporate residue into soil or use Happy Seeder"
-],
-  },
-  {
-    id: "mustard",
-    cropName: "Mustard / Sarson",
-    name: "Mustard / Sarson",
-    varieties: ["Pusa Bold", "Giriraj", "RH-749", "RLC-3", "Pusa Jai Kisan"],
-    variety: "Pusa Jai Kisan / Giriraj",
-    durationDays: 120,
-    duration: "110-120 Days",
-    season: "Rabi",
-    sowingWindow: "10 Oct – 31 Oct (Rabi)",
-    defaultSoil: "Red & Yellow Sandy Loam",
-    defaultIrrigation: "Sprinkler System (Overhead/Center Pivot)",
-    badge: "Low Water Requirement",
-    targetYieldQuintals: "8 – 11 Qtl/Acre",
-    irrigationThresholdMoisture: 25,
-    criticalIrrigationStages: [
-      "Pre-sowing (Rauni)",
-      "Vegetative (30 Days)",
-      "Flowering & Siliqua (60 – 70 Days)",
-    ],
-    growthTimeline: [
-      { id: "m-1", stageName: "Sowing & Rosette Phase", startDay: 0, endDay: 25, irrigationRequirement: "Moderate", recommendedActivity: "Pre-sowing Rauni watering. Thinning at 15-20 days to maintain 10-15cm spacing." },
-      { id: "m-2", stageName: "Branching & Pre-Flowering", startDay: 30, endDay: 55, irrigationRequirement: "Critical", recommendedActivity: "1st post-sowing irrigation. Top-dress remaining Nitrogen. Scout for white rust." },
-      { id: "m-3", stageName: "Flowering & Siliqua (Pod) Formation", startDay: 60, endDay: 90, irrigationRequirement: "Critical", recommendedActivity: "Critical 2nd irrigation. Monitor aphid population. Rogor 30% EC if ETL crossed." },
-      { id: "m-4", stageName: "Pod Filling & Maturity", startDay: 95, endDay: 120, irrigationRequirement: "Low", recommendedActivity: "Harvest when 75% of siliquae turn golden yellow. Avoid shattering loss." },
-    ],
-    majorDiseases: ["White Rust", "Alternaria Blight", "Mustard Aphids"],
-    pauFungicidePrescription: "Ridomil Gold @ 400g/acre for white rust; Rogor (Dimethoate) @ 250ml/acre for aphids.",
-    dos: [
-      "Complete sowing between 10 Oct and 25 Oct for peak oil concentration",
-      "Thin seedlings at 15-20 days to maintain 10-15 cm intra-row plant spacing",
-      "Apply critical irrigations at pre-flowering (30 days) and pod formation (65 days)",
-      "Spray Rogor (Dimethoate) or Thiamethoxam on cloudy days if aphids exceed ETL"
-],
-    donts: [
-      "Do not allow standing water or moisture stagnation; mustard is highly vulnerable to root rot",
-      "Avoid flood irrigation during peak flowering to prevent blossom drop",
-      "Do not delay aphid treatment once colonies form on central shoots",
-      "Do not harvest during blazing afternoon heat to prevent pod shattering loss"
-],
-  },
-  {
-    id: "potato",
-    cropName: "Potato (Aloo)",
-    name: "Potato (Aloo)",
-    varieties: ["Kufri Pukhraj", "Kufri Jyoti", "Kufri Chipsona", "Lady Rosetta"],
-    variety: "Kufri Pukhraj / Jyoti",
-    durationDays: 95,
-    duration: "85-100 Days",
-    season: "Rabi",
-    sowingWindow: "1 Oct – 20 Oct (Rabi)",
-    defaultSoil: "Sandy Loam (Loose & Well-drained)",
-    defaultIrrigation: "Sprinkler System (Overhead/Center Pivot)",
-    badge: "Cold Storage Certified",
-    targetYieldQuintals: "120 – 160 Qtl/Acre",
-    irrigationThresholdMoisture: 35,
-    criticalIrrigationStages: [
-      "Stolon Formation (25 Days)",
-      "Tuber Bulking (45 – 65 Days)",
-      "Maturity & Skin Setting (80 Days)",
-    ],
-    growthTimeline: [
-      { id: "po-1", stageName: "Sprouting & Stolon Formation", startDay: 0, endDay: 25, irrigationRequirement: "Moderate", recommendedActivity: "Earthing-up and furrow irrigation. Apply Mancozeb preventively for late blight." },
-      { id: "po-2", stageName: "Tuber Initiation", startDay: 30, endDay: 50, irrigationRequirement: "Critical", recommendedActivity: "Keep ridge moisture even to avoid misshapen tubers. Top-dress Potassium sulphate." },
-      { id: "po-3", stageName: "Tuber Bulking", startDay: 55, endDay: 75, irrigationRequirement: "Critical", recommendedActivity: "Maintain consistent moisture (35-40%). Intensive late blight surveillance." },
-      { id: "po-4", stageName: "Skin Setting & Haulm Cutting", startDay: 80, endDay: 95, irrigationRequirement: "Withhold", recommendedActivity: "Dehaulming (cut foliage) 10-12 days before digging to harden tuber skin." },
-    ],
-    majorDiseases: ["Late Blight (Pichheta Jhulsa)", "Early Blight", "Scab"],
-    pauFungicidePrescription: "Curzate / Sectin @ 600g/acre preventively before foggy periods; Dithane M-45 @ 700g/acre.",
-    dos: [
-      "Use certified disease-free seed tubers treated with Mancozeb (0.25%)",
-      "Perform timely earthing-up (mounding) at 25-30 days to shield developing tubers from sunlight",
-      "Maintain light, frequent furrow irrigations to keep ridge soil uniformly moist",
-      "Dehaulm (cut foliage) 10-12 days before digging to cure and harden tuber skin"
-],
-    donts: [
-      "Do not over-irrigate ridges causing water to submerge the top ridge crown",
-      "Never plant freshly cut seed tubers without proper curing and fungicide dipping",
-      "Avoid excessive nitrogen fertilization late in the vegetative period",
-      "Do not expose harvested potato heaps to direct afternoon sunlight"
-],
-  },
-  {
-    id: "cotton",
-    cropName: "Bt Cotton (Narma)",
-    name: "Bt Cotton (Narma)",
-    varieties: ["Bt RCH-659", "Ankur 3028", "Bioseed 6588", "Bollgard II Hybrid"],
-    variety: "Bollgard II Hybrid",
-    durationDays: 165,
-    duration: "150-170 Days",
-    season: "Kharif",
-    sowingWindow: "15 Apr – 15 May (Kharif)",
-    defaultSoil: "Black Cotton Soil (Regur - High Clay)",
-    defaultIrrigation: "Drip / Micro-Irrigation (Sub-surface/Surface)",
-    badge: "Pest & Bollworm Guard",
-    targetYieldQuintals: "9 – 13 Qtl/Acre",
-    irrigationThresholdMoisture: 28,
-    criticalIrrigationStages: [
-      "First Post-sowing (35 Days)",
-      "Square Formation (60 Days)",
-      "Peak Flowering (85 Days)",
-      "Boll Development (115 Days)",
-    ],
-    growthTimeline: [
-      { id: "c-1", stageName: "Emergence & Square Initiation", startDay: 0, endDay: 45, irrigationRequirement: "Moderate", recommendedActivity: "First irrigation at 35-40 days. Install 8 pheromone traps/acre for Pink Bollworm." },
-      { id: "c-2", stageName: "Peak Flowering", startDay: 50, endDay: 80, irrigationRequirement: "Critical", recommendedActivity: "Foliar spray of Potassium Nitrate (13-0-45) @ 2%. Scout whitefly nymphs." },
-      { id: "c-3", stageName: "Boll Development", startDay: 85, endDay: 125, irrigationRequirement: "Critical", recommendedActivity: "Crucial irrigation to avoid boll shedding. Emamectin Benzoate 5% SG if bollworm seen." },
-      { id: "c-4", stageName: "Boll Bursting & Picking", startDay: 130, endDay: 165, irrigationRequirement: "Withhold", recommendedActivity: "Dry weather required for clean cotton picking. Pick clean seed-cotton in dry sun." },
-    ],
-    majorDiseases: ["Pink Bollworm (Gulabi Sundi)", "Whitefly", "Cotton Leaf Curl Virus (CLCuV)"],
-    pauFungicidePrescription: "Proclaim (Emamectin Benzoate 5% SG) @ 100g/acre + Pheromone traps @ 8 per acre for bollworm.",
-    dos: [
-      "Install 8 pheromone traps per acre at 45 days for early Pink Bollworm surveillance",
-      "Foliar spray 2% Potassium Nitrate (13-0-45) during peak boll development",
-      "Maintain clean field boundaries and remove weed hosts of whitefly",
-      "Pick seed-cotton in dry sunny weather after morning dew has completely evaporated"
-],
-    donts: [
-      "Do not spray synthetic pyrethroids early in the season to prevent whitefly outbreaks",
-      "Do not allow field water stagnation for more than 24 hours after heavy rainfall",
-      "Avoid picking damp or dew-laden cotton as it discolors lint and reduces market value",
-      "Never mix pest-damaged or stained bolls with clean Grade-A seed cotton"
-],
-  },
-  {
-    id: "maize",
-    cropName: "Maize / Corn (Makki)",
-    name: "Maize / Corn (Makki)",
-    varieties: ["Pioneer 3396", "DKC 9108", "PMH-1", "PMH-13"],
-    variety: "Pioneer 3396 Hybrid",
-    durationDays: 105,
-    duration: "95-110 Days",
-    season: "Kharif",
-    sowingWindow: "20 May – 25 Jun (Kharif)",
-    defaultSoil: "Alluvial Loam (Deep & Fertile)",
-    defaultIrrigation: "Drip / Micro-Irrigation (Sub-surface/Surface)",
-    badge: "Silage & Grain Yield",
-    targetYieldQuintals: "24 – 28 Qtl/Acre",
-    irrigationThresholdMoisture: 32,
-    criticalIrrigationStages: [
-      "Knee-high Stage (30 Days)",
-      "Tasseling & Silking (50-60 Days)",
-      "Grain Filling (75 Days)",
-    ],
-    growthTimeline: [
-      { id: "mz-1", stageName: "Germination & Seedling", startDay: 0, endDay: 20, irrigationRequirement: "Moderate", recommendedActivity: "Pre-emergence Atrazine spray for weed suppression. Ensure uniform seedling stand." },
-      { id: "mz-2", stageName: "Knee-High Stage", startDay: 25, endDay: 45, irrigationRequirement: "Critical", recommendedActivity: "Top-dress 1st split Urea. Scout for Fall Armyworm whorl feeding." },
-      { id: "mz-3", stageName: "Tasseling & Silking", startDay: 50, endDay: 75, irrigationRequirement: "Critical", recommendedActivity: "Most critical moisture window. Never allow drought stress during pollen shed." },
-      { id: "mz-4", stageName: "Grain Filling & Dough Stage", startDay: 80, endDay: 105, irrigationRequirement: "Moderate", recommendedActivity: "Maintain soil moisture until black layer formation at cob base." },
-    ],
-    majorDiseases: ["Fall Armyworm (FAW)", "Maydis Leaf Blight", "Banded Leaf & Sheath Blight"],
-    pauFungicidePrescription: "Coragen (Chlorantraniliprole 18.5% SC) @ 0.4 ml/L water into the whorl for Fall Armyworm.",
-    dos: [
-      "Apply pre-emergence Atrazine (1 kg/acre) within 48 hours of sowing for clean emergence",
-      "Inspect central leaf whorls for Fall Armyworm (FAW) pinholes at knee-high stage",
-      "Ensure adequate soil moisture during the critical tasseling and silking stages",
-      "Apply balanced Muriate of Potash alongside nitrogen to enhance stalk strength"
-],
-    donts: [
-      "Do not allow drought stress during pollination; moisture deficit causes barren ears",
-      "Avoid broad overhead spray when FAW larvae are settled deep inside leaf whorls",
-      "Do not overpopulate without maintaining minimum 60 cm row-to-row spacing",
-      "Never store grain at moisture levels exceeding 14% to prevent Aspergillus aflatoxins"
-],
-  },
-  {
-    id: "sugarcane",
-    cropName: "Sugarcane (Kamad)",
-    name: "Sugarcane (Kamad)",
-    varieties: ["Co 0238 (Early)", "CoPb 95", "CoPb 96"],
-    variety: "Co 0238 (Early)",
-    durationDays: 330,
-    duration: "300-360 Days",
-    season: "Annual",
-    sowingWindow: "15 Feb – 15 Mar (Spring) / Oct (Autumn)",
-    defaultSoil: "Alluvial Loam (Deep & Fertile)",
-    defaultIrrigation: "Furrow / Sub-surface Drip Irrigation",
-    badge: "High Sugar Recovery",
-    targetYieldQuintals: "320 – 380 Qtl/Acre",
-    irrigationThresholdMoisture: 35,
-    criticalIrrigationStages: [
-      "Formative Stage (60–120 Days)",
-      "Grand Growth Phase (150–240 Days)",
-    ],
-    growthTimeline: [
-      { id: "sg-1", stageName: "Germination & Tillering", startDay: 0, endDay: 60, irrigationRequirement: "Moderate", recommendedActivity: "Pre-planting sett treatment with Carbendazim. Blind hoeing at 3-4 weeks." },
-      { id: "sg-2", stageName: "Formative & Shoot Elongation", startDay: 65, endDay: 150, irrigationRequirement: "Critical", recommendedActivity: "Apply Urea in splits. Apply Ferterra @ 7.5kg/acre against Early Shoot Borer." },
-      { id: "sg-3", stageName: "Grand Growth (Cane Formation)", startDay: 155, endDay: 260, irrigationRequirement: "Critical", recommendedActivity: "Earthing up to prevent lodging. Trash mulching between cane rows." },
-      { id: "sg-4", stageName: "Ripening & Sugar Synthesis", startDay: 265, endDay: 330, irrigationRequirement: "Low", recommendedActivity: "Withhold irrigation 20 days prior to mill harvest to maximize brix reading." },
-    ],
-    majorDiseases: ["Red Rot", "Top Borer", "Early Shoot Borer"],
-    pauFungicidePrescription: "Sett treatment with Carbendazim 50% WP @ 2g/L. Ferterra (Chlorantraniliprole 0.4% GR) @ 7.5kg/acre.",
-    dos: [
-      "Treat two-budded seed setts with Carbendazim (0.2%) prior to furrow planting",
-      "Perform earthing-up twice before monsoon rains to anchor tall cane against lodging",
-      "Spread sugarcane trash mulch between rows to suppress weeds and retain soil moisture",
-      "Apply Ferterra (Chlorantraniliprole 0.4% GR) @ 7.5kg/acre against early shoot borer"
-],
-    donts: [
-      "Do not use propagation setts from fields with any history of red rot infection",
-      "Do not irrigate 20-25 days before mill harvest to maximize sugar brix concentration",
-      "Avoid harvesting immature or over-aged cane which leads to sucrose inversion",
-      "Never burn trash indiscriminately; decompose using compost inoculants"
-],
-  },
-  {
-    id: "fodder",
-    cropName: "Green Fodder (Barseem)",
-    name: "Green Fodder (Barseem)",
-    varieties: ["BL-42", "BL-10", "African Tall"],
-    variety: "Barseem (African Tall)",
-    durationDays: 150,
-    duration: "140-160 Days",
-    season: "Rabi",
-    sowingWindow: "20 Sep – 15 Oct (Rabi)",
-    defaultSoil: "Red & Yellow Sandy Loam",
-    defaultIrrigation: "Sprinkler System (Overhead/Center Pivot)",
-    badge: "High Protein Dairy Fodder",
-    targetYieldQuintals: "350 – 420 Qtl/Acre (Multi-Cut)",
-    irrigationThresholdMoisture: 40,
-    criticalIrrigationStages: [
-      "Post-Sowing Wetting (4-5 Days)",
-      "Post-Harvest Regrowth (Every 25 Days)",
-    ],
-    growthTimeline: [
-      { id: "fd-1", stageName: "Establishment & 1st Cut", startDay: 0, endDay: 50, irrigationRequirement: "Critical", recommendedActivity: "Inoculate seed with Rhizobium culture. Light frequent watering. 1st cut at 50-55 days." },
-      { id: "fd-2", stageName: "Peak Multi-Cutting Cycles", startDay: 55, endDay: 120, irrigationRequirement: "Critical", recommendedActivity: "Cut every 25-30 days. Top-dress 15kg Urea immediately post-harvest." },
-      { id: "fd-3", stageName: "Seed Setting / Terminal Cut", startDay: 125, endDay: 150, irrigationRequirement: "Moderate", recommendedActivity: "Leave crop unharvested after early April for certified seed production." },
-    ],
-    majorDiseases: ["Stem Rot", "Root Rot"],
-    pauFungicidePrescription: "Bavistin (Carbendazim 50% WP) @ 2g/kg seed treatment before broadcasting.",
-    dos: [
-      "Inoculate seeds with Berseem Rhizobium culture before field broadcasting",
-      "Provide light irrigation immediately following each cutting cycle to spur regrowth",
-      "Top-dress 15 kg Urea per acre immediately post-cut for vigorous multi-cut foliage",
-      "Harvest at 45-50 cm height when forage crude protein is at its peak"
-],
-    donts: [
-      "Do not mow closer than 5 cm to ground level to protect basal regenerating buds",
-      "Do not allow field flooding after cutting to avoid damping-off and collar rot",
-      "Avoid grazing dairy cattle immediately after chemical fertilizer top-dressing",
-      "Do not delay first cutting past 55 days to avoid tough, fibrous stem development"
-],
-  },
-  {
-    id: "horticulture",
-    cropName: "Vegetables & Chilli (Sabziyan)",
-    name: "Vegetables & Chilli (Sabziyan)",
-    varieties: ["CH-1 Hybrid", "Pusa Jwala", "Syngenta 1065"],
-    variety: "Hybrid F1 Commercial",
-    durationDays: 85,
-    duration: "70-90 Days",
-    season: "Zaid",
-    sowingWindow: "Feb – Mar (Summer) / Jun – Jul (Monsoon)",
-    defaultSoil: "Alluvial Loam (Deep & Fertile)",
-    defaultIrrigation: "Drip / Micro-Irrigation (Sub-surface/Surface)",
-    badge: "Polyhouse / Open Field",
-    targetYieldQuintals: "45 – 60 Qtl/Acre",
-    irrigationThresholdMoisture: 35,
-    criticalIrrigationStages: [
-      "Transplanting (0–10 Days)",
-      "Flowering & Fruit Setting (35–55 Days)",
-      "Pickings Window (60–85 Days)",
-    ],
-    growthTimeline: [
-      { id: "ht-1", stageName: "Nursery & Transplanting", startDay: 0, endDay: 20, irrigationRequirement: "Moderate", recommendedActivity: "Transplant 25-day seedlings on raised beds with silver-black mulch. Drench with Trichoderma." },
-      { id: "ht-2", stageName: "Vegetative & Flowering", startDay: 25, endDay: 50, irrigationRequirement: "Critical", recommendedActivity: "Fertigate with 19-19-19 soluble fertilizer. Install yellow sticky traps for whiteflies." },
-      { id: "ht-3", stageName: "Fruit Setting & 1st Picking", startDay: 55, endDay: 70, irrigationRequirement: "Critical", recommendedActivity: "Regular drip fertigation with Calcium Nitrate & Boron. Pegasus spray for mites." },
-      { id: "ht-4", stageName: "Continuous Pickings", startDay: 75, endDay: 85, irrigationRequirement: "Moderate", recommendedActivity: "Harvest green chillies at 7-10 day intervals. Maintain soil moisture consistency." },
-    ],
-    majorDiseases: ["Chilli Leaf Curl Virus", "Anthracnose Fruit Rot", "Thrips & Yellow Mites"],
-    pauFungicidePrescription: "Pegasus (Diafenthiuron 50% WP) @ 250g/acre for mites; Score (Difenoconazole) @ 1ml/L for fruit rot.",
-    dos: [
-      "Transplant healthy seedlings onto raised beds equipped with silver-black mulch film",
-      "Install yellow and blue sticky traps (15-20 per acre) for thrips and whitefly monitoring",
-      "Fertigate through drip with balanced 19-19-19 and soluble micronutrients regularly",
-      "Harvest fresh vegetable produce during cooler morning or late evening hours"
-],
-    donts: [
-      "Do not use overhead sprinkler watering during peak bloom to prevent flower abortion",
-      "Avoid repeated continuous spraying of identical chemical groups to prevent insect resistance",
-      "Do not allow standing water around the root collar to prevent phytophthora wilt",
-      "Never harvest produce during wet rainy periods to prevent transit fungal decay"
-],
-  },
-];
+const INITIAL_CROPS: CropMasterTemplate[] = [];
 
-const INITIAL_SUPPORT_TICKETS: SupportTicketAdmin[] = [
-  {
-    id: "t-1",
-    ticketCode: "TK-8821",
-    clientName: "Jaswinder Singh Brar",
-    phone: "+91 98140-54321",
-    farmName: "Main Holding (Ludhiana)",
-    subject: "Suspected Yellow Rust on early tillering leaf tips",
-    category: "Pest Outbreak",
-    crop: "Wheat (HD-3086)",
-    priority: "High",
-    status: "In Progress",
-    assignedAgronomist: "Dr. Harpreet Singh (PAU)",
-    createdAt: "26 Oct 2026, 09:15 AM",
-    messages: [
-      {
-        sender: "Farmer",
-        text: "Leaf tips in parcel 3 turning yellow with linear powder stripes after rainfall.",
-        time: "26 Oct, 09:15 AM",
-      },
-      {
-        sender: "Dr. Harpreet Singh",
-        text: "Confirmed stripe rust onset. Avoid urea top-dressing immediately. Apply Propiconazole 25% EC @ 200ml/acre with hollow cone nozzle.",
-        time: "26 Oct, 11:30 AM",
-      },
-    ],
-  },
-  {
-    id: "t-2",
-    ticketCode: "TK-8819",
-    clientName: "Vikramjeet Singh Sandhu",
-    phone: "+91 94178-90321",
-    farmName: "Sandhu Cotton Belt (Bathinda)",
-    subject: "Herbicide drift scorching young mustard intercrop",
-    category: "Agronomy Advice",
-    crop: "Mustard",
-    priority: "Medium",
-    status: "Resolved",
-    assignedAgronomist: "Dr. Gurmeet Kaur (PAU)",
-    createdAt: "24 Oct 2026, 02:40 PM",
-    messages: [
-      {
-        sender: "Farmer",
-        text: "Wind blew neighbor's 2,4-D spray into our border plots. Foliage curling.",
-        time: "24 Oct, 02:40 PM",
-      },
-      {
-        sender: "Dr. Gurmeet Kaur",
-        text: "Spray with 1% Urea + 0.5% Zinc Sulphate to stimulate new vegetative bud emergence. Soil moisture should be kept adequate.",
-        time: "24 Oct, 04:00 PM",
-      },
-    ],
-  },
-  {
-    id: "t-3",
-    ticketCode: "TK-8814",
-    clientName: "Gurpreet Singh Dhillon",
-    phone: "+91 98722-11094",
-    farmName: "Dhillon Agro Estate",
-    subject: "Submersible pump telemetry relay offline",
-    category: "IoT Hardware",
-    crop: "Potato",
-    priority: "High",
-    status: "Open",
-    assignedAgronomist: "Pending Assignment",
-    createdAt: "27 Oct 2026, 04:10 PM",
-    messages: [
-      {
-        sender: "Farmer",
-        text: "Solar controller in parcel B stopped transmitting run hours since yesterday.",
-        time: "27 Oct, 04:10 PM",
-      },
-    ],
-  },
-];
+const INITIAL_SUPPORT_TICKETS: SupportTicketAdmin[] = [];
 
-const INITIAL_FIELD_VISITS: FieldVisitLead[] = [
-  {
-    id: "FV-2026-9281",
-    farmerName: "Jaswinder Singh Brar",
-    phone: "+91 98140-54321",
-    farmName: "Main Holding (Ludhiana)",
-    plotLandmark: "Killa #3 - Near Solar Tubewell",
-    crop: "Wheat (HD-3086) - Tillering Stage",
-    reason: "Pest / Disease Attack (Yellow Rust / Aphids)",
-    scheduledDate: "29 Oct 2026",
-    timeSlot: "Morning (8:00 AM - 12:00 PM)",
-    tier: "Standard (₹499)",
-    fee: 499,
-    paymentStatus: "Paid Online",
-    workflowStage: "Agronomist Assigned",
-    assignedSpecialist: "Dr. Harpreet Singh (PAU)",
-    capturedAt: "28 Oct 2026, 01:10 AM",
-    notes: "Yellow powder spotted on early tillering leaf tips in low moisture parcel.",
-  },
-  {
-    id: "FV-2026-8814",
-    farmerName: "Gurpreet Singh Dhillon",
-    phone: "+91 98722-11094",
-    farmName: "Dhillon Agro Estate (Sangrur)",
-    plotLandmark: "Plot B - Canal Feeder Corner",
-    crop: "Mustard (Pusa Bold) - Flowering Stage",
-    reason: "Nutrient Deficiency & Chlorosis (Zinc/Nitrogen)",
-    scheduledDate: "30 Oct 2026",
-    timeSlot: "Afternoon (12:00 PM - 4:00 PM)",
-    tier: "Priority Express (₹799)",
-    fee: 799,
-    paymentStatus: "Paid Online",
-    workflowStage: "Payment Verified",
-    assignedSpecialist: "Dr. Gurmeet Kaur (PAU)",
-    capturedAt: "27 Oct 2026, 05:45 PM",
-    notes: "Severe interveinal chlorosis appearing after second irrigation.",
-  },
-  {
-    id: "FV-2026-7731",
-    farmerName: "Harbhajan Singh Gill",
-    phone: "+91 97801-44329",
-    farmName: "Gill Bet Farm (Moga)",
-    plotLandmark: "Killa #7 near Highway Boundary",
-    crop: "Wheat (PBW-826) - Crown Root",
-    reason: "Root Rot, Wilt & Soil Pathology Check",
-    scheduledDate: "31 Oct 2026",
-    timeSlot: "Morning (8:00 AM - 12:00 PM)",
-    tier: "Standard (₹499)",
-    fee: 499,
-    paymentStatus: "Pay on Arrival",
-    workflowStage: "Lead Captured",
-    assignedSpecialist: "Pending Assignment",
-    capturedAt: "27 Oct 2026, 08:20 PM",
-    notes: "Water stagnation in low-lying basin causing root tip darkening.",
-  },
-];
+const INITIAL_FIELD_VISITS: FieldVisitLead[] = [];
 
-const INITIAL_ROLES: AdminRoleMember[] = [
-  {
-    id: "adm-1",
-    name: "Dr. Amanpreet Singh",
-    email: "amanpreet.lead@khetivo.com",
-    phone: "+91 98141-00210",
-    role: "Superadmin",
-    status: "Active",
-    lastLogin: "Active Now",
-    permissions: [
-      "Manage Clients & Farms",
-      "User & Subscription Control",
-      "Plan & Pricing Management",
-      "Crop Master Templates",
-      "Field Visits & Dispatches",
-      "Support Ticket Resolution",
-      "Platform Analytics",
-      "Role-Based Admin Access",
-      "Data Backup & Audit Logs",
-    ],
-  },
-  {
-    id: "adm-2",
-    name: "Dr. Harpreet Singh",
-    email: "harpreet.pau@khetivo.com",
-    phone: "+91 98762-33419",
-    role: "Agronomist Lead",
-    status: "Active",
-    lastLogin: "35 mins ago",
-    permissions: [
-      "Crop Master Templates",
-      "Field Visits & Dispatches",
-      "Support Ticket Resolution",
-      "View Client Holdings",
-    ],
-  },
-  {
-    id: "adm-3",
-    name: "Sukhmani Kaur",
-    email: "sukhmani.support@khetivo.com",
-    phone: "+91 97800-44122",
-    role: "Support Agent",
-    status: "Active",
-    lastLogin: "1 hour ago",
-    permissions: [
-      "Support Ticket Resolution",
-      "View Client Holdings",
-      "Field Visits Pipeline Tracking",
-    ],
-  },
-  {
-    id: "adm-4",
-    name: "Navjot Singh Gill",
-    email: "navjot.billing@khetivo.com",
-    phone: "+91 94170-88120",
-    role: "Billing Manager",
-    status: "Active",
-    lastLogin: "Yesterday",
-    permissions: [
-      "User & Subscription Control",
-      "Plan & Pricing Management",
-      "Platform Analytics",
-      "Data Backup & Audit Logs",
-    ],
-  },
-];
+const INITIAL_ROLES: AdminRoleMember[] = [];
 
-const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [
-  {
-    id: "log-1",
-    timestamp: "28 Oct 2026, 01:10 AM",
-    actor: "Farmer (Web App)",
-    action: "FIELD_VISIT_LEAD_CAPTURED",
-    entity: "Visit #FV-2026-9281 (Jaswinder Singh Brar)",
-    status: "Success",
-    ipAddress: "106.195.42.18",
-  },
-  {
-    id: "log-2",
-    timestamp: "27 Oct 2026, 11:45 PM",
-    actor: "Dr. Amanpreet Singh",
-    action: "SUBSCRIPTION_TIER_UPGRADED",
-    entity: "Client: Gurpreet Singh Dhillon -> Enterprise",
-    status: "Success",
-    ipAddress: "14.139.241.2",
-  },
-  {
-    id: "log-3",
-    timestamp: "27 Oct 2026, 06:30 PM",
-    actor: "APMC Automated Cron",
-    action: "MANDI_PRICE_INGESTION",
-    entity: "Khanna, Karnal, Bhawanigarh (98 Mandis)",
-    status: "Success",
-    ipAddress: "172.31.14.88",
-  },
-  {
-    id: "log-4",
-    timestamp: "27 Oct 2026, 02:00 AM",
-    actor: "System Engine",
-    action: "DAILY_DATABASE_BACKUP_S3",
-    entity: "khetivo_vault_snapshot_20261027.enc",
-    status: "Success",
-    ipAddress: "Internal VPC",
-  },
-];
+const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [];
 
-const INITIAL_BROADCASTS: BroadcastDispatch[] = [
-  {
-    id: "bc-101",
-    title: "Urgent Yellow Rust (Stripe Rust) Alert in Ludhiana Bet",
-    category: "Pest & Disease Alert",
-    priority: "High / Emergency",
-    targetCrop: "Wheat (Kanak)",
-    targetDistrict: "Ludhiana",
-    targetPlan: "All Plans",
-    targetGrowthStage: "Crown Root / Tillering",
-    message:
-      "High relative humidity (>85%) following unseasonal rain has created optimal spore conditions for Stripe Rust. Inspect early tillering leaf tips in low-lying parcels.",
-    actionPrescription:
-      "Tilt / Propiconazole 25% EC @ 200 ml in 200L water per acre with hollow-cone spray nozzle. Withhold urea top-dressing until treated.",
-    channels: ["In-App Banner", "WhatsApp"],
-    dispatchedAt: "28 Oct 2026, 08:30 AM",
-    dispatchedBy: "Dr. Harpreet Singh (PAU)",
-    matchedFarmersCount: 2,
-    matchedAcreage: 32,
-    status: "Active",
-  },
-  {
-    id: "bc-102",
-    title: "Sub-4°C Ground Frost Warning for Mustard Intercrops",
-    category: "Weather & Frost Warning",
-    priority: "Medium / Advisory",
-    targetCrop: "Mustard / Sarson",
-    targetDistrict: "Bathinda",
-    targetPlan: "All Plans",
-    targetGrowthStage: "All Stages",
-    message:
-      "Night temperatures projected to dip to 3.8°C over next 48 hours with clear skies and calm winds in the Bathinda-Abohar belt. High frost risk for flowering siliquae.",
-    actionPrescription:
-      "Apply light evening irrigation to raise soil thermal capacity. Light smoke heaps along windward boundary if temperatures drop below 3°C.",
-    channels: ["In-App Banner", "SMS Alert"],
-    dispatchedAt: "26 Oct 2026, 04:15 PM",
-    dispatchedBy: "Dr. Gurmeet Kaur (PAU)",
-    matchedFarmersCount: 1,
-    matchedAcreage: 48,
-    status: "Active",
-  },
-];
+const INITIAL_BROADCASTS: BroadcastDispatch[] = [];
 
 // =========================================================================
 // MAIN COMPONENT
 // =========================================================================
 
 export default function AdminPage() {
+  // --- Admin Authentication State ---
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
+  const [authChecking, setAuthChecking] = useState<boolean>(true);
+  const [adminEmailInput, setAdminEmailInput] = useState<string>("");
+  const [adminPasswordInput, setAdminPasswordInput] = useState<string>("");
+  const [adminAuthError, setAdminAuthError] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [adminAuthLoading, setAdminAuthLoading] = useState<boolean>(false);
+
+  // Check persisted admin session on mount
+  useEffect(() => {
+    try {
+      const session = localStorage.getItem("khetivo_admin_session");
+      if (session) {
+        const parsed = JSON.parse(session);
+        if (parsed && parsed.authenticated && parsed.email) {
+          setIsAdminAuthenticated(true);
+        }
+      }
+    } catch {}
+    setAuthChecking(false);
+  }, []);
+
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminAuthError("");
+    setAdminAuthLoading(true);
+
+    const email = adminEmailInput.trim().toLowerCase();
+    const pass = adminPasswordInput.trim();
+
+    // Default admin credentials: admin@gmail.com / admin123 (also accepts admin@khetivo.com / khetivo@2026)
+    const validCredentials = [
+      { email: "admin@gmail.com", pass: "admin123" },
+      { email: "admin@khetivo.com", pass: "khetivo@2026" },
+      { email: "amanpreet@khetivo.com", pass: "admin123" },
+    ];
+
+    const match = validCredentials.find(
+      (c) => c.email.toLowerCase() === email && c.pass === pass
+    );
+
+    if (match) {
+      const sessionData = {
+        authenticated: true,
+        email: match.email,
+        name: "Dr. Amanpreet Singh",
+        role: "Superadmin",
+        loginTime: new Date().toISOString(),
+      };
+      localStorage.setItem("khetivo_admin_session", JSON.stringify(sessionData));
+      setIsAdminAuthenticated(true);
+      setAdminAuthLoading(false);
+    } else {
+      setTimeout(() => {
+        setAdminAuthError("Invalid Gmail/Email or Password. Please verify your credentials.");
+        setAdminAuthLoading(false);
+      }, 400);
+    }
+  };
+
+  const handleAdminLogout = () => {
+    try {
+      localStorage.removeItem("khetivo_admin_session");
+    } catch {}
+    setIsAdminAuthenticated(false);
+    setAdminEmailInput("");
+    setAdminPasswordInput("");
+  };
+
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -1291,6 +529,16 @@ export default function AdminPage() {
 
   // 3: Plan Management State
   const [plans, setPlans] = useState<PlanConfig[]>(INITIAL_PLANS);
+
+  // Recalculate plan subscribers dynamically based on realtime clients
+  useEffect(() => {
+    setPlans((prev) =>
+      prev.map((p) => ({
+        ...p,
+        activeSubscribers: clients.filter((c) => c.plan.toLowerCase() === p.id.toLowerCase()).length,
+      }))
+    );
+  }, [clients]);
   const [editingPlan, setEditingPlan] = useState<PlanConfig | null>(null);
 
   // 4: Crop Master Templates State
@@ -1298,6 +546,7 @@ export default function AdminPage() {
   const [cropSearch, setCropSearch] = useState("");
   const [selectedCropModal, setSelectedCropModal] = useState<CropMasterTemplate | null>(null);
   const [isAddCropModalOpen, setIsAddCropModalOpen] = useState(false);
+  const [cropToDelete, setCropToDelete] = useState<CropMasterTemplate | null>(null);
   const [editingCropId, setEditingCropId] = useState<string | null>(null);
   const [newCropName, setNewCropName] = useState("");
   const [newCropVariety, setNewCropVariety] = useState("");
@@ -1426,9 +675,11 @@ export default function AdminPage() {
 
   const broadcastMatchedAcreage = broadcastMatchingClients.reduce((sum, c) => sum + c.totalAcreage, 0);
 
-  // LocalStorage Persistence
+  // Realtime Cloud & Local Data Loader
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Load from local cache first
     try {
       const savedClients = localStorage.getItem("khetivo_admin_clients");
       if (savedClients) setClients(JSON.parse(savedClients));
@@ -1445,6 +696,249 @@ export default function AdminPage() {
     } catch (e) {
       console.warn("Could not load from localStorage", e);
     }
+
+    // Fetch live data directly from Appwrite Cloud & API routes
+    const fetchLiveRealtimeAdminData = async () => {
+      try {
+        const [farmsRes, supportRes, invoicesRes, cropTemplatesRes, advisoriesRes] = await Promise.all([
+          fetch("/api/appwrite/farms").catch(() => null),
+          fetch("/api/appwrite/support").catch(() => null),
+          fetch("/api/appwrite/invoices").catch(() => null),
+          fetch("/api/appwrite/crop-templates").catch(() => null),
+          fetch("/api/appwrite/advisories?all=true").catch(() => null),
+        ]);
+
+        // Process live advisories / broadcasts from Appwrite Cloud
+        if (advisoriesRes && advisoriesRes.ok) {
+          const advData = await advisoriesRes.json();
+          if (advData && Array.isArray(advData.advisories)) {
+            const mappedBroadcasts: BroadcastDispatch[] = advData.advisories.map((a: any) => ({
+              id: a.$id || a.id,
+              title: a.title,
+              category: a.category || "Pest Warning",
+              priority: a.priority || "High",
+              targetCrop: a.targetCrop || "All Crops",
+              targetDistrict: a.targetDistrict || "All Districts",
+              targetPlan: "All Plans",
+              targetGrowthStage: "All Growth Stages",
+              message: a.message,
+              actionPrescription: a.actionPrescription,
+              channels: ["In-App Banner", "SMS / WhatsApp"],
+              dispatchedAt: a.dispatchedAt ? new Date(a.dispatchedAt).toLocaleDateString("en-IN") : "Recent",
+              dispatchedBy: a.dispatchedBy || "Dr. Amanpreet Singh",
+              matchedFarmersCount: 1,
+              matchedAcreage: 20,
+              status: a.isActive !== false ? "Active" : "Expired",
+            }));
+            setBroadcasts(mappedBroadcasts);
+            try {
+              localStorage.setItem("khetivo_admin_broadcasts", JSON.stringify(mappedBroadcasts));
+            } catch {}
+          }
+        }
+
+        // Process live crop master templates from Appwrite Cloud
+        if (cropTemplatesRes && cropTemplatesRes.ok) {
+          const tmplData = await cropTemplatesRes.json();
+          if (tmplData && Array.isArray(tmplData.templates)) {
+            const liveCropTemplates: CropMasterTemplate[] = tmplData.templates.map((t: any) => {
+              let parsedTimeline: GrowthStageMilestone[] = [];
+              try {
+                if (typeof t.growthTimeline === "string" && t.growthTimeline.trim()) {
+                  parsedTimeline = JSON.parse(t.growthTimeline);
+                } else if (Array.isArray(t.growthTimeline)) {
+                  parsedTimeline = t.growthTimeline;
+                }
+              } catch {}
+
+              const varList = Array.isArray(t.varieties)
+                ? t.varieties
+                : typeof t.varieties === "string"
+                ? t.varieties.split(",").map((v: string) => v.trim()).filter(Boolean)
+                : ["Standard Variety"];
+
+              return {
+                id: t.$id || t.id,
+                cropName: t.cropName || t.name,
+                name: t.cropName || t.name,
+                varieties: varList,
+                variety: varList[0] || "Standard Variety",
+                season: t.season || "Rabi",
+                sowingWindow: t.sowingWindow || "",
+                durationDays: Number(t.durationDays) || 120,
+                duration: `${Number(t.durationDays) || 120} Days`,
+                defaultSoil: t.defaultSoil || "Alluvial Loam",
+                defaultIrrigation: t.defaultIrrigation || "Tubewell",
+                badge: `${t.season || "Seasonal"} Crop`,
+                targetYieldQuintals: t.targetYield || "20-25 Qtl/Acre",
+                irrigationThresholdMoisture: Number(t.irrigationThresholdMoisture) || 30,
+                criticalIrrigationStages: Array.isArray(t.criticalIrrigationStages) ? t.criticalIrrigationStages : [],
+                growthTimeline: parsedTimeline,
+                majorDiseases: Array.isArray(t.majorDiseases) ? t.majorDiseases : [],
+                pauFungicidePrescription: t.pauPrescription || "",
+                dos: Array.isArray(t.dos) ? t.dos : [],
+                donts: Array.isArray(t.donts) ? t.donts : [],
+              };
+            });
+
+            setCrops((prev) => {
+              const combined = [...liveCropTemplates];
+              prev.forEach((p) => {
+                if (!combined.some((c) => c.id === p.id || c.name.toLowerCase() === p.name.toLowerCase())) {
+                  combined.push(p);
+                }
+              });
+              try {
+                localStorage.setItem("khetivo_admin_crops", JSON.stringify(combined));
+              } catch {}
+              return combined;
+            });
+          }
+        }
+
+        // Process live registered farms into client accounts
+        if (farmsRes && farmsRes.ok) {
+          const farmsData = await farmsRes.json();
+          if (farmsData && Array.isArray(farmsData.farms) && farmsData.farms.length > 0) {
+            // Group farms by userId
+            const userFarmsMap = new Map<string, any[]>();
+            farmsData.farms.forEach((f: any) => {
+              const uid = f.userId || "default_farmer";
+              if (!userFarmsMap.has(uid)) userFarmsMap.set(uid, []);
+              userFarmsMap.get(uid)!.push(f);
+            });
+
+            const liveClients: ClientAccount[] = Array.from(userFarmsMap.entries()).map(
+              ([uid, uFarms], idx) => {
+                const primaryFarm = uFarms[0];
+                const totalAcres = uFarms.reduce((sum, farm) => sum + (Number(farm.totalArea) || 0), 0);
+
+                const mappedHoldingList: FarmHolding[] = uFarms.map((farm) => ({
+                  id: farm.$id || farm.id,
+                  name: farm.name || "Main Holding",
+                  district: farm.district || "Ludhiana",
+                  state: farm.state || "Punjab",
+                  totalArea: Number(farm.totalArea) || 0,
+                  areaUnit: farm.areaUnit || "Acres",
+                  soilType: farm.soilType || "Alluvial Loam",
+                  irrigationType: farm.irrigationType || "Canal / Tubewell",
+                  waterSource: farm.waterSource || "Groundwater",
+                  primaryCrop: farm.cropTemplate || "Wheat / Paddy",
+                }));
+
+                const clientName =
+                  primaryFarm.name.includes("Farm") || primaryFarm.name.includes("Holding")
+                    ? primaryFarm.name.replace(/ Farm| Holding/i, "") + " (Farmer)"
+                    : primaryFarm.name;
+
+                return {
+                  id: `client-${uid}`,
+                  name: clientName || `Farmer ${idx + 1}`,
+                  phone: "+91 98140" + Math.floor(10000 + Math.random() * 90000),
+                  email: `${uid.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()}@farmer.khetivo.com`,
+                  district: primaryFarm.district || "Ludhiana",
+                  state: primaryFarm.state || "Punjab",
+                  plan: "Pro" as SubscriptionTier,
+                  status: "Active" as AccountStatus,
+                  farms: mappedHoldingList,
+                  totalAcreage: totalAcres,
+                  areaUnit: primaryFarm.areaUnit || "Acres",
+                  joinedDate: primaryFarm.$createdAt ? primaryFarm.$createdAt.split("T")[0] : "2026-01-15",
+                  renewalDate: "2027-01-15",
+                  primaryCrop: primaryFarm.cropTemplate || "Multi-Crop",
+                  mandi: primaryFarm.district ? `${primaryFarm.district} Mandi` : "APMC Mandi",
+                };
+              }
+            );
+
+            setClients((prev) => {
+              // Merge live clients with any manually added clients in state
+              const combined = [...liveClients];
+              prev.forEach((p) => {
+                if (!combined.some((c) => c.id === p.id || c.name === p.name)) {
+                  combined.push(p);
+                }
+              });
+              try {
+                localStorage.setItem("khetivo_admin_clients", JSON.stringify(combined));
+              } catch {}
+              return combined;
+            });
+          }
+        }
+
+        // Process live support queries and field visits
+        if (supportRes && supportRes.ok) {
+          const supportData = await supportRes.json();
+          if (supportData && Array.isArray(supportData.tickets) && supportData.tickets.length > 0) {
+            const mappedTickets: SupportTicketAdmin[] = supportData.tickets.map((t: any) => ({
+              id: t.$id || t.id,
+              ticketCode: t.ticketNo || `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
+              clientName: t.farmName || "Farmer",
+              phone: "+91 9814054321",
+              farmName: t.farmName || "Main Farm",
+              subject: t.subject || "Agronomy inquiry",
+              category: "Agronomy Advice" as const,
+              crop: t.cropName || "Field Crop",
+              priority: "Medium" as const,
+              status: t.status === "Resolved" ? "Resolved" : t.status === "In Progress" ? "In Progress" : "Open",
+              assignedAgronomist: t.assignedAgronomist || "PAU Agronomist",
+              createdAt: t.$createdAt ? t.$createdAt.split("T")[0] : "2026-11-20",
+              messages: [{ sender: t.farmName || "Farmer", text: t.description || t.subject, time: "Just now" }],
+            }));
+            setTickets((prev) => {
+              const combined = [...mappedTickets];
+              prev.forEach((p) => {
+                if (!combined.some((t) => t.id === p.id || t.ticketCode === p.ticketCode)) {
+                  combined.push(p);
+                }
+              });
+              try {
+                localStorage.setItem("khetivo_admin_tickets", JSON.stringify(combined));
+              } catch {}
+              return combined;
+            });
+          }
+
+          if (supportData && Array.isArray(supportData.fieldVisits) && supportData.fieldVisits.length > 0) {
+            const mappedVisits: FieldVisitLead[] = supportData.fieldVisits.map((v: any) => ({
+              id: v.$id || v.id,
+              leadSource: "Farmer App",
+              farmerName: v.farmerName || "Farmer",
+              phone: v.phone || "+91 9814054321",
+              farmName: v.farmName || "Main Farm",
+              plotLandmark: v.plotLandmark || "",
+              crop: v.crop || "Wheat",
+              reason: v.reason || "Field Diagnostic",
+              scheduledDate: v.scheduledDate ? v.scheduledDate.split("T")[0] : "2026-11-22",
+              timeSlot: v.timeSlot || "Morning",
+              tier: v.tier || "Standard Diagnostic",
+              fee: Number(v.fee) || 499,
+              paymentStatus: v.paymentStatus || "Pending",
+              workflowStage: v.workflowStage || "Requested",
+              assignedSpecialist: v.assignedSpecialist || "PAU Specialist",
+              notes: v.notes || "",
+            }));
+            setFieldVisits((prev) => {
+              const combined = [...mappedVisits];
+              prev.forEach((p) => {
+                if (!combined.some((v) => v.id === p.id)) {
+                  combined.push(p);
+                }
+              });
+              try {
+                localStorage.setItem("khetivo_admin_visits", JSON.stringify(combined));
+              } catch {}
+              return combined;
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("[Admin Realtime Load Error]:", err);
+      }
+    };
+
+    fetchLiveRealtimeAdminData();
 
     const handleStorageChange = (e: StorageEvent) => {
       if (!e.key || !e.newValue) return;
@@ -1561,6 +1055,43 @@ export default function AdminPage() {
 
     setClients([newClient, ...clients]);
 
+    // Save Farm and User to Appwrite Cloud
+    try {
+      const generatedUserId = `usr_${Date.now().toString(36)}`;
+      fetch("/api/appwrite/farms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: generatedUserId,
+          name: initialFarm.name,
+          district: initialFarm.district,
+          state: initialFarm.state,
+          totalArea: initialFarm.totalArea,
+          areaUnit: initialFarm.areaUnit,
+          soilType: initialFarm.soilType,
+          waterSource: initialFarm.waterSource,
+          cropTemplate: initialFarm.primaryCrop,
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.success && data.farm) {
+            setClients((prev) =>
+              prev.map((c) =>
+                c.id === newClient.id
+                  ? {
+                      ...c,
+                      id: `client-${generatedUserId}`,
+                      farms: [{ ...initialFarm, id: data.farm.$id }],
+                    }
+                  : c
+              )
+            );
+          }
+        })
+        .catch((e) => console.warn("Appwrite onboard farm error:", e));
+    } catch {}
+
     // Record audit log
     const auditEntry: AuditLogEntry = {
       id: `log-${Date.now()}`,
@@ -1609,6 +1140,42 @@ export default function AdminPage() {
       })
     );
 
+    // Save additional farm to Appwrite Cloud
+    try {
+      const targetClient = clients.find((c) => c.id === targetClientIdForFarm);
+      const parsedUserId = targetClient?.id?.replace("client-", "") || "usr_default_farmer";
+      fetch("/api/appwrite/farms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: parsedUserId,
+          name: farm.name,
+          district: farm.district,
+          state: farm.state,
+          totalArea: farm.totalArea,
+          areaUnit: farm.areaUnit,
+          soilType: farm.soilType,
+          waterSource: farm.waterSource,
+          cropTemplate: farm.primaryCrop,
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.success && data.farm) {
+            setClients((prev) =>
+              prev.map((c) => {
+                if (c.id === targetClientIdForFarm) {
+                  const updatedFarms = c.farms.map((f) => (f.id === farm.id ? { ...f, id: data.farm.$id } : f));
+                  return { ...c, farms: updatedFarms };
+                }
+                return c;
+              })
+            );
+          }
+        })
+        .catch((e) => console.warn("Appwrite add farm error:", e));
+    } catch {}
+
     setIsAddFarmModalOpen(false);
     setExtraFarmName("");
     showToast(`Added farm ${farm.name} to client.`);
@@ -1642,6 +1209,25 @@ export default function AdminPage() {
         renewalDate: extendedRenewal || selectedClientModal.renewalDate,
       });
     }
+
+    const targetClient = clients.find((c) => c.id === clientId);
+    const parsedUserId = targetClient?.id?.replace("client-", "");
+    if (parsedUserId) {
+      const planTierLower = plan.toLowerCase();
+      const annualPrice = planTierLower === "enterprise" ? 5999 : planTierLower === "pro" ? 2999 : 0;
+      fetch("/api/appwrite/subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: parsedUserId,
+          planTier: planTierLower,
+          maxAcres: planTierLower === "enterprise" ? 50 : 25,
+          annualFee: annualPrice,
+          paymentMethod: "Admin Override",
+        }),
+      }).catch((e) => console.warn("Appwrite update user subscription error:", e));
+    }
+
     showToast("Subscription & status updated.");
   };
 
@@ -1666,6 +1252,13 @@ export default function AdminPage() {
         totalAcreage: totalArea,
       });
     }
+
+    if (farmId && !farmId.startsWith("f-")) {
+      fetch(`/api/appwrite/farms?farmId=${encodeURIComponent(farmId)}`, {
+        method: "DELETE",
+      }).catch((e) => console.warn("Appwrite delete farm error:", e));
+    }
+
     showToast("Farm parcel removed.");
   };
 
@@ -1771,14 +1364,23 @@ export default function AdminPage() {
   const handleDeleteCropTemplate = (cropId: string) => {
     const target = crops.find((c) => c.id === cropId);
     if (!target) return;
-    if (confirm(`Are you sure you want to delete template for "${target.cropName || target.name}"?`)) {
-      const updated = crops.filter((c) => c.id !== cropId);
-      setCrops(updated);
-      try {
-        localStorage.setItem("khetivo_admin_crops", JSON.stringify(updated));
-      } catch {}
-      showToast(`Crop template "${target.cropName || target.name}" deleted.`);
-    }
+    setCropToDelete(target);
+  };
+
+  const confirmDeleteCropTemplate = () => {
+    if (!cropToDelete) return;
+    const cropId = cropToDelete.id;
+    const cropTitle = cropToDelete.cropName || cropToDelete.name;
+    const updated = crops.filter((c) => c.id !== cropId);
+    setCrops(updated);
+    try {
+      localStorage.setItem("khetivo_admin_crops", JSON.stringify(updated));
+    } catch {}
+    fetch(`/api/appwrite/crop-templates?templateId=${encodeURIComponent(cropId)}`, {
+      method: "DELETE",
+    }).catch((err) => console.warn("Error deleting crop template from Appwrite:", err));
+    setCropToDelete(null);
+    showToast(`Crop template "${cropTitle}" deleted successfully.`);
   };
 
   // Add / Update Crop Template Handler
@@ -1855,6 +1457,22 @@ export default function AdminPage() {
       localStorage.setItem("khetivo_admin_crops", JSON.stringify(updatedCrops));
     } catch {}
 
+    // Save/Update in Appwrite Cloud Database
+    fetch("/api/appwrite/crop-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cropTemplate),
+    }).then(async (res) => {
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data.template && data.template.$id) {
+          setCrops((prev) =>
+            prev.map((c) => (c.id === cropTemplate.id ? { ...c, id: data.template.$id } : c))
+          );
+        }
+      }
+    }).catch((err) => console.warn("Error creating crop template in Appwrite:", err));
+
     const auditEntry: AuditLogEntry = {
       id: `log-${Date.now()}`,
       timestamp: new Date().toLocaleString(),
@@ -1875,6 +1493,20 @@ export default function AdminPage() {
   const handleUpdateFieldVisit = (updatedVisit: FieldVisitLead) => {
     setFieldVisits((prev) => prev.map((v) => (v.id === updatedVisit.id ? updatedVisit : v)));
     setSelectedVisitModal(null);
+
+    if (updatedVisit.id && !updatedVisit.id.startsWith("visit-")) {
+      fetch("/api/appwrite/support", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "field_visit",
+          id: updatedVisit.id,
+          workflowStage: updatedVisit.workflowStage,
+          assignedSpecialist: updatedVisit.assignedSpecialist,
+          notes: updatedVisit.notes,
+        }),
+      }).catch((e) => console.warn("Appwrite update field visit error:", e));
+    }
 
     const auditEntry: AuditLogEntry = {
       id: `log-${Date.now()}`,
@@ -1929,7 +1561,7 @@ export default function AdminPage() {
   };
 
   // Broadcast Handlers
-  const handleDispatchBroadcast = (e: React.FormEvent) => {
+  const handleDispatchBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!broadcastTitle.trim() || !broadcastMessage.trim()) {
       alert("Please provide both a broadcast title and advisory message.");
@@ -1963,6 +1595,35 @@ export default function AdminPage() {
 
     setBroadcasts([newBroadcast, ...broadcasts]);
 
+    // Save to Appwrite Cloud in background
+    try {
+      fetch("/api/appwrite/advisories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: newBroadcast.title,
+          category: newBroadcast.category,
+          priority: newBroadcast.priority,
+          targetCrop: newBroadcast.targetCrop,
+          targetDistrict: newBroadcast.targetDistrict,
+          targetState: "Punjab",
+          message: newBroadcast.message,
+          actionPrescription: newBroadcast.actionPrescription || "",
+          dispatchedBy: newBroadcast.dispatchedBy,
+          isActive: true,
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.success && data.advisory) {
+            setBroadcasts((prev) =>
+              prev.map((b) => (b.id === newBroadcast.id ? { ...b, id: data.advisory.$id } : b))
+            );
+          }
+        })
+        .catch((e) => console.warn("Appwrite advisory dispatch error:", e));
+    } catch {}
+
     const auditEntry: AuditLogEntry = {
       id: `log-${Date.now()}`,
       timestamp: new Date().toLocaleString(),
@@ -1982,15 +1643,38 @@ export default function AdminPage() {
   };
 
   const handleToggleBroadcastStatus = (id: string) => {
+    const target = broadcasts.find((b) => b.id === id);
+    const newStatus = target?.status === "Active" ? "Expired" : "Active";
     setBroadcasts(
-      broadcasts.map((b) => (b.id === id ? { ...b, status: b.status === "Active" ? "Expired" : "Active" } : b))
+      broadcasts.map((b) => (b.id === id ? { ...b, status: newStatus } : b))
     );
+    if (id && !id.startsWith("bc-") && target) {
+      fetch("/api/appwrite/advisories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          title: target.title,
+          category: target.category,
+          priority: target.priority,
+          targetCrop: target.targetCrop,
+          targetDistrict: target.targetDistrict,
+          message: target.message,
+          isActive: newStatus === "Active",
+        }),
+      }).catch((e) => console.warn("Appwrite update advisory error:", e));
+    }
     showToast("Updated broadcast status");
   };
 
   const handleDeleteBroadcast = (id: string) => {
     if (!confirm("Are you sure you want to delete this broadcast?")) return;
     setBroadcasts(broadcasts.filter((b) => b.id !== id));
+    if (id && !id.startsWith("bc-")) {
+      fetch(`/api/appwrite/advisories?advisoryId=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      }).catch((e) => console.warn("Appwrite delete advisory error:", e));
+    }
     showToast("Broadcast removed");
   };
 
@@ -2048,6 +1732,157 @@ export default function AdminPage() {
     ];
     handleExportCSV(`khetivo_platform_analytics_${new Date().toISOString().split("T")[0]}.csv`, headers, rows);
   };
+
+// Authentication Guard Screen
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-[#F4F8F4] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#0C4B32] text-white flex items-center justify-center font-bold text-sm shadow-md animate-pulse">
+            K
+          </div>
+          <p className="text-xs font-semibold text-[#55685D]">Verifying Admin Access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdminAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#F4F8F4] flex flex-col justify-center py-12 sm:px-6 lg:px-8 antialiased">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#0C4B32] text-white font-extrabold text-2xl shadow-lg shadow-[#0C4B32]/15 mb-3 border border-[#166244]">
+            K
+          </div>
+          <h2 className="text-xl font-extrabold text-[#26352D] tracking-tight">
+            KHETIVO <span className="text-[#0C4B32]">ADMIN PORTAL</span>
+          </h2>
+          <p className="mt-1 text-xs text-[#55685D]">
+            Sign in with authorized credentials to access central command & telemetry
+          </p>
+        </div>
+
+        <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4">
+          <div className="bg-white py-7 px-6 sm:px-8 shadow-md rounded-2xl border border-[#E5ECE7] space-y-5">
+            {/* Security Badge */}
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-[#E7F3EB] border border-[#C6E2D0] text-[#0C4B32]">
+              <ShieldCheck className="w-5 h-5 shrink-0" />
+              <div className="text-[11px] leading-tight">
+                <span className="font-bold">Restricted Platform Access:</span> Authorized agronomists and operations managers only.
+              </div>
+            </div>
+
+            {/* Default Credentials Helper Card */}
+            <div className="p-3.5 rounded-xl bg-[#FAFCFA] border border-[#DCE6DE] text-xs space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-[#26352D]">
+                <span>Default Admin Credentials:</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">Demo / Ready</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-[11px] font-mono bg-white p-2.5 rounded-lg border border-[#E5ECE7]">
+                <div>
+                  <div className="text-[10px] text-[#7A8D80] font-sans font-medium">Email / Gmail:</div>
+                  <div className="text-[#0C4B32] font-semibold truncate select-all">admin@gmail.com</div>
+                </div>
+                <div>
+                  <div className="text-[10px] text-[#7A8D80] font-sans font-medium">Password:</div>
+                  <div className="text-[#0C4B32] font-semibold truncate select-all">admin123</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminEmailInput("admin@gmail.com");
+                  setAdminPasswordInput("admin123");
+                  setAdminAuthError("");
+                }}
+                className="w-full text-center text-[11px] font-semibold text-[#0C4B32] hover:text-[#093826] hover:underline cursor-pointer pt-0.5"
+              >
+                Auto-fill Default Credentials
+              </button>
+            </div>
+
+            {/* Error Notice */}
+            {adminAuthError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{adminAuthError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleAdminLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-[#26352D] mb-1.5">
+                  Admin Gmail / Email Address
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    required
+                    value={adminEmailInput}
+                    onChange={(e) => setAdminEmailInput(e.target.value)}
+                    placeholder="e.g. admin@gmail.com"
+                    className="w-full px-3.5 py-2.5 text-xs text-[#26352D] rounded-xl border border-[#DCE6DE] bg-white outline-none focus:border-[#0C4B32] shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-[#26352D]">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-[11px] font-semibold text-[#55685D] hover:text-[#0C4B32] cursor-pointer"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={adminPasswordInput}
+                    onChange={(e) => setAdminPasswordInput(e.target.value)}
+                    placeholder="Enter admin password"
+                    className="w-full px-3.5 py-2.5 text-xs text-[#26352D] rounded-xl border border-[#DCE6DE] bg-white outline-none focus:border-[#0C4B32] shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={adminAuthLoading}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#0C4B32] hover:bg-[#093826] text-white text-xs font-bold transition-all shadow-md shadow-[#0C4B32]/15 cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+              >
+                {adminAuthLoading ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Authenticating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Sign In to Admin Portal</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="pt-2 border-t border-[#F0F4F1] text-center">
+              <Link
+                href="/dashboard"
+                className="text-xs font-semibold text-[#55685D] hover:text-[#0C4B32] transition-colors"
+              >
+                ← Return to Farmer Dashboard
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F8F4] flex flex-col antialiased text-[#26352D]">
@@ -2333,13 +2168,14 @@ export default function AdminPage() {
                   <div className="text-[10px] text-[#55685D] truncate">Superadmin</div>
                 </div>
               </div>
-              <Link
-                href="/signin"
-                title="Sign Out"
-                className="p-1 text-[#889B90] hover:text-red-600 rounded transition-colors"
+              <button
+                type="button"
+                onClick={handleAdminLogout}
+                title="Sign Out of Admin Portal"
+                className="p-1 text-[#889B90] hover:text-red-600 rounded transition-colors cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
-              </Link>
+              </button>
             </div>
           </div>
         </aside>
@@ -3717,13 +3553,13 @@ export default function AdminPage() {
                         <div className="flex justify-between font-semibold">
                           <span className="text-gray-700">Free Starter</span>
                           <span className="text-[#55685D] font-bold">
-                            {freeClients} farmers ({Math.round((freeClients / totalClients) * 100)}%)
+                            {freeClients} farmers ({totalClients > 0 ? Math.round((freeClients / totalClients) * 100) : 0}%)
                           </span>
                         </div>
                         <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
                           <div
                             className="h-full bg-gray-400 rounded-full"
-                            style={{ width: `${(freeClients / totalClients) * 100}%` }}
+                            style={{ width: `${totalClients > 0 ? (freeClients / totalClients) * 100 : 0}%` }}
                           />
                         </div>
                       </div>
@@ -3733,13 +3569,13 @@ export default function AdminPage() {
                         <div className="flex justify-between font-semibold">
                           <span className="text-blue-800">Basic Grower (₹699/yr)</span>
                           <span className="text-[#55685D] font-bold">
-                            {basicClients} farmers ({Math.round((basicClients / totalClients) * 100)}%)
+                            {basicClients} farmers ({totalClients > 0 ? Math.round((basicClients / totalClients) * 100) : 0}%)
                           </span>
                         </div>
                         <div className="h-2 rounded-full bg-blue-100 overflow-hidden">
                           <div
                             className="h-full bg-blue-600 rounded-full"
-                            style={{ width: `${(basicClients / totalClients) * 100}%` }}
+                            style={{ width: `${totalClients > 0 ? (basicClients / totalClients) * 100 : 0}%` }}
                           />
                         </div>
                       </div>
@@ -3749,13 +3585,13 @@ export default function AdminPage() {
                         <div className="flex justify-between font-semibold">
                           <span className="text-[#0C4B32]">Farm Pro (₹1,499/yr)</span>
                           <span className="text-[#55685D] font-bold">
-                            {proClients} farmers ({Math.round((proClients / totalClients) * 100)}%)
+                            {proClients} farmers ({totalClients > 0 ? Math.round((proClients / totalClients) * 100) : 0}%)
                           </span>
                         </div>
                         <div className="h-2 rounded-full bg-emerald-100 overflow-hidden">
                           <div
                             className="h-full bg-[#0C4B32] rounded-full"
-                            style={{ width: `${(proClients / totalClients) * 100}%` }}
+                            style={{ width: `${totalClients > 0 ? (proClients / totalClients) * 100 : 0}%` }}
                           />
                         </div>
                       </div>
@@ -3765,13 +3601,13 @@ export default function AdminPage() {
                         <div className="flex justify-between font-semibold">
                           <span className="text-purple-800">Estate Enterprise (₹4,999/yr)</span>
                           <span className="text-[#55685D] font-bold">
-                            {enterpriseClients} estates ({Math.round((enterpriseClients / totalClients) * 100)}%)
+                            {enterpriseClients} estates ({totalClients > 0 ? Math.round((enterpriseClients / totalClients) * 100) : 0}%)
                           </span>
                         </div>
                         <div className="h-2 rounded-full bg-purple-100 overflow-hidden">
                           <div
                             className="h-full bg-purple-700 rounded-full"
-                            style={{ width: `${(enterpriseClients / totalClients) * 100}%` }}
+                            style={{ width: `${totalClients > 0 ? (enterpriseClients / totalClients) * 100 : 0}%` }}
                           />
                         </div>
                       </div>
@@ -3780,7 +3616,7 @@ export default function AdminPage() {
                     <div className="p-3 rounded-xl bg-[#E7F3EB]/60 border border-[#C6E2D0] flex items-center justify-between text-xs text-[#0C4B32]">
                       <span className="font-semibold">Paid Conversion Rate:</span>
                       <strong className="font-bold">
-                        {Math.round(((basicClients + proClients + enterpriseClients) / totalClients) * 100)}% Paid Accounts
+                        {totalClients > 0 ? Math.round(((basicClients + proClients + enterpriseClients) / totalClients) * 100) : 0}% Paid Accounts
                       </strong>
                     </div>
                   </div>
@@ -4547,9 +4383,10 @@ export default function AdminPage() {
                   type="button"
                   onClick={() => {
                     if (!ticketReplyInput.trim()) return;
+                    const replyText = ticketReplyInput.trim();
                     const newMsg = {
                       sender: "Dr. Amanpreet Singh (PAU)",
-                      text: ticketReplyInput.trim(),
+                      text: replyText,
                       time: "Just now",
                     };
                     const updated = {
@@ -4560,6 +4397,21 @@ export default function AdminPage() {
                     setSelectedTicketModal(updated);
                     setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
                     setTicketReplyInput("");
+
+                    if (selectedTicketModal.id && !selectedTicketModal.id.startsWith("tkt-")) {
+                      fetch("/api/appwrite/support", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          type: "ticket",
+                          id: selectedTicketModal.id,
+                          status: "In Progress",
+                          resolution: replyText,
+                          assignedAgronomist: "Dr. Amanpreet Singh (PAU)",
+                        }),
+                      }).catch((e) => console.warn("Appwrite update ticket error:", e));
+                    }
+
                     showToast("Reply dispatched to farmer's WhatsApp.");
                   }}
                   className="btn btn-primary text-xs px-4 py-2 font-medium"
@@ -4576,6 +4428,19 @@ export default function AdminPage() {
                     const updated = { ...selectedTicketModal, status };
                     setSelectedTicketModal(updated);
                     setTickets((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+
+                    if (selectedTicketModal.id && !selectedTicketModal.id.startsWith("tkt-")) {
+                      fetch("/api/appwrite/support", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          type: "ticket",
+                          id: selectedTicketModal.id,
+                          status,
+                        }),
+                      }).catch((err) => console.warn("Appwrite update ticket status error:", err));
+                    }
+
                     showToast(`Status updated to ${status}`);
                   }}
                   className="px-2.5 py-1 rounded-lg border border-[#DCE6DE] text-xs cursor-pointer"
@@ -5842,6 +5707,65 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Crop Delete Confirmation Modal */}
+      {cropToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            className="w-full max-w-md bg-white rounded-2xl border border-[#E5ECE7] shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-11 h-11 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <h3 className="text-sm font-bold text-[#26352D]">
+                  Delete Crop Master Template?
+                </h3>
+                <p className="text-xs text-[#55685D] leading-relaxed">
+                  Are you sure you want to delete template for{" "}
+                  <strong className="text-[#26352D] font-bold">
+                    &ldquo;{cropToDelete.cropName || cropToDelete.name}&rdquo;
+                  </strong>
+                  ?
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-[#FAFCFA] border border-[#E5ECE7] text-[11px] text-[#55685D] space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-[#26352D]">
+                <Sprout className="w-3.5 h-3.5 text-[#0C4B32]" />
+                <span>{cropToDelete.cropName || cropToDelete.name}</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#E7F3EB] text-[#0C4B32] font-medium">
+                  {cropToDelete.season}
+                </span>
+              </div>
+              <p className="text-[#889B90]">
+                This will remove the default PAU growth timeline ({cropToDelete.growthTimeline?.length || 5} stages), advisory rules, and recommended agronomy protocols for this crop.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setCropToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold rounded-xl text-[#55685D] hover:text-[#26352D] bg-white border border-[#DCE6DE] hover:bg-[#F4F8F4] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteCropTemplate}
+                className="px-4 py-2 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 text-white shadow-xs transition-colors cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Template</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -8,8 +8,7 @@ import { Query } from "node-appwrite";
 export async function GET(req: NextRequest) {
   try {
     const databases = getServerDatabases();
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
+    const userId = req.nextUrl.searchParams.get("userId");
 
     const queries: string[] = [Query.limit(50), Query.orderDesc("$createdAt")];
     if (userId) queries.push(Query.equal("userId", userId));

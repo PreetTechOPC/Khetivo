@@ -161,7 +161,7 @@ export async function sendRealOtpApi(phone: string): Promise<{
 export async function verifyRealOtpApi(
   phone: string,
   code: string,
-  userInfo?: { name?: string; email?: string }
+  userInfo?: { name?: string; email?: string; password?: string }
 ): Promise<{
   success: boolean;
   message: string;
@@ -187,6 +187,7 @@ export async function verifyRealOtpApi(
         code,
         name: userInfo?.name,
         email: userInfo?.email,
+        password: userInfo?.password,
       }),
     });
 
