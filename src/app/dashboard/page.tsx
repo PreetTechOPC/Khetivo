@@ -1533,8 +1533,12 @@ export default function DashboardPage() {
       if (uEmail) setSettingsEmail(uEmail);
     } catch {}
 
-    // Fast Hydration: Instantly restore cached farm data from localStorage so page doesn't feel empty
+    // Fast Hydration: Instantly restore active language and cached farm data
     try {
+      const savedLang = localStorage.getItem("khetivo_language");
+      if (savedLang && ["en", "pa", "hi", "mr", "gu"].includes(savedLang)) {
+        setSettingsLanguageState(savedLang as SupportedLanguage);
+      }
       const savedFarmId = localStorage.getItem("khetivo_selected_farm_id");
       if (savedFarmId) {
         setSelectedFarmIdState(savedFarmId);
@@ -1656,8 +1660,11 @@ export default function DashboardPage() {
               localStorage.setItem("khetivo_default_unit", cloudProfile.measurementUnit);
             }
             if (cloudProfile.preferredLanguage) {
-              setSettingsLanguage(cloudProfile.preferredLanguage);
-              localStorage.setItem("khetivo_language", cloudProfile.preferredLanguage);
+              const localLang = localStorage.getItem("khetivo_language");
+              if (!localLang) {
+                setSettingsLanguage(cloudProfile.preferredLanguage);
+                localStorage.setItem("khetivo_language", cloudProfile.preferredLanguage);
+              }
             }
           }
 
@@ -5139,10 +5146,38 @@ export default function DashboardPage() {
             <div className="min-w-0">
               <div className="flex items-baseline gap-2">
                 <h1 className="text-base sm:text-lg font-bold text-[#26352D] tracking-tight truncate">
-                  {NAV_ITEMS.find((n) => n.id === activeTab)?.label || "Dashboard"}
+                  {activeTab === "dashboard" ? t.nav_dashboard :
+                   activeTab === "advisories" ? t.nav_advisories :
+                   activeTab === "weather" ? t.nav_weather :
+                   activeTab === "tasks" ? t.nav_tasks :
+                   activeTab === "inventory" ? t.nav_inventory :
+                   activeTab === "equipment" ? t.nav_equipment :
+                   activeTab === "crops" ? t.nav_crops :
+                   activeTab === "expenses" ? t.nav_stats :
+                   activeTab === "reports" ? t.nav_reports :
+                   activeTab === "my-farms" ? t.nav_my_farms :
+                   activeTab === "team" ? t.nav_team :
+                   activeTab === "subscription" ? t.nav_subscription :
+                   activeTab === "support" ? t.nav_support :
+                   activeTab === "settings" ? t.nav_settings :
+                   (NAV_ITEMS.find((n) => n.id === activeTab)?.label || "Dashboard")}
                 </h1>
                 <span className="text-[11px] text-[#55685D] hidden md:inline truncate">
-                  • {NAV_ITEMS.find((n) => n.id === activeTab)?.description}
+                  • {activeTab === "dashboard" ? t.nav_dashboard_desc :
+                     activeTab === "advisories" ? t.nav_advisories_desc :
+                     activeTab === "weather" ? t.nav_weather_desc :
+                     activeTab === "tasks" ? t.nav_tasks_desc :
+                     activeTab === "inventory" ? t.nav_inventory_desc :
+                     activeTab === "equipment" ? t.nav_equipment_desc :
+                     activeTab === "crops" ? t.nav_crops_desc :
+                     activeTab === "expenses" ? t.nav_stats_desc :
+                     activeTab === "reports" ? t.nav_reports_desc :
+                     activeTab === "my-farms" ? t.nav_my_farms_desc :
+                     activeTab === "team" ? t.nav_team_desc :
+                     activeTab === "subscription" ? t.nav_subscription_desc :
+                     activeTab === "support" ? t.nav_support_desc :
+                     activeTab === "settings" ? t.nav_settings_desc :
+                     (NAV_ITEMS.find((n) => n.id === activeTab)?.description || "")}
                 </span>
               </div>
             </div>
@@ -5219,8 +5254,7 @@ export default function DashboardPage() {
               className="btn btn-primary text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 inline-flex items-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer font-medium"
             >
               <MapPin className="w-3.5 h-3.5 text-[#F9B21B]" />
-              <span className="hidden sm:inline">Raise a </span>
-              <span>Field Visit</span>
+              <span>{t.raise_field_visit}</span>
             </button>
           </div>
         </header>
@@ -5262,7 +5296,7 @@ export default function DashboardPage() {
                         className="btn btn-primary text-xs px-3.5 py-2 flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer rounded-xl font-medium"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Add Task</span>
+                        <span>{t.add_task}</span>
                       </button>
                       <button
                         type="button"
@@ -5270,7 +5304,7 @@ export default function DashboardPage() {
                         className="btn btn-outline text-xs px-3.5 py-2 flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 cursor-pointer rounded-xl font-medium bg-white"
                       >
                         <Receipt className="w-3.5 h-3.5 text-[#0C4B32]" />
-                        <span>Financial Entry</span>
+                        <span>{t.financial_entry}</span>
                       </button>
                     </div>
                   </div>
@@ -5282,7 +5316,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2">
                       <Receipt className="w-4 h-4 text-[#0C4B32]" />
                       <h3 className="text-base font-bold text-[#26352D]">
-                        Stats
+                        {t.stats}
                       </h3>
                     </div>
                     <button
@@ -5290,7 +5324,7 @@ export default function DashboardPage() {
                       onClick={() => setActiveTab("expenses")}
                       className="text-xs font-semibold text-[#0C4B32] hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <span>View Ledger</span>
+                      <span>{t.view_ledger}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -5298,19 +5332,19 @@ export default function DashboardPage() {
                   {/* Clean 3-Metric Summary Strip */}
                   <div className="grid grid-cols-3 gap-2 text-center py-2.5 px-3 rounded-xl bg-[#F8FAF8] border border-[#E5ECE7]">
                     <div>
-                      <div className="text-xs text-[#55685D]">Production</div>
+                      <div className="text-xs text-[#55685D]">{t.production}</div>
                       <div className="text-sm font-bold text-emerald-700 mt-0.5">
                         +₹{totalProduction.toLocaleString("en-IN")}
                       </div>
                     </div>
                     <div className="border-x border-[#E5ECE7]">
-                      <div className="text-xs text-[#55685D]">Losses</div>
+                      <div className="text-xs text-[#55685D]">{t.losses}</div>
                       <div className="text-sm font-bold text-amber-700 mt-0.5">
                         -₹{totalLosses.toLocaleString("en-IN")}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-[#55685D]">Expenses</div>
+                      <div className="text-xs text-[#55685D]">{t.expenses}</div>
                       <div className="text-sm font-bold text-red-600 mt-0.5">
                         -₹{totalExpenses.toLocaleString("en-IN")}
                       </div>
@@ -11318,10 +11352,10 @@ export default function DashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#E5ECE7]">
                   <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-[#26352D] tracking-tight">
-                      Farm & System Settings
+                      {t.settings_title}
                     </h2>
                     <p className="text-xs text-[#55685D] mt-0.5">
-                      Configure your farmer identity, regional measurement units, and interface preferences.
+                      {t.settings_subtitle}
                     </p>
                   </div>
 
@@ -11332,7 +11366,7 @@ export default function DashboardPage() {
                       className="px-3.5 py-2 text-xs font-medium rounded-xl bg-white text-[#55685D] hover:text-[#26352D] border border-[#DCE6DE] hover:bg-[#F4F8F4] transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Reset</span>
+                      <span>{t.settings_reset}</span>
                     </button>
                     <button
                       type="button"
@@ -11340,7 +11374,7 @@ export default function DashboardPage() {
                       className="px-3.5 py-2 text-xs font-medium rounded-xl bg-white text-red-600 hover:text-white hover:bg-red-600 border border-red-200 hover:border-red-600 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <LogOut className="w-3.5 h-3.5" />
-                      <span>Sign Out</span>
+                      <span>{t.settings_sign_out}</span>
                     </button>
                     <button
                       type="button"
@@ -11348,7 +11382,7 @@ export default function DashboardPage() {
                       className="btn btn-primary text-xs px-4 py-2 inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
                     >
                       <Check className="w-3.5 h-3.5" />
-                      <span>Save Preferences</span>
+                      <span>{t.settings_save}</span>
                     </button>
                   </div>
                 </div>
@@ -11362,19 +11396,19 @@ export default function DashboardPage() {
                           <UserCheck className="w-4 h-4" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-bold text-[#26352D]">Farmer Identity & Account Profile</h3>
-                          <p className="text-[11px] text-[#55685D]">Official details used on mandi dispatch slips and GST receipts</p>
+                          <h3 className="text-sm font-bold text-[#26352D]">{t.farmer_identity_title}</h3>
+                          <p className="text-[11px] text-[#55685D]">{t.farmer_identity_desc}</p>
                         </div>
                       </div>
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                        Verified Farmer ID
+                        {t.verified_farmer_id}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Registered Farmer Full Name
+                          {t.farmer_name_label}
                         </label>
                         <input
                           type="text"
@@ -11387,7 +11421,7 @@ export default function DashboardPage() {
 
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Primary Mobile Number (OTP & SMS)
+                          {t.farmer_phone_label}
                         </label>
                         <input
                           type="tel"
@@ -11400,7 +11434,7 @@ export default function DashboardPage() {
 
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Official Email Address
+                          {t.farmer_email_label}
                         </label>
                         <input
                           type="email"
@@ -11414,7 +11448,7 @@ export default function DashboardPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Primary APMC Mandi Linkage
+                          {t.primary_mandi_label}
                         </label>
                         <select
                           value={settingsMandi}
@@ -11432,7 +11466,7 @@ export default function DashboardPage() {
 
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Farm Headquarters Base Address
+                          {t.farm_address_label}
                         </label>
                         <input
                           type="text"
@@ -11452,15 +11486,15 @@ export default function DashboardPage() {
                         <Ruler className="w-4 h-4" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-[#26352D]">Regional Units & Interface Preferences</h3>
-                        <p className="text-[11px] text-[#55685D]">Standards used across all crop records, field maps, and reports</p>
+                        <h3 className="text-sm font-bold text-[#26352D]">{t.regional_units_title}</h3>
+                        <p className="text-[11px] text-[#55685D]">{t.regional_units_desc}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Default Area Measurement Unit
+                          {t.default_unit_label}
                         </label>
                         <select
                           value={settingsDefaultUnit}
@@ -11494,7 +11528,7 @@ export default function DashboardPage() {
 
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Currency & Financial Standard
+                          {t.currency_standard_label}
                         </label>
                         <select
                           defaultValue="INR"
@@ -11507,7 +11541,7 @@ export default function DashboardPage() {
 
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Calendar Date Format
+                          {t.date_format_label}
                         </label>
                         <select
                           defaultValue="DD/MM/YYYY"
@@ -11528,8 +11562,8 @@ export default function DashboardPage() {
                           <ShieldAlert className="w-4 h-4" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-bold text-[#26352D]">Account Management & Danger Zone</h3>
-                          <p className="text-[11px] text-[#55685D]">Sign out of your farmer session or permanently delete your account and records</p>
+                          <h3 className="text-sm font-bold text-[#26352D]">{t.danger_zone_title}</h3>
+                          <p className="text-[11px] text-[#55685D]">{t.danger_zone_desc}</p>
                         </div>
                       </div>
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200">
