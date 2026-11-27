@@ -1386,15 +1386,20 @@ export default function DashboardPage() {
   const [settingsMandi, setSettingsMandi] = useState("Local APMC Mandi");
   const [settingsHeadquartersAddress, setSettingsHeadquartersAddress] = useState("");
   const [settingsDefaultUnit, setSettingsDefaultUnit] = useState<LandAreaUnit>("Acres");
-  const [settingsLanguage, setSettingsLanguageState] = useState<SupportedLanguage>("en");
+  // Active applied interface language
+  const [activeLanguage, setActiveLanguage] = useState<SupportedLanguage>("en");
+  // Draft language selected in the Settings tab (only committed when user clicks "Save Preferences")
+  const [draftSettingsLanguage, setDraftSettingsLanguage] = useState<SupportedLanguage>("en");
 
-  // Helper translation dictionary based on current active language
-  const t = TRANSLATIONS[settingsLanguage] || TRANSLATIONS.en;
+  // Helper translation dictionary based on current active saved language
+  const t = TRANSLATIONS[activeLanguage] || TRANSLATIONS.en;
 
-  const setSettingsLanguage = (lang: string) => {
+  // Immediate language switch function (used when saving settings or changing quick pill)
+  const commitLanguage = (lang: string, persistToStorage = true) => {
     const validLang: SupportedLanguage = (["en", "pa", "hi", "mr", "gu"].includes(lang) ? lang : "en") as SupportedLanguage;
-    setSettingsLanguageState(validLang);
-    if (typeof window !== "undefined") {
+    setActiveLanguage(validLang);
+    setDraftSettingsLanguage(validLang);
+    if (persistToStorage && typeof window !== "undefined") {
       try {
         localStorage.setItem("khetivo_language", validLang);
       } catch {}
@@ -1537,7 +1542,8 @@ export default function DashboardPage() {
     try {
       const savedLang = localStorage.getItem("khetivo_language");
       if (savedLang && ["en", "pa", "hi", "mr", "gu"].includes(savedLang)) {
-        setSettingsLanguageState(savedLang as SupportedLanguage);
+        setActiveLanguage(savedLang as SupportedLanguage);
+        setDraftSettingsLanguage(savedLang as SupportedLanguage);
       }
       const savedFarmId = localStorage.getItem("khetivo_selected_farm_id");
       if (savedFarmId) {
@@ -1662,8 +1668,7 @@ export default function DashboardPage() {
             if (cloudProfile.preferredLanguage) {
               const localLang = localStorage.getItem("khetivo_language");
               if (!localLang) {
-                setSettingsLanguage(cloudProfile.preferredLanguage);
-                localStorage.setItem("khetivo_language", cloudProfile.preferredLanguage);
+                commitLanguage(cloudProfile.preferredLanguage, true);
               }
             }
           }
@@ -3827,7 +3832,10 @@ export default function DashboardPage() {
       const storedUnit = localStorage.getItem("khetivo_default_unit");
       if (storedUnit) setSettingsDefaultUnit(storedUnit);
       const storedLang = localStorage.getItem("khetivo_language");
-      if (storedLang) setSettingsLanguage(storedLang);
+      if (storedLang && ["en", "pa", "hi", "mr", "gu"].includes(storedLang)) {
+        setActiveLanguage(storedLang as SupportedLanguage);
+        setDraftSettingsLanguage(storedLang as SupportedLanguage);
+      }
       const storedMandi = localStorage.getItem("khetivo_mandi");
       if (storedMandi) setSettingsMandi(storedMandi);
       const storedAddress = localStorage.getItem("khetivo_farm_address");
@@ -3848,10 +3856,13 @@ export default function DashboardPage() {
       localStorage.setItem("khetivo_user_name", settingsFarmerName);
       if (settingsEmail) localStorage.setItem("khetivo_user_email", settingsEmail);
       localStorage.setItem("khetivo_default_unit", settingsDefaultUnit);
-      localStorage.setItem("khetivo_language", settingsLanguage);
+      localStorage.setItem("khetivo_language", draftSettingsLanguage);
       localStorage.setItem("khetivo_mandi", settingsMandi);
       localStorage.setItem("khetivo_farm_address", settingsHeadquartersAddress);
     }
+
+    // Explicitly commit the draft settings language to active dashboard language on save!
+    commitLanguage(draftSettingsLanguage, true);
 
     try {
       const currentUid = typeof window !== "undefined" ? localStorage.getItem("khetivo_user_id") || undefined : undefined;
@@ -3863,7 +3874,7 @@ export default function DashboardPage() {
         district: currentFarm?.district || "Ludhiana",
         state: currentFarm?.state || "Punjab",
         measurementUnit: settingsDefaultUnit,
-        preferredLanguage: settingsLanguage,
+        preferredLanguage: draftSettingsLanguage,
         mandiLinkage: settingsMandi,
         farmAddress: settingsHeadquartersAddress,
       });
@@ -3887,7 +3898,7 @@ export default function DashboardPage() {
     setSettingsMandi("Khanna Mandi (Asia's Largest Grain Market - Ludhiana)");
     setSettingsHeadquartersAddress("Village Samrala, GT Road Belt, Ludhiana, Punjab 141001");
     setSettingsDefaultUnit("Acres");
-    setSettingsLanguage("en");
+    setDraftSettingsLanguage(activeLanguage);
     setSettingsMoistureDeficit("30");
     setSettingsWindThreshold("18");
     setSettingsWhatsappAlerts(true);
@@ -5189,10 +5200,10 @@ export default function DashboardPage() {
             {/* Quick Language Selector Pill */}
             <div className="relative inline-flex items-center">
               <select
-                value={settingsLanguage}
+                value={activeLanguage}
                 onChange={(e) => {
-                  setSettingsLanguage(e.target.value);
-                  setSettingsToast(t.language_updated_toast);
+                  commitLanguage(e.target.value, true);
+                  setSettingsToast(TRANSLATIONS[e.target.value as SupportedLanguage]?.language_updated_toast || t.language_updated_toast);
                 }}
                 title={t.interface_language}
                 className="appearance-none bg-[#F4F8F4] hover:bg-[#E7F3EB] border border-[#DCE6DE] hover:border-[#0C4B32] text-[#0C4B32] text-xs font-semibold py-1.5 pl-2.5 pr-6 rounded-xl cursor-pointer outline-none transition-all shadow-2xs"
@@ -11511,11 +11522,11 @@ export default function DashboardPage() {
 
                       <div>
                         <label className="block text-[11px] font-medium text-[#55685D] mb-1">
-                          Interface Language
+                          {t.interface_language}
                         </label>
                         <select
-                          value={settingsLanguage}
-                          onChange={(e) => setSettingsLanguage(e.target.value)}
+                          value={draftSettingsLanguage}
+                          onChange={(e) => setDraftSettingsLanguage(e.target.value as SupportedLanguage)}
                           className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D] cursor-pointer"
                         >
                           <option value="en">English (Default)</option>
