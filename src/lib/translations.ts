@@ -68,16 +68,73 @@ export interface Translations {
   production: string;
   losses: string;
   expenses: string;
+  net: string;
 
-  // Weather & Advisories
+  // Overview Widgets & Banners
+  advisory_label: string;
+  view_all: string;
+  farm_operations_active: string;
+  farm_operations_active_desc: string;
+  active_crops_title: string;
+  detailed_timeline: string;
+  day: string;
+  stage: string;
+  todays_field_tasks: string;
+  all_tasks_link: string;
+  weather_spray_conditions: string;
+  foliar_spray_window: string;
+  view_weather_satellite_map: string;
+  inventory_status: string;
+  all_warehouses: string;
+  manage_stock: string;
+  no_inventory_items: string;
+  no_inventory_desc: string;
+  add_inventory_item: string;
+  wind: string;
+  humidity_label: string;
+  rain_chance: string;
+
+  // Weather Tab
   hyperlocal_weather: string;
+  live_weather_api: string;
+  weather_advisory_title: string;
+  refresh: string;
+  coordinates: string;
+  updated: string;
+  relative_humidity: string;
+  wind_velocity: string;
+  precipitation_probability: string;
   safe_to_spray: string;
   spray_window: string;
   optimal_window: string;
   risk_warning: string;
-  humidity: string;
-  wind_velocity: string;
-  precipitation_chance: string;
+  seven_day_forecast: string;
+  farm_location_map_title: string;
+  open_map: string;
+
+  // Tasks Tab
+  tasks_operations_title: string;
+  tasks_operations_desc: string;
+  view_list: string;
+  view_calendar: string;
+  create_task: string;
+  all_tasks_count: string;
+  to_do_count: string;
+  in_progress_count: string;
+  completed_count: string;
+  to_do: string;
+  in_progress: string;
+  pending_status: string;
+  done_status: string;
+  active_status: string;
+  all_farms_option: string;
+  search_tasks_placeholder: string;
+  priority_urgent: string;
+  priority_high: string;
+  priority_medium: string;
+  priority_low: string;
+  overdue_by: string;
+  due_today: string;
 
   // Settings Tab
   settings_title: string;
@@ -165,7 +222,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     quick_actions: "Quick Operational Actions",
     add_crop: "Add New Crop",
-    record_entry: "Record Transaction",
+    record_entry: "Record Entry",
     assign_task: "Assign Field Task",
     log_equipment: "Log Equipment Usage",
     request_visit: "Request Agronomist Visit",
@@ -184,15 +241,70 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     production: "Production",
     losses: "Losses",
     expenses: "Expenses",
+    net: "Net",
+
+    advisory_label: "Advisory",
+    view_all: "View All",
+    farm_operations_active: "Farm Operations Active",
+    farm_operations_active_desc: "All field activities, crops, and storage records are up to date.",
+    active_crops_title: "Active Crops",
+    detailed_timeline: "Detailed Timeline",
+    day: "Day",
+    stage: "Stage",
+    todays_field_tasks: "Today's Field Tasks",
+    all_tasks_link: "All Tasks",
+    weather_spray_conditions: "Weather & Spray Conditions",
+    foliar_spray_window: "Foliar Spray Window",
+    view_weather_satellite_map: "View Weather Satellite Map",
+    inventory_status: "Inventory Status",
+    all_warehouses: "(All Warehouses)",
+    manage_stock: "Manage Stock",
+    no_inventory_items: "No Inventory Items",
+    no_inventory_desc: "No seeds, fertilizers, or supplies recorded yet.",
+    add_inventory_item: "+ Add Inventory Item",
+    wind: "Wind",
+    humidity_label: "Humidity",
+    rain_chance: "Rain Chance",
 
     hyperlocal_weather: "Hyper-Local Farm Weather",
+    live_weather_api: "Live WeatherAPI",
+    weather_advisory_title: "Weather Advisory",
+    refresh: "Refresh",
+    coordinates: "Coordinates",
+    updated: "Updated",
+    relative_humidity: "Relative Humidity",
+    wind_velocity: "Wind Velocity",
+    precipitation_probability: "Precipitation Probability",
     safe_to_spray: "Safe to Spray",
     spray_window: "Foliar Spray Window",
     optimal_window: "Optimal Window • Safe to Spray",
     risk_warning: "Unfavorable Spray Conditions",
-    humidity: "Relative Humidity",
-    wind_velocity: "Wind Velocity",
-    precipitation_chance: "Precipitation Chance",
+    seven_day_forecast: "7-Day Agricultural Forecast",
+    farm_location_map_title: "Farm Location & Satellite Weather Map",
+    open_map: "Open Map",
+
+    tasks_operations_title: "Tasks & Operations",
+    tasks_operations_desc: "Field operations, fertilizer cycles & calendar",
+    view_list: "List",
+    view_calendar: "Calendar",
+    create_task: "Create Task",
+    all_tasks_count: "All Tasks",
+    to_do_count: "To Do",
+    in_progress_count: "In Progress",
+    completed_count: "Completed",
+    to_do: "To Do",
+    in_progress: "In Progress",
+    pending_status: "Pending",
+    done_status: "Done",
+    active_status: "Active",
+    all_farms_option: "All Farms",
+    search_tasks_placeholder: "Search tasks, crop, worker...",
+    priority_urgent: "Urgent",
+    priority_high: "High",
+    priority_medium: "Medium",
+    priority_low: "Low",
+    overdue_by: "Overdue by",
+    due_today: "Due today",
 
     settings_title: "Farm & System Settings",
     settings_subtitle: "Configure your farmer identity, regional measurement units, and interface preferences.",
@@ -277,7 +389,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     quick_actions: "ਤੇਜ਼ ਕਾਰਵਾਈਆਂ",
     add_crop: "ਨਵੀਂ ਫ਼ਸਲ ਜੋੜੋ",
-    record_entry: "ਖ਼ਰਚਾ/ਕਮਾਈ ਦਰਜ ਕਰੋ",
+    record_entry: "ਐਂਟਰੀ ਦਰਜ ਕਰੋ",
     assign_task: "ਕੰਮ ਸੌਂਪੋ",
     log_equipment: "ਮਸ਼ੀਨਰੀ ਵਰਤੋਂ ਲਿਖੋ",
     request_visit: "ਮਾਹਰ ਮੁਲਾਕਾਤ ਬੁੱਕ ਕਰੋ",
@@ -296,15 +408,70 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     production: "ਉਤਪਾਦਨ",
     losses: "ਨੁਕਸਾਨ",
     expenses: "ਖ਼ਰਚੇ",
+    net: "ਸ਼ੁੱਧ ਬਚਤ",
+
+    advisory_label: "ਸਲਾਹ",
+    view_all: "ਸਾਰੀਆਂ ਵੇਖੋ",
+    farm_operations_active: "ਖੇਤ ਦੇ ਕੰਮ ਚੱਲ ਰਹੇ ਹਨ",
+    farm_operations_active_desc: "ਸਾਰੀਆਂ ਖੇਤੀ ਗਤੀਵਿਧੀਆਂ, ਫ਼ਸਲਾਂ ਅਤੇ ਸਟਾਕ ਰਿਕਾਰਡ ਅਪਡੇਟ ਹਨ।",
+    active_crops_title: "ਮੌਜੂਦਾ ਫ਼ਸਲਾਂ",
+    detailed_timeline: "ਵਿਸਤ੍ਰਿਤ ਟਾਈਮਲਾਈਨ",
+    day: "ਦਿਨ",
+    stage: "ਪੜਾਅ",
+    todays_field_tasks: "ਅੱਜ ਦੇ ਖੇਤ ਕਾਰਜ",
+    all_tasks_link: "ਸਾਰੇ ਕੰਮ",
+    weather_spray_conditions: "ਮੌਸਮ ਅਤੇ ਸਪ੍ਰੇ ਸਥਿਤੀ",
+    foliar_spray_window: "ਸਪ੍ਰੇ ਕਰਨ ਦਾ ਸਮਾਂ",
+    view_weather_satellite_map: "ਸੈਟੇਲਾਈਟ ਮੌਸਮ ਨਕਸ਼ਾ ਵੇਖੋ",
+    inventory_status: "ਗੋਦਾਮ ਸਟਾਕ ਸਥਿਤੀ",
+    all_warehouses: "(ਸਾਰੇ ਗੋਦਾਮ)",
+    manage_stock: "ਸਟਾਕ ਸੰਭਾਲੋ",
+    no_inventory_items: "ਕੋਈ ਵਸਤੂ ਨਹੀਂ ਮਿਲੀ",
+    no_inventory_desc: "ਅਜੇ ਕੋਈ ਬੀਜ, ਖਾਦ ਜਾਂ ਦਵਾਈ ਦਰਜ ਨਹੀਂ ਹੈ।",
+    add_inventory_item: "+ ਨਵੀਂ ਵਸਤੂ ਜੋੜੋ",
+    wind: "ਹਵਾ",
+    humidity_label: "ਨਮੀ",
+    rain_chance: "ਮੀਂਹ ਦੀ ਸੰਭਾਵਨਾ",
 
     hyperlocal_weather: "ਖੇਤ ਦਾ ਤਾਜ਼ਾ ਮੌਸਮ",
+    live_weather_api: "ਲਾਈਵ ਮੌਸਮ ਜਾਣਕਾਰੀ",
+    weather_advisory_title: "ਮੌਸਮ ਸਲਾਹਕਾਰੀ",
+    refresh: "ਤਾਜ਼ਾ ਕਰੋ",
+    coordinates: "ਕੋਆਰਡੀਨੇਟਸ",
+    updated: "ਅਪਡੇਟ ਹੋਇਆ",
+    relative_humidity: "ਹਵਾ ਵਿੱਚ ਨਮੀ",
+    wind_velocity: "ਹਵਾ ਦੀ ਰਫ਼ਤਾਰ",
+    precipitation_probability: "ਮੀਂਹ ਦੀ ਸੰਭਾਵਨਾ",
     safe_to_spray: "ਸਪ੍ਰੇ ਲਈ ਅਨੁਕੂਲ",
-    spray_window: "ਸਪ੍ਰੇ ਕਰਨ ਦਾ ਸਮਾਂ",
+    spray_window: "ਸਪ੍ਰੇ ਦਾ ਸਮਾਂ",
     optimal_window: "ਉੱਤਮ ਸਮਾਂ • ਸੁਰੱਖਿਅਤ ਸਪ੍ਰੇ",
     risk_warning: "ਮੌਸਮ ਖ਼ਰਾਬ • ਸਪ੍ਰੇ ਨਾ ਕਰੋ",
-    humidity: "ਨਮੀ ਦੀ ਮਾਤਰਾ",
-    wind_velocity: "ਹਵਾ ਦੀ ਰਫ਼ਤਾਰ",
-    precipitation_chance: "ਮੀਂਹ ਦੀ ਸੰਭਾਵਨਾ",
+    seven_day_forecast: "੭ ਦਿਨਾਂ ਦੀ ਖੇਤੀਬਾੜੀ ਮੌਸਮ ਭਵਿੱਖਬਾਣੀ",
+    farm_location_map_title: "ਖੇਤ ਸਥਾਨ ਅਤੇ ਸੈਟੇਲਾਈਟ ਮੌਸਮ ਨਕਸ਼ਾ",
+    open_map: "ਨਕਸ਼ਾ ਖੋਲ੍ਹੋ",
+
+    tasks_operations_title: "ਖੇਤ ਦੇ ਕੰਮ ਅਤੇ ਸੰਚਾਲਨ",
+    tasks_operations_desc: "ਖੇਤ ਦੀਆਂ ਗਤੀਵਿਧੀਆਂ, ਖਾਦ ਚੱਕਰ ਅਤੇ ਕੈਲੰਡਰ",
+    view_list: "ਸੂਚੀ",
+    view_calendar: "ਕੈਲੰਡਰ",
+    create_task: "ਨਵਾਂ ਕੰਮ ਬਣਾਓ",
+    all_tasks_count: "ਸਾਰੇ ਕੰਮ",
+    to_do_count: "ਬਾਕੀ ਕੰਮ",
+    in_progress_count: "ਚੱਲ ਰਹੇ",
+    completed_count: "ਮੁਕੰਮਲ",
+    to_do: "ਬਾਕੀ",
+    in_progress: "ਜਾਰੀ",
+    pending_status: "ਬਕਾਇਆ",
+    done_status: "ਪੂਰਾ ਹੋਇਆ",
+    active_status: "ਸਰਗਰਮ",
+    all_farms_option: "ਸਾਰੇ ਖੇਤ",
+    search_tasks_placeholder: "ਕੰਮ, ਫ਼ਸਲ ਜਾਂ ਮਜ਼ਦੂਰ ਖੋਜੋ...",
+    priority_urgent: "ਜ਼ਰੂਰੀ",
+    priority_high: "ਉੱਚ",
+    priority_medium: "ਮੱਧਮ",
+    priority_low: "ਆਮ",
+    overdue_by: "ਲੇਟ",
+    due_today: "ਅੱਜ ਦਾ ਕੰਮ",
 
     settings_title: "ਖੇਤ ਅਤੇ ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ",
     settings_subtitle: "ਆਪਣੀ ਕਿਸਾਨ ਪਛਾਣ, ਰਕਬਾ ਮਾਪ ਇਕਾਈਆਂ ਅਤੇ ਭਾਸ਼ਾ ਪਸੰਦ ਸੈੱਟ ਕਰੋ।",
@@ -389,7 +556,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     quick_actions: "त्वरित कार्य",
     add_crop: "नई फसल जोड़ें",
-    record_entry: "खर्च/आय दर्ज करें",
+    record_entry: "प्रविष्टि दर्ज करें",
     assign_task: "कार्य सौंपें",
     log_equipment: "मशीनरी उपयोग दर्ज करें",
     request_visit: "विशेषज्ञ विजिट बुक करें",
@@ -408,15 +575,70 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     production: "उत्पादन",
     losses: "नुकसान",
     expenses: "खर्च",
+    net: "शुद्ध आय",
+
+    advisory_label: "सलाह",
+    view_all: "सभी देखें",
+    farm_operations_active: "खेत कार्य सुचारू हैं",
+    farm_operations_active_desc: "सभी कृषि गतिविधियां, फसलें और स्टॉक रिकॉर्ड अद्यतित हैं।",
+    active_crops_title: "सक्रिय फसलें",
+    detailed_timeline: "विस्तृत टाइमलाइन",
+    day: "दिन",
+    stage: "चरण",
+    todays_field_tasks: "आज के खेत कार्य",
+    all_tasks_link: "सभी कार्य",
+    weather_spray_conditions: "मौसम एवं छिड़काव स्थिति",
+    foliar_spray_window: "छिड़काव का सही समय",
+    view_weather_satellite_map: "मौसम उपग्रह मानचित्र देखें",
+    inventory_status: "गोदाम स्टॉक स्थिति",
+    all_warehouses: "(सभी गोदाम)",
+    manage_stock: "स्टॉक प्रबंधित करें",
+    no_inventory_items: "कोई स्टॉक सामग्री नहीं",
+    no_inventory_desc: "अभी तक कोई बीज, खाद या दवा दर्ज नहीं है।",
+    add_inventory_item: "+ नया सामान जोड़ें",
+    wind: "हवा",
+    humidity_label: "नमी",
+    rain_chance: "बारिश की संभावना",
 
     hyperlocal_weather: "खेत का सटीक मौसम",
+    live_weather_api: "लाइव मौसम जानकारी",
+    weather_advisory_title: "मौसम सलाह",
+    refresh: "ताज़ा करें",
+    coordinates: "निर्देशांक",
+    updated: "अपडेट हुआ",
+    relative_humidity: "हवा में नमी",
+    wind_velocity: "हवा की गति",
+    precipitation_probability: "बारिश की संभावना",
     safe_to_spray: "छिड़काव के लिए अनुकूल",
-    spray_window: "छिड़काव का सही समय",
+    spray_window: "छिड़काव का समय",
     optimal_window: "उत्तम समय • सुरक्षित छिड़काव",
     risk_warning: "प्रतिकूल मौसम • छिड़काव न करें",
-    humidity: "हवा में नमी",
-    wind_velocity: "हवा की गति",
-    precipitation_chance: "बारिश की संभावना",
+    seven_day_forecast: "७-दिवसीय कृषि मौसम पूर्वानुमान",
+    farm_location_map_title: "खेत स्थान एवं उपग्रह मौसम मानचित्र",
+    open_map: "नक्शा खोलें",
+
+    tasks_operations_title: "खेत कार्य एवं संचालन",
+    tasks_operations_desc: "खेत गतिविधियां, उर्वरक चक्र एवं कैलेंडर",
+    view_list: "सूची",
+    view_calendar: "कैलेंडर",
+    create_task: "नया कार्य बनाएं",
+    all_tasks_count: "सभी कार्य",
+    to_do_count: "करने योग्य",
+    in_progress_count: "प्रगति पर",
+    completed_count: "पूर्ण",
+    to_do: "बाकी",
+    in_progress: "प्रगति पर",
+    pending_status: "लंबित",
+    done_status: "संपन्न",
+    active_status: "सक्रिय",
+    all_farms_option: "सभी खेत",
+    search_tasks_placeholder: "कार्य, फसल या मजदूर खोजें...",
+    priority_urgent: "अति आवश्यक",
+    priority_high: "उच्च",
+    priority_medium: "मध्यम",
+    priority_low: "सामान्य",
+    overdue_by: "विलंबित",
+    due_today: "आज देय",
 
     settings_title: "खेत और सिस्टम सेटिंग्स",
     settings_subtitle: "अपनी किसान पहचान, क्षेत्रीय माप इकाइयां और भाषा प्राथमिकताएं सेट करें।",
@@ -501,7 +723,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     quick_actions: "जलद कृती",
     add_crop: "नवीन पीक जोडा",
-    record_entry: "खर्च/उत्पन्न नोंदवा",
+    record_entry: "नोंद करा",
     assign_task: "काम सोपवा",
     log_equipment: "यंत्रसामग्री वापर नोंदवा",
     request_visit: "तज्ञ भेट नोंदवा",
@@ -520,15 +742,70 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     production: "उत्पादन",
     losses: "नुकसान",
     expenses: "खर्च",
+    net: "निव्वळ बचत",
+
+    advisory_label: "सल्ला",
+    view_all: "सर्व पहा",
+    farm_operations_active: "शेतीची कामे सुरू आहेत",
+    farm_operations_active_desc: "सर्व शेती उपक्रम, पिके आणि साठा नोंदी अद्ययावत आहेत.",
+    active_crops_title: "सक्रिय पिके",
+    detailed_timeline: "सविस्तर टाइमलाइन",
+    day: "दिवस",
+    stage: "टप्पा",
+    todays_field_tasks: "आजची शेतातील कामे",
+    all_tasks_link: "सर्व कामे",
+    weather_spray_conditions: "हवामान आणि फवारणी परिस्थिती",
+    foliar_spray_window: "फवारणीची योग्य वेळ",
+    view_weather_satellite_map: "उपग्रह हवामान नकाशा पहा",
+    inventory_status: "गोदाम साठा स्थिती",
+    all_warehouses: "(सर्व गोदामांमध्ये)",
+    manage_stock: "साठा व्यवस्थापित करा",
+    no_inventory_items: "साठ्यात कोणतीही सामग्री नाही",
+    no_inventory_desc: "अजून कोणतेही बियाणे, खत किंवा औषध नोंदवले नाही.",
+    add_inventory_item: "+ नवीन वस्तू जोडा",
+    wind: "वारा",
+    humidity_label: "आर्द्रता",
+    rain_chance: "पावसाची शक्यता",
 
     hyperlocal_weather: "शेताचे अचूक हवामान",
+    live_weather_api: "थेट हवामान माहिती",
+    weather_advisory_title: "हवामान सल्ला",
+    refresh: "ताजे करा",
+    coordinates: "अक्षांश-रेखांश",
+    updated: "अपडेट केले",
+    relative_humidity: "हवेतील आर्द्रता",
+    wind_velocity: "वाऱ्याचा वेग",
+    precipitation_probability: "पावसाची शक्यता",
     safe_to_spray: "फवारणीसाठी अनुकूल",
-    spray_window: "फवारणीची योग्य वेळ",
+    spray_window: "फवारणीची वेळ",
     optimal_window: "उत्तम वेळ • सुरक्षित फवारणी",
     risk_warning: "प्रतिकूल हवामान • फवारणी टाळा",
-    humidity: "हवेतील आर्द्रता",
-    wind_velocity: "वाऱ्याचा वेग",
-    precipitation_chance: "पावसाची शक्यता",
+    seven_day_forecast: "७-दिवसीय कृषी हवामान अंदाज",
+    farm_location_map_title: "शेत स्थान आणि उपग्रह हवामान नकाशा",
+    open_map: "नकाशा उघडा",
+
+    tasks_operations_title: "शेतातील कामे आणि व्यवस्थापन",
+    tasks_operations_desc: "शेती कामे, खत चक्र आणि कॅलेंडर",
+    view_list: "यादी",
+    view_calendar: "कॅलेंडर",
+    create_task: "नवीन काम जोडा",
+    all_tasks_count: "सर्व कामे",
+    to_do_count: "करावयाची कामे",
+    in_progress_count: "सुरू कामे",
+    completed_count: "पूर्ण कामे",
+    to_do: "बाकी",
+    in_progress: "सुरू",
+    pending_status: "प्रलंबित",
+    done_status: "पूर्ण",
+    active_status: "सक्रिय",
+    all_farms_option: "सर्व शेते",
+    search_tasks_placeholder: "काम, पीक किंवा मजूर शोधा...",
+    priority_urgent: "तातडीचे",
+    priority_high: "उच्च",
+    priority_medium: "मध्यम",
+    priority_low: "सामान्य",
+    overdue_by: "उशीर",
+    due_today: "आज देय",
 
     settings_title: "शेत आणि सिस्टम सेटिंग्ज",
     settings_subtitle: "आपली शेतकरी ओळख, प्रादेशिक मोजमाप एकके आणि भाषा प्राधान्ये सेट करा.",
@@ -613,7 +890,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     quick_actions: "ઝડપી ક્રિયાઓ",
     add_crop: "નવો પાક ઉમેરો",
-    record_entry: "ખર્ચ/આવક નોંધો",
+    record_entry: "નોંધણી કરો",
     assign_task: "કામ સોંપો",
     log_equipment: "મશીનરી ઉપયોગ નોંધો",
     request_visit: "નિષ્ણાત મુલાકાત બુક કરો",
@@ -632,15 +909,70 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     production: "ઉત્પાદન",
     losses: "નુકસાન",
     expenses: "ખર્ચ",
+    net: "ચોખ્ખી આવક",
+
+    advisory_label: "સલાહ",
+    view_all: "બધા જુઓ",
+    farm_operations_active: "ખેતી કામગીરી સક્રિય છે",
+    farm_operations_active_desc: "તમામ ખેતી પ્રવૃત્તિઓ, પાક અને સ્ટોક રેકોર્ડ અદ્યતન છે.",
+    active_crops_title: "સક્રિય પાકો",
+    detailed_timeline: "વિગતવાર સમયરેખા",
+    day: "દિવસ",
+    stage: "તબક્કો",
+    todays_field_tasks: "આજના ખેતરના કાર્યો",
+    all_tasks_link: "બધા કાર્યો",
+    weather_spray_conditions: "હવામાન અને છંટકાવ સ્થિતિ",
+    foliar_spray_window: "છંટકાવ સમય",
+    view_weather_satellite_map: "હવામાન સેટેલાઇટ નકશો જુઓ",
+    inventory_status: "ગોદામ સ્ટોક સ્થિતિ",
+    all_warehouses: "(તમામ ગોદામો)",
+    manage_stock: "સ્ટોક મેનેજ કરો",
+    no_inventory_items: "કોઈ સ્ટોક સામગ્રી નથી",
+    no_inventory_desc: "હજુ સુધી કોઈ બિયારણ, ખાતર કે દવા નોંધાયેલ નથી.",
+    add_inventory_item: "+ નવી વસ્તુ ઉમેરો",
+    wind: "પવન",
+    humidity_label: "ભેજ",
+    rain_chance: "વરસાદની શક્યતા",
 
     hyperlocal_weather: "ખેતરનું તાજું હવામાન",
+    live_weather_api: "લાઇવ હવામાન માહિતી",
+    weather_advisory_title: "હવામાન સલાહ",
+    refresh: "રીફ્રેશ",
+    coordinates: "અક્ષાંશ-રેખાંશ",
+    updated: "અપડેટ થયેલ",
+    relative_humidity: "હવામાં ભેજ",
+    wind_velocity: "પવનની ગતિ",
+    precipitation_probability: "વરસાદની શક્યતા",
     safe_to_spray: "છંટકાવ માટે અનુકૂળ",
     spray_window: "છંટકાવ સમય",
     optimal_window: "શ્રેષ્ઠ સમય • સલામત છંટકાવ",
     risk_warning: "પ્રતિકૂળ હવામાન • છંટકાવ ટાળો",
-    humidity: "ભેજનું પ્રમાણ",
-    wind_velocity: "પવનની ગતિ",
-    precipitation_chance: "વરસાદની શક્યતા",
+    seven_day_forecast: "૭-દિવસીય કૃષિ હવામાન આગાહી",
+    farm_location_map_title: "ખેતર સ્થાન અને સેટેલાઇટ હવામાન નકશો",
+    open_map: "નકશો ખોલો",
+
+    tasks_operations_title: "ખેતરના કાર્યો અને સંચાલન",
+    tasks_operations_desc: "ખેતરની પ્રવૃત્તિઓ, ખાતર ચક્ર અને કેલેન્ડર",
+    view_list: "યાદી",
+    view_calendar: "કેલેન્ડર",
+    create_task: "નવું કાર્ય બનાવો",
+    all_tasks_count: "બધા કાર્યો",
+    to_do_count: "કરવાના કાર્યો",
+    in_progress_count: "ચાલુ કાર્યો",
+    completed_count: "પૂર્ણ થયેલ",
+    to_do: "કરવાનું બાકી",
+    in_progress: "પ્રગતિમાં",
+    pending_status: "બાકી",
+    done_status: "પૂર્ણ",
+    active_status: "સક્રિય",
+    all_farms_option: "તમામ ખેતરો",
+    search_tasks_placeholder: "કાર્ય, પાક અથવા કામદાર શોધો...",
+    priority_urgent: "અતિ મહત્વનું",
+    priority_high: "ઉચ્ચ",
+    priority_medium: "મધ્યમ",
+    priority_low: "સામાન્ય",
+    overdue_by: "વિલંબિત",
+    due_today: "આજે પૂર્ણ કરવાનું",
 
     settings_title: "ખેતર અને સિસ્ટમ સેટિંગ્સ",
     settings_subtitle: "તમારી ખેડૂત ઓળખ, જમીન માપણી એકમો અને ભાષા પસંદ કરો.",

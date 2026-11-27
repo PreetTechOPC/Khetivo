@@ -4039,7 +4039,7 @@ export default function DashboardPage() {
       list.push({
         id: wId,
         title: `Weather: ${realWeather.sprayWindow}`,
-        message: `${realWeather.conditionText} in ${realWeather.locationName} (${realWeather.tempC}°C, Wind: ${realWeather.windKph} km/h, Rain chance: ${realWeather.chanceOfRain}%).`,
+        message: `${realWeather.conditionText} in ${realWeather.locationName} (${realWeather.tempC}°C, {t.wind}: ${realWeather.windKph} km/h, Rain chance: ${realWeather.chanceOfRain}%).`,
         time: realWeather.lastUpdated ? `Live (${realWeather.lastUpdated})` : "Live",
         createdAtMs: 0,
         type: "weather",
@@ -5384,7 +5384,7 @@ export default function DashboardPage() {
                   {/* Card Footer: Net Realization & Record Entry CTA */}
                   <div className="pt-1 flex items-center justify-between text-xs border-t border-[#E5ECE7]">
                     <span className="text-xs text-[#55685D]">
-                      Net: <strong className={`text-sm font-bold ${netRealization >= 0 ? "text-[#0C4B32]" : "text-red-600"}`}>
+                      {t.net}: <strong className={`text-sm font-bold ${netRealization >= 0 ? "text-[#0C4B32]" : "text-red-600"}`}>
                         {netRealization >= 0 ? "+" : ""}₹{netRealization.toLocaleString("en-IN")}
                       </strong>
                     </span>
@@ -5394,7 +5394,7 @@ export default function DashboardPage() {
                       className="text-xs font-semibold text-[#0C4B32] hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Record Entry</span>
+                      <span>{t.record_entry}</span>
                     </button>
                   </div>
                 </div>
@@ -5406,7 +5406,7 @@ export default function DashboardPage() {
                     <div className="p-3 rounded-xl bg-[#F7FAF8] border border-[#D5EAD9] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className="w-2 h-2 rounded-full bg-[#0C4B32] shrink-0 animate-pulse" />
-                        <span className="font-semibold text-[#0C4B32] shrink-0">Advisory:</span>
+                        <span className="font-semibold text-[#0C4B32] shrink-0">{t.advisory_label}:</span>
                         <span className="text-[#26352D] truncate font-medium">{urgent.title}</span>
                         <span className="text-[#55685D] hidden md:inline truncate">({urgent.targetCrop} • {urgent.targetDistrict})</span>
                       </div>
@@ -5415,7 +5415,7 @@ export default function DashboardPage() {
                         onClick={() => setActiveTab("advisories")}
                         className="text-xs font-semibold text-[#0C4B32] hover:underline shrink-0 flex items-center gap-1 cursor-pointer"
                       >
-                        <span>View All ({activeAdminBroadcasts.length})</span>
+                        <span>{t.view_all} ({activeAdminBroadcasts.length})</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -5493,7 +5493,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2.5 min-w-0">
                         <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                         <span className="text-emerald-950">
-                          <strong>Farm Operations Active:</strong> All field activities, crops, and storage records are up to date.
+                          <strong>{t.farm_operations_active}:</strong> {t.farm_operations_active_desc}
                         </span>
                       </div>
                       <button
@@ -5501,7 +5501,7 @@ export default function DashboardPage() {
                         onClick={() => setActiveTab("tasks")}
                         className="text-xs font-semibold text-emerald-900 hover:underline shrink-0 cursor-pointer self-start sm:self-auto"
                       >
-                        Add Task →
+                        {t.add_task} →
                       </button>
                     </div>
                   );
@@ -5520,7 +5520,7 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-2">
                           <Sprout className="w-4 h-4 text-[#0C4B32]" />
                           <h3 className="text-sm font-bold text-[#26352D]">
-                            {isAllFarms ? "Active Crops" : `${currentFarm.name} Crops`}
+                            {isAllFarms ? t.active_crops_title : `${currentFarm.name} ${t.nav_crops}`}
                           </h3>
                           <span className="text-xs text-[#55685D]">({activeCrops.length})</span>
                         </div>
@@ -5529,7 +5529,7 @@ export default function DashboardPage() {
                           onClick={() => setActiveTab("crops")}
                           className="text-xs font-semibold text-[#0C4B32] hover:underline cursor-pointer"
                         >
-                          Detailed Timeline →
+                          {t.detailed_timeline} →
                         </button>
                       </div>
 
@@ -5556,7 +5556,7 @@ export default function DashboardPage() {
 
                               <div className="text-right shrink-0">
                                 <div className="text-xs font-semibold text-[#26352D]">
-                                  Day {crop.currentDay} <span className="text-[#55685D] font-normal">/ {crop.totalDays}</span>
+                                  {t.day} {crop.currentDay} <span className="text-[#55685D] font-normal">/ {crop.totalDays}</span>
                                 </div>
                                 <div className="w-24 sm:w-28 bg-[#E5ECE7] h-1.5 rounded-full overflow-hidden mt-1 ml-auto">
                                   <div
@@ -5576,7 +5576,7 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <CheckSquare className="w-4 h-4 text-[#0C4B32]" />
-                          <h3 className="text-sm font-bold text-[#26352D]">Today&apos;s Field Tasks</h3>
+                          <h3 className="text-sm font-bold text-[#26352D]">{t.todays_field_tasks}</h3>
                           <span className="text-xs text-[#55685D]">({visibleTasks.length})</span>
                         </div>
                         <button
@@ -5584,7 +5584,7 @@ export default function DashboardPage() {
                           onClick={() => setActiveTab("tasks")}
                           className="text-xs font-semibold text-[#0C4B32] hover:underline cursor-pointer"
                         >
-                          All Tasks →
+                          {t.all_tasks_link} →
                         </button>
                       </div>
 
@@ -5645,7 +5645,7 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <CloudSun className="w-4 h-4 text-amber-600" />
-                          <h3 className="text-sm font-bold text-[#26352D]">Weather & Spray Conditions</h3>
+                          <h3 className="text-sm font-bold text-[#26352D]">{t.weather_spray_conditions}</h3>
                         </div>
                         <span className="text-xs text-[#55685D] flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
@@ -5673,16 +5673,16 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <div className="text-right text-xs text-[#55685D] space-y-0.5">
-                            <div>Wind: <strong className="text-[#26352D]">{realWeather ? `${realWeather.windKph} km/h ${realWeather.windDir}` : "8 km/h NW"}</strong></div>
-                            <div>Humidity: <strong className="text-[#26352D]">{realWeather ? `${realWeather.humidity}%` : "44%"}</strong></div>
-                            <div>Rain Chance: <strong className="text-[#26352D]">{realWeather ? `${realWeather.chanceOfRain}%` : "0%"}</strong></div>
+                            <div>{t.wind}: <strong className="text-[#26352D]">{realWeather ? `${realWeather.windKph} km/h ${realWeather.windDir}` : "8 km/h NW"}</strong></div>
+                            <div>{t.humidity_label}: <strong className="text-[#26352D]">{realWeather ? `${realWeather.humidity}%` : "44%"}</strong></div>
+                            <div>{t.rain_chance}: <strong className="text-[#26352D]">{realWeather ? `${realWeather.chanceOfRain}%` : "0%"}</strong></div>
                           </div>
                         </div>
 
                         <div className="mt-3 pt-2.5 border-t border-[#E5ECE7] flex items-center justify-between text-xs">
-                          <span className="text-[#55685D]">Foliar Spray Window</span>
+                          <span className="text-[#55685D]">{t.foliar_spray_window}</span>
                           <span className="font-semibold text-emerald-800 bg-[#E7F3EB] px-2 py-0.5 rounded">
-                            {realWeather ? realWeather.sprayWindow : "Optimal Today"}
+                            {realWeather ? realWeather.sprayWindow : t.optimal_window}
                           </span>
                         </div>
 
@@ -5694,7 +5694,7 @@ export default function DashboardPage() {
                             className="inline-flex items-center gap-1.5 text-[#0C4B32] hover:underline font-semibold cursor-pointer"
                           >
                             <MapPin className="w-3.5 h-3.5 text-[#0C4B32]" />
-                            <span>View Weather Satellite Map</span>
+                            <span>{t.view_weather_satellite_map}</span>
                           </button>
                           <span className="text-[11px] text-[#55685D] font-mono">
                             {currentFarm.latitude.toFixed(3)}°N, {currentFarm.longitude.toFixed(3)}°E
@@ -5709,7 +5709,7 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-2">
                           <Package className="w-4 h-4 text-purple-700" />
                           <h3 className="text-sm font-bold text-[#26352D]">
-                            Inventory Status {isAllFarms ? "(All Warehouses)" : ""}
+                            {t.inventory_status} {isAllFarms ? t.all_warehouses : ""}
                           </h3>
                         </div>
                         <button
@@ -5717,15 +5717,15 @@ export default function DashboardPage() {
                           onClick={() => setActiveTab("inventory")}
                           className="text-xs font-semibold text-[#0C4B32] hover:underline cursor-pointer"
                         >
-                          Manage Stock →
+                          {t.manage_stock} →
                         </button>
                       </div>
 
                       <div className="divide-y divide-[#E5ECE7] text-xs">
                         {scopedInventoryItems.length === 0 ? (
                           <div className="py-4 text-center text-[#55685D]">
-                            <p className="font-medium text-[#26352D]">No Inventory Items</p>
-                            <p className="text-[11px] mt-0.5">No seeds, fertilizers, or supplies recorded yet.</p>
+                            <p className="font-medium text-[#26352D]">{t.no_inventory_items}</p>
+                            <p className="text-[11px] mt-0.5">{t.no_inventory_desc}</p>
                             <button
                               type="button"
                               onClick={() => {
@@ -5734,7 +5734,7 @@ export default function DashboardPage() {
                               }}
                               className="mt-2 text-[11px] font-semibold text-[#0C4B32] hover:underline cursor-pointer"
                             >
-                              + Add Inventory Item
+                              {t.add_inventory_item}
                             </button>
                           </div>
                         ) : (
@@ -6402,10 +6402,10 @@ export default function DashboardPage() {
                     <div>
                       <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0C4B32] bg-[#E7F3EB] px-2.5 py-1 rounded-full mb-1">
                         <MapPin className="w-3.5 h-3.5 text-[#0C4B32]" />
-                        <span>Hyper-Local Farm Weather • Live WeatherAPI</span>
+                        <span>{t.hyperlocal_weather} • {t.live_weather_api}</span>
                       </div>
                       <h2 className="text-lg font-semibold text-[#26352D] flex items-center gap-2">
-                        <span>Weather Advisory ({realWeather?.locationName || currentFarm.district || "Ludhiana"}, {realWeather?.region || currentFarm.state || "Punjab"})</span>
+                        <span>{t.weather_advisory_title} ({realWeather?.locationName || currentFarm.district || "Ludhiana"}, {realWeather?.region || currentFarm.state || "Punjab"})</span>
                         {weatherLoading && (
                           <span className="text-xs text-[#55685D] font-normal animate-pulse">(updating...)</span>
                         )}
@@ -6417,11 +6417,11 @@ export default function DashboardPage() {
                           className="ml-auto sm:ml-2 px-2.5 py-1 text-xs font-semibold rounded-lg border border-[#DCE6DE] bg-[#F4F8F4] hover:bg-[#EAF3EC] text-[#0C4B32] inline-flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
                         >
                           <RefreshCw className={`w-3 h-3 text-[#0C4B32] ${isPageRefreshing ? "animate-spin" : ""}`} />
-                          <span>Refresh</span>
+                          <span>{t.refresh}</span>
                         </button>
                       </h2>
                       <p className="text-xs text-[#55685D]">
-                        Coordinates: {currentFarm.latitude.toFixed(4)}°N, {currentFarm.longitude.toFixed(4)}°E • Updated {realWeather?.lastUpdated || "recently"}
+                        {t.coordinates}: {currentFarm.latitude.toFixed(4)}°N, {currentFarm.longitude.toFixed(4)}°E • {t.updated} {realWeather?.lastUpdated || "recently"}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -6447,25 +6447,25 @@ export default function DashboardPage() {
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[#E5ECE7]">
                     <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs">
-                      <span className="text-[#55685D] block text-[11px]">Relative Humidity</span>
+                      <span className="text-[#55685D] block text-[11px]">{t.relative_humidity}</span>
                       <strong className="text-sm text-[#26352D] font-semibold">
                         {realWeather ? `${realWeather.humidity}%` : "58%"}
                       </strong>
                     </div>
                     <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs">
-                      <span className="text-[#55685D] block text-[11px]">Wind Velocity</span>
+                      <span className="text-[#55685D] block text-[11px]">{t.wind_velocity}</span>
                       <strong className="text-sm text-[#26352D] font-semibold">
                         {realWeather ? `${realWeather.windKph} km/h ${realWeather.windDir}` : "12 km/h NW"}
                       </strong>
                     </div>
                     <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs">
-                      <span className="text-[#55685D] block text-[11px]">Precipitation Probability</span>
+                      <span className="text-[#55685D] block text-[11px]">{t.precipitation_probability}</span>
                       <strong className="text-sm text-[#26352D] font-semibold">
                         {realWeather ? `${realWeather.chanceOfRain}% (${realWeather.precipMm} mm)` : "5% (Dry)"}
                       </strong>
                     </div>
                     <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs">
-                      <span className="text-[#55685D] block text-[11px]">Foliar Spray Window</span>
+                      <span className="text-[#55685D] block text-[11px]">{t.foliar_spray_window}</span>
                       <strong className="text-sm text-emerald-700 font-semibold">
                         {realWeather ? realWeather.sprayWindow : "Optimal Today"}
                       </strong>
@@ -6474,7 +6474,7 @@ export default function DashboardPage() {
 
                   {/* 7-Day Forecast */}
                   <div className="mt-6 pt-5 border-t border-[#E5ECE7]">
-                    <div className="text-xs font-semibold text-[#26352D] mb-3">7-Day Agricultural Forecast</div>
+                    <div className="text-xs font-semibold text-[#26352D] mb-3">{t.seven_day_forecast}</div>
                     <div className="flex sm:grid sm:grid-cols-7 gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden text-center text-xs">
                       {(realWeather?.forecastDays && realWeather.forecastDays.length > 0
                         ? realWeather.forecastDays
@@ -6516,7 +6516,7 @@ export default function DashboardPage() {
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-[#0C4B32]" />
                         <h3 className="text-sm font-bold text-[#26352D]">
-                          Farm Location & Satellite Weather Map ({currentFarm.name})
+                          {t.farm_location_map_title} ({currentFarm.name})
                         </h3>
                       </div>
                       <div className="flex items-center gap-3 text-xs">
@@ -6529,7 +6529,7 @@ export default function DashboardPage() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 font-semibold text-[#0C4B32] hover:underline"
                         >
-                          <span>Open Map</span>
+                          <span>{t.open_map}</span>
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       </div>
@@ -6565,9 +6565,9 @@ export default function DashboardPage() {
                 {/* 1. Header with View Switcher & Create Task Button */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                   <div>
-                    <h2 className="text-base font-bold text-[#26352D]">Tasks & Operations</h2>
+                    <h2 className="text-base font-bold text-[#26352D]">{t.tasks_operations_title}</h2>
                     <p className="text-xs text-[#55685D] mt-0.5">
-                      Field operations, fertilizer cycles & calendar • {isAllFarms ? "All registered holdings" : currentFarm.name}
+                      {t.tasks_operations_desc} • {isAllFarms ? (t.all_farms_consolidated || "All registered holdings") : currentFarm.name}
                     </p>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
@@ -6583,7 +6583,7 @@ export default function DashboardPage() {
                         }`}
                       >
                         <CheckSquare className="w-3.5 h-3.5" />
-                        <span>List</span>
+                        <span>{t.view_list}</span>
                       </button>
                       <button
                         type="button"
@@ -6595,7 +6595,7 @@ export default function DashboardPage() {
                         }`}
                       >
                         <Calendar className="w-3.5 h-3.5" />
-                        <span>Calendar</span>
+                        <span>{t.view_calendar}</span>
                       </button>
                     </div>
 
@@ -6607,7 +6607,7 @@ export default function DashboardPage() {
                       className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 text-[#0C4B32] ${isPageRefreshing ? "animate-spin" : ""}`} />
-                      <span className="hidden sm:inline">Refresh</span>
+                      <span className="hidden sm:inline">{t.refresh}</span>
                     </button>
 
                     <button
@@ -6616,7 +6616,7 @@ export default function DashboardPage() {
                       className="btn btn-primary text-xs px-3.5 py-1.5 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-xs rounded-xl flex-1 sm:flex-initial"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Create Task</span>
+                      <span>{t.create_task}</span>
                     </button>
                   </div>
                 </div>
@@ -6636,13 +6636,13 @@ export default function DashboardPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-[#55685D]">All Tasks</span>
+                      <span className="text-[11px] font-semibold text-[#55685D]">{t.all_tasks_count}</span>
                       {taskFilter === "all" && taskViewMode === "list" && (
                         <span className="w-1.5 h-1.5 rounded-full bg-[#0C4B32]" />
                       )}
                     </div>
                     <div className="text-lg font-bold text-[#0C4B32] mt-1">
-                      {totalTaskCount} Tasks
+                      {totalTaskCount} {t.nav_tasks}
                     </div>
                   </button>
 
@@ -6659,13 +6659,13 @@ export default function DashboardPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-amber-800">To Do</span>
+                      <span className="text-[11px] font-semibold text-amber-800">{t.to_do_count}</span>
                       {taskFilter === "todo" && taskViewMode === "list" && (
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
                       )}
                     </div>
                     <div className="text-lg font-bold text-amber-700 mt-1">
-                      {todoTaskCount} Pending
+                      {todoTaskCount} {t.pending_status}
                     </div>
                   </button>
 
@@ -6682,13 +6682,13 @@ export default function DashboardPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-blue-800">In Progress</span>
+                      <span className="text-[11px] font-semibold text-blue-800">{t.in_progress_count}</span>
                       {taskFilter === "in_progress" && taskViewMode === "list" && (
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
                       )}
                     </div>
                     <div className="text-lg font-bold text-blue-700 mt-1">
-                      {inProgressTaskCount} Active
+                      {inProgressTaskCount} {t.active_status}
                     </div>
                   </button>
 
@@ -6705,13 +6705,13 @@ export default function DashboardPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-emerald-800">Completed</span>
+                      <span className="text-[11px] font-semibold text-emerald-800">{t.completed_count}</span>
                       {taskFilter === "completed" && taskViewMode === "list" && (
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
                       )}
                     </div>
                     <div className="text-lg font-bold text-emerald-700 mt-1">
-                      {completedTaskCount} Done
+                      {completedTaskCount} {t.done_status}
                     </div>
                   </button>
                 </div>
@@ -6728,7 +6728,7 @@ export default function DashboardPage() {
                           : "text-[#55685D] hover:text-[#26352D]"
                       }`}
                     >
-                      All Tasks ({scopedTasks.length})
+                      {t.all_tasks_count} ({scopedTasks.length})
                     </button>
                     <button
                       type="button"
@@ -6739,7 +6739,7 @@ export default function DashboardPage() {
                           : "text-[#55685D] hover:text-amber-800"
                       }`}
                     >
-                      To Do ({todoTaskCount})
+                      {t.to_do_count} ({todoTaskCount})
                     </button>
                     <button
                       type="button"
@@ -6750,7 +6750,7 @@ export default function DashboardPage() {
                           : "text-[#55685D] hover:text-blue-800"
                       }`}
                     >
-                      In Progress ({inProgressTaskCount})
+                      {t.in_progress_count} ({inProgressTaskCount})
                     </button>
                     <button
                       type="button"
@@ -6761,7 +6761,7 @@ export default function DashboardPage() {
                           : "text-[#55685D] hover:text-emerald-800"
                       }`}
                     >
-                      Completed ({completedTaskCount})
+                      {t.completed_count} ({completedTaskCount})
                     </button>
                   </div>
 
@@ -6772,7 +6772,7 @@ export default function DashboardPage() {
                         onChange={(e) => setTaskFarmFilter(e.target.value)}
                         className="px-2.5 py-1.5 text-xs font-medium text-[#26352D] bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl outline-none focus:border-[#0C4B32] cursor-pointer"
                       >
-                        <option value="all">All Farms</option>
+                        <option value="all">{t.all_farms_option}</option>
                         {farms.map((f) => (
                           <option key={f.id} value={f.id}>
                             {f.name}
@@ -6785,7 +6785,7 @@ export default function DashboardPage() {
                       <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#889B90]" />
                       <input
                         type="text"
-                        placeholder="Search tasks, crop, worker..."
+                        placeholder={t.search_tasks_placeholder}
                         value={taskSearch}
                         onChange={(e) => setTaskSearch(e.target.value)}
                         className="pl-8 pr-3 py-1.5 text-xs text-[#26352D] bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl outline-none focus:border-[#0C4B32] placeholder:text-[#889B90] w-full sm:w-56"
@@ -7982,7 +7982,7 @@ export default function DashboardPage() {
                         onChange={(e) => setEquipmentFarmFilter(e.target.value)}
                         className="px-2.5 py-1.5 text-xs font-medium text-[#26352D] bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl outline-none focus:border-[#0C4B32] cursor-pointer"
                       >
-                        <option value="all">All Farms</option>
+                        <option value="all">{t.all_farms_option}</option>
                         {farms.map((f) => (
                           <option key={f.id} value={f.id}>
                             {f.name}
