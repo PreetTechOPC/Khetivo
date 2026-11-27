@@ -106,6 +106,41 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// PUT: Update an existing farm
+export async function PUT(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const body = await req.json();
+    const { farmId, ...updates } = body;
+
+    if (!farmId) {
+      return NextResponse.json(
+        { success: false, message: "farmId is required" },
+        { status: 400 }
+      );
+    }
+
+    const doc = await databases.updateDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.FARMS,
+      farmId,
+      updates
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Farm updated successfully",
+      farm: doc,
+    });
+  } catch (error: any) {
+    console.error("[Appwrite update farm error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to update farm" },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE: Archive / remove a farm
 export async function DELETE(req: NextRequest) {
   try {

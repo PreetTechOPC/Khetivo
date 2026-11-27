@@ -11,10 +11,10 @@ export async function GET(req: NextRequest) {
     const farmId = searchParams.get("farmId");
     const userId = searchParams.get("userId");
 
-    const eqQueries: string[] = [Query.limit(50)];
-    const issueQueries: string[] = [Query.limit(50), Query.orderDesc("$createdAt")];
+    const eqQueries: string[] = [Query.limit(100)];
+    const issueQueries: string[] = [Query.limit(100), Query.orderDesc("$createdAt")];
 
-    if (farmId) {
+    if (farmId && farmId !== "all") {
       eqQueries.push(Query.equal("farmId", farmId));
       issueQueries.push(Query.equal("farmId", farmId));
     }
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       issueQueries.push(Query.equal("userId", userId));
     }
 
-    const [equipmentRes, issuesRes] = await Promise.all([
+    const [equipmentRes, issuesRes, farmsRes] = await Promise.all([
       databases.listDocuments(
         APPWRITE_CONFIG.DATABASE_ID,
         APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT,
@@ -34,12 +34,33 @@ export async function GET(req: NextRequest) {
         APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT_ISSUES,
         issueQueries
       ),
+      databases.listDocuments(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.COLLECTIONS.FARMS,
+        [Query.limit(100)]
+      ).catch(() => ({ documents: [] })),
     ]);
+
+    // Build farm lookup map for accurate farmName
+    const farmMap = new Map<string, string>();
+    for (const f of farmsRes.documents) {
+      farmMap.set(f.$id, f.name);
+    }
+
+    const enrichedEquipment = equipmentRes.documents.map((eq: any) => ({
+      ...eq,
+      farmName: farmMap.get(eq.farmId) || eq.farmName || "Farm",
+    }));
+
+    const enrichedIssues = issuesRes.documents.map((iss: any) => ({
+      ...iss,
+      farmName: farmMap.get(iss.farmId) || iss.farmName || "Farm",
+    }));
 
     return NextResponse.json({
       success: true,
-      equipment: equipmentRes.documents,
-      issues: issuesRes.documents,
+      equipment: enrichedEquipment,
+      issues: enrichedIssues,
     });
   } catch (error: any) {
     console.error("[Appwrite list equipment error]:", error);
@@ -157,6 +178,91 @@ export async function POST(req: NextRequest) {
     console.error("[Appwrite equipment post error]:", error);
     return NextResponse.json(
       { success: false, message: error.message || "Failed to save equipment" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE: Delete equipment or equipment issue
+export async function DELETE(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const { searchParams } = new URL(req.url);
+    const equipmentId = searchParams.get("equipmentId") || searchParams.get("id");
+    const issueId = searchParams.get("issueId");
+
+    if (issueId) {
+      await databases.deleteDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT_ISSUES,
+        issueId
+      );
+      return NextResponse.json({
+        success: true,
+        message: "Equipment issue deleted successfully",
+      });
+    }
+
+    if (equipmentId) {
+      await databases.deleteDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT,
+        equipmentId
+      );
+      return NextResponse.json({
+        success: true,
+        message: "Equipment deleted successfully",
+      });
+    }
+
+    return NextResponse.json(
+      { success: false, message: "equipmentId or issueId query parameter is required" },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    console.error("[Appwrite delete equipment error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to delete equipment" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH/PUT: Update equipment status or issue status
+export async function PATCH(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const body = await req.json();
+    const { equipmentId, issueId, status } = body;
+
+    if (issueId && status) {
+      const updated = await databases.updateDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT_ISSUES,
+        issueId,
+        { status }
+      );
+      return NextResponse.json({ success: true, issue: updated });
+    }
+
+    if (equipmentId && status) {
+      const updated = await databases.updateDocument(
+        APPWRITE_CONFIG.DATABASE_ID,
+        APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT,
+        equipmentId,
+        { status }
+      );
+      return NextResponse.json({ success: true, equipment: updated });
+    }
+
+    return NextResponse.json(
+      { success: false, message: "Invalid update payload" },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    console.error("[Appwrite update equipment error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to update equipment" },
       { status: 500 }
     );
   }

@@ -260,7 +260,7 @@ export default function SignUpPage() {
             <div className="relative z-10 space-y-2.5 mt-auto pt-6">
               <div className="flex items-center gap-2 text-xs text-white/90">
                 <CheckCircle2 className="w-4 h-4 text-[#86EFAC] shrink-0" />
-                <span>Real-time IoT soil & moisture telemetry</span>
+                <span>Real-time IoT soil & moisture sensors</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-white/90">
                 <CheckCircle2 className="w-4 h-4 text-[#86EFAC] shrink-0" />
@@ -341,7 +341,7 @@ export default function SignUpPage() {
                     Add Your Phone Number
                   </h1>
                   <p className="text-xs sm:text-sm text-[var(--color-text-muted)] mt-1 font-normal leading-relaxed">
-                    Your Google account is connected. Please provide your mobile number to link farm sensor telemetry and Kisan SMS alerts.
+                    Your Google account is connected. Please provide your mobile number to link farm sensors and Kisan SMS alerts.
                   </p>
                   <div className="w-full h-px bg-[var(--color-border)] mt-3" />
                 </div>

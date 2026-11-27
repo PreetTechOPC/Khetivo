@@ -176,3 +176,88 @@ input:focus, textarea:focus, select:focus {
   border-color: var(--color-secondary);
   box-shadow: 0 0 0 2px rgba(39, 132, 73, 0.18);
 }
+
+/* ==========================================================================
+   PRINT / PDF STYLESHEET FOR PROFESSIONAL FARM AUDIT REPORTS
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 12mm 12mm;
+  }
+
+  /* Reset body & background */
+  html, body {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide all interactive/screen elements */
+  aside,
+  header,
+  nav,
+  .no-print,
+  button,
+  input,
+  select,
+  [class*="print:hidden"] {
+    display: none !important;
+  }
+
+  /* Reset main layout offsets so report occupies full page cleanly */
+  div[class*="lg:pl-64"] {
+    padding-left: 0 !important;
+    margin: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    background: transparent !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* Printable Report Container */
+  .khetivo-print-container {
+    display: block !important;
+    width: 100% !important;
+    background: #FFFFFF !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Avoid unwanted page breaks */
+  .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  th, td {
+    border-color: #E2E8F0 !important;
+  }
+
+  /* Watermark and decorative accents */
+  .print-bg-tint {
+    background-color: #F8FAF9 !important;
+  }
+}
+

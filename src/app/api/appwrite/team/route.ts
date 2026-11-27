@@ -127,31 +127,40 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// DELETE: Delete team member
+// DELETE: Delete team member or designation
 export async function DELETE(req: NextRequest) {
   try {
     const databases = getServerDatabases();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+    const type = searchParams.get("type") || "member"; // "member" or "designation"
 
     if (!id) {
       return NextResponse.json(
-        { success: false, message: "Member ID is required" },
+        { success: false, message: "ID parameter is required" },
         { status: 400 }
       );
     }
 
+    const collectionId =
+      type === "designation"
+        ? APPWRITE_CONFIG.COLLECTIONS.TEAM_DESIGNATIONS
+        : APPWRITE_CONFIG.COLLECTIONS.TEAM_MEMBERS;
+
     await databases.deleteDocument(
       APPWRITE_CONFIG.DATABASE_ID,
-      APPWRITE_CONFIG.COLLECTIONS.TEAM_MEMBERS,
+      collectionId,
       id
     );
 
-    return NextResponse.json({ success: true, message: "Team member deleted" });
+    return NextResponse.json({
+      success: true,
+      message: type === "designation" ? "Designation deleted" : "Team member deleted",
+    });
   } catch (error: any) {
     console.error("[Appwrite delete team error]:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Failed to delete team member" },
+      { success: false, message: error.message || "Failed to delete team record" },
       { status: 500 }
     );
   }

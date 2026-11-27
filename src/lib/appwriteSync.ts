@@ -92,6 +92,8 @@ export interface CloudEquipment {
   nextServiceHours?: number;
   fuelLevel?: number;
   fuelEfficiency?: string;
+  lastServiceDate?: string;
+  nextServiceDate?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -299,6 +301,21 @@ export async function createCropInAppwrite(crop: CloudCrop): Promise<CloudCrop |
   }
 }
 
+export async function updateCropInAppwrite(cropId: string, updates: Partial<CloudCrop>): Promise<CloudCrop | null> {
+  try {
+    const res = await fetch("/api/appwrite/crops", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cropId, ...updates }),
+    });
+    const data = await res.json();
+    return data.success ? data.crop : null;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error updating crop:", err);
+    return null;
+  }
+}
+
 export async function deleteCropInAppwrite(cropId: string): Promise<boolean> {
   try {
     const res = await fetch(`/api/appwrite/crops?cropId=${encodeURIComponent(cropId)}`, {
@@ -460,6 +477,46 @@ export async function reportEquipmentProblemInAppwrite(problem: {
     return res.ok;
   } catch (err) {
     console.warn("[AppwriteSync] Error reporting equipment issue:", err);
+    return false;
+  }
+}
+
+export async function deleteEquipmentInAppwrite(equipmentId: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/appwrite/equipment?equipmentId=${encodeURIComponent(equipmentId)}`, {
+      method: "DELETE",
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error deleting equipment:", err);
+    return false;
+  }
+}
+
+export async function updateEquipmentStatusInAppwrite(equipmentId: string, status: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/appwrite/equipment", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ equipmentId, status }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error updating equipment status:", err);
+    return false;
+  }
+}
+
+export async function resolveEquipmentIssueInAppwrite(issueId: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/appwrite/equipment", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ issueId, status: "Resolved" }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error resolving equipment issue:", err);
     return false;
   }
 }
@@ -636,9 +693,41 @@ export async function createTeamMemberInAppwrite(member: {
   }
 }
 
+export async function createDesignationInAppwrite(des: {
+  title: string;
+  description?: string;
+  allowedModules?: string[];
+  color?: string;
+  isSystemDefault?: boolean;
+}): Promise<any | null> {
+  try {
+    const res = await fetch("/api/appwrite/team", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "designation", ...des }),
+    });
+    const data = await res.json();
+    return data.success ? data.designation : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 export async function deleteTeamMemberInAppwrite(id: string): Promise<boolean> {
   try {
-    const res = await fetch(`/api/appwrite/team?id=${encodeURIComponent(id)}`, {
+    const res = await fetch(`/api/appwrite/team?id=${encodeURIComponent(id)}&type=member`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+    return !!data.success;
+  } catch (err) {
+    return false;
+  }
+}
+
+export async function deleteDesignationInAppwrite(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/appwrite/team?id=${encodeURIComponent(id)}&type=designation`, {
       method: "DELETE",
     });
     const data = await res.json();
@@ -774,5 +863,55 @@ export async function deleteCropTemplateFromAppwrite(templateId: string): Promis
   } catch (err) {
     console.warn("[AppwriteSync] Error deleting crop template:", err);
     return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// User Profile & Settings
+// ---------------------------------------------------------------------------
+export async function syncUserProfileFromAppwrite(userId?: string, phone?: string, email?: string): Promise<any | null> {
+  try {
+    const params = new URLSearchParams();
+    if (userId) params.append("userId", userId);
+    if (phone) params.append("phone", phone);
+    if (email) params.append("email", email);
+
+    const queryString = params.toString();
+    if (!queryString) return null;
+
+    const res = await fetch(`/api/appwrite/profile?${queryString}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.profile || null;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error fetching user profile:", err);
+    return null;
+  }
+}
+
+export async function saveUserProfileToAppwrite(profileData: {
+  userId?: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  district?: string;
+  state?: string;
+  measurementUnit?: string;
+  preferredLanguage?: string;
+  mandiLinkage?: string;
+  farmAddress?: string;
+}): Promise<any | null> {
+  try {
+    const res = await fetch("/api/appwrite/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(profileData),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.profile || null;
+  } catch (err) {
+    console.warn("[AppwriteSync] Error saving user profile:", err);
+    return null;
   }
 }

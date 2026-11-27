@@ -121,6 +121,57 @@ export async function POST(req: NextRequest) {
 }
 
 
+// PUT: Update an existing farm crop cycle
+export async function PUT(req: NextRequest) {
+  try {
+    const databases = getServerDatabases();
+    const body = await req.json();
+    const { cropId, ...updates } = body;
+
+    if (!cropId) {
+      return NextResponse.json(
+        { success: false, message: "cropId is required" },
+        { status: 400 }
+      );
+    }
+
+    const payload: Record<string, any> = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.variety !== undefined) payload.variety = updates.variety;
+    if (updates.area !== undefined) payload.area = Number(updates.area);
+    if (updates.areaUnit !== undefined) payload.areaUnit = updates.areaUnit;
+    if (updates.season !== undefined) payload.season = updates.season;
+    if (updates.stage !== undefined) payload.stage = updates.stage;
+    if (updates.stageStep !== undefined) payload.stageStep = Number(updates.stageStep);
+    if (updates.currentDay !== undefined) payload.currentDay = Number(updates.currentDay);
+    if (updates.totalDays !== undefined) payload.totalDays = Number(updates.totalDays);
+    if (updates.health !== undefined) payload.health = updates.health;
+    if (updates.sownDate !== undefined) payload.sownDate = new Date(updates.sownDate).toISOString();
+    if (updates.harvestDate !== undefined) payload.harvestDate = new Date(updates.harvestDate).toISOString();
+    if (updates.nextMilestone !== undefined) payload.nextMilestone = updates.nextMilestone;
+    if (updates.color !== undefined) payload.color = updates.color;
+
+    const doc = await databases.updateDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.FARM_CROPS,
+      cropId,
+      payload
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Crop cycle updated successfully in Appwrite",
+      crop: doc,
+    });
+  } catch (error: any) {
+    console.error("[Appwrite update crop error]:", error);
+    return NextResponse.json(
+      { success: false, message: error.message || "Failed to update crop" },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE: Delete a farm crop cycle
 export async function DELETE(req: NextRequest) {
   try {

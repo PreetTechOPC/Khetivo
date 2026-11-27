@@ -343,14 +343,14 @@ const INITIAL_PLANS: PlanConfig[] = [
     name: "Estate Enterprise",
     pricePerYear: 4999,
     billingPeriod: "₹4,999 / Year",
-    tagline: "Comprehensive telemetry & dedicated agronomist partnership for large estates and FPOs.",
+    tagline: "Comprehensive sensor monitoring & dedicated agronomist partnership for large estates and FPOs.",
     maxFarms: "Unlimited Farms",
     maxAcreage: "Unlimited Acreage",
     satelliteRefresh: "Sentinel-2 + Planet High-Res",
     teamSeats: "Unlimited Team Members",
     features: [
       "Unlimited Farm Holdings & Acreage",
-      "Solar tubewell IoT telemetry & cutoff relay",
+      "Solar tubewell IoT sensors & cutoff relay",
       "Dedicated senior PAU agronomist assigned",
       "Custom GST mandi billing & audit exports",
       "Free 2 physical field visits per harvest cycle",
@@ -1718,7 +1718,7 @@ export default function AdminPage() {
       ["Executive Performance", "Registered Farm Holdings", totalFarms, "Holdings / Parcels", "Average 67.5 Acres / Farm"],
       ["Plan Breakdown", "Free Starter", freeClients, "Accounts", "42% 45-day upgrade rate"],
       ["Plan Breakdown", "Basic Grower", basicClients, "Accounts (INR 699/yr)", "Family farms"],
-      ["Plan Breakdown", "Farm Pro", proClients, "Accounts (INR 1,499/yr)", "Sentinel-2 NDVI telemetry"],
+      ["Plan Breakdown", "Farm Pro", proClients, "Accounts (INR 1,499/yr)", "Sentinel-2 NDVI monitoring"],
       ["Plan Breakdown", "Estate Enterprise", enterpriseClients, "Accounts (INR 4,999/yr)", "IoT Cutoff & PAU Lead"],
       ["Regional Coverage", "Ludhiana & Khanna Belt", "155 Acres", "Punjab (Alluvial Loam)", "38% acreage share"],
       ["Regional Coverage", "Karnal & GT Road Belt", "140 Acres", "Haryana (Rich Basmati Loam)", "35% acreage share"],
@@ -1758,7 +1758,7 @@ export default function AdminPage() {
             KHETIVO <span className="text-[#0C4B32]">ADMIN PORTAL</span>
           </h2>
           <p className="mt-1 text-xs text-[#55685D]">
-            Sign in with authorized credentials to access central command & telemetry
+            Sign in with authorized credentials to access central command & live monitoring
           </p>
         </div>
 
@@ -3715,7 +3715,7 @@ export default function AdminPage() {
                       <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] space-y-1">
                         <span className="text-[11px] text-[#55685D] block">Irrigation Setup</span>
                         <strong className="text-sm text-[#26352D] block">55% Solar Pump</strong>
-                        <span className="text-[10px] text-[#55685D]">Telemetry cutoff active</span>
+                        <span className="text-[10px] text-[#55685D]">Sensor cutoff active</span>
                       </div>
 
                       <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] space-y-1">

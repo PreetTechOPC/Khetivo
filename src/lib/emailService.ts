@@ -85,7 +85,7 @@ export async function sendSubscriptionInvoiceEmail(payload: InvoiceEmailPayload)
 
     <div class="greeting">Subscription Confirmed!</div>
     <p style="font-size: 14px; color: #55685D; line-height: 1.5;">
-      Hello <strong>${farmerName}</strong>, thank you for purchasing your Khetivo farm license. Your subscription is active, and all features including Sentinel-2 NDVI satellite monitoring, farm quotas, and telemetry analytics are now unlocked.
+      Hello <strong>${farmerName}</strong>, thank you for purchasing your Khetivo farm license. Your subscription is active, and all features including Sentinel-2 NDVI satellite monitoring, farm quotas, and sensor analytics are now unlocked.
     </p>
 
     <div style="background: #FBFDFB; border: 1px solid #E5ECE7; border-radius: 12px; padding: 16px; margin: 20px 0;">

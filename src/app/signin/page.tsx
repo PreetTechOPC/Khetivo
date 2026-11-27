@@ -121,7 +121,7 @@ export default function SignInPage() {
                 <span className="text-[#F9B21B]">your fingertips.</span>
               </h2>
               <p className="text-xs text-white/80 leading-relaxed font-normal">
-                Direct sign-in for registered farmers. Access real-time IoT soil moisture, telemetry, and live mandi intelligence.
+                Direct sign-in for registered farmers. Access real-time IoT soil moisture, live weather, and live mandi intelligence.
               </p>
             </div>
 
@@ -129,7 +129,7 @@ export default function SignInPage() {
             <div className="relative z-10 space-y-2.5 mt-auto pt-6">
               <div className="flex items-center gap-2 text-xs text-white/90">
                 <CheckCircle2 className="w-4 h-4 text-[#86EFAC] shrink-0" />
-                <span>Real-time IoT soil & moisture telemetry</span>
+                <span>Real-time IoT soil & moisture sensors</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-white/90">
                 <CheckCircle2 className="w-4 h-4 text-[#86EFAC] shrink-0" />
