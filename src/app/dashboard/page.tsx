@@ -5770,10 +5770,10 @@ export default function DashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-[#E5ECE7] shadow-xs">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-semibold text-[#26352D]">My Registered Farms</h2>
+                      <h2 className="text-lg font-semibold text-[#26352D]">{t.my_farms_title}</h2>
                       {isAllFarms && (
                         <span className="text-[11px] font-semibold text-[#0C4B32] bg-[#E7F3EB] px-2.5 py-0.5 rounded-full border border-[#C6E2D0]">
-                          All Farms View Active
+                          {t.all_farms_view_active}
                         </span>
                       )}
                     </div>
@@ -5795,7 +5795,7 @@ export default function DashboardPage() {
                       }`}
                     >
                       <Layers className="w-3.5 h-3.5" />
-                      <span>{isAllFarms ? "All Farms (52 Ac)" : "Switch to All Farms"}</span>
+                      <span>{isAllFarms ? `${t.all_farms_option} (${totalCombinedArea} Ac)` : t.switch_to_all_farms}</span>
                     </button>
                     <button
                       type="button"
@@ -5803,7 +5803,7 @@ export default function DashboardPage() {
                       className="btn btn-primary text-xs px-4 py-2 inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-initial cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add New Farm</span>
+                      <span>{t.add_new_farm}</span>
                     </button>
                   </div>
                 </div>
@@ -5917,7 +5917,7 @@ export default function DashboardPage() {
                 {/* Clean Top Bar */}
                 <div className="bg-white p-5 rounded-2xl border border-[#E5ECE7] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
-                    <h2 className="text-lg font-bold text-[#26352D]">Crop Planning & Timeline</h2>
+                    <h2 className="text-lg font-bold text-[#26352D]">{t.crop_planning_title}</h2>
                     <p className="text-xs text-[#55685D] mt-0.5">
                       {isAllFarms
                         ? `Overview of all ${activeCrops.length} active crops across registered holdings.`
@@ -5933,7 +5933,7 @@ export default function DashboardPage() {
                     className="btn btn-primary text-xs px-3.5 py-2 inline-flex items-center justify-center gap-1.5 w-full sm:w-auto cursor-pointer rounded-xl font-medium"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Add Crop to Farm</span>
+                    <span>{t.add_crop_to_farm}</span>
                   </button>
                 </div>
 
@@ -6294,7 +6294,7 @@ export default function DashboardPage() {
                 <div className="bg-white p-4.5 rounded-xl border border-[#E5ECE7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h2 className="text-base font-bold text-[#26352D] flex items-center gap-2">
-                      <span>Crop Advisories & Bulletins</span>
+                      <span>{t.crop_advisories_title}</span>
                       <span className="text-[11px] font-semibold bg-[#E7F3EB] text-[#0C4B32] px-2 py-0.5 rounded-full">
                         {activeAdminBroadcasts.length} Active
                       </span>
@@ -6317,9 +6317,9 @@ export default function DashboardPage() {
                       <span>Refresh</span>
                     </button>
                     {[
-                      { id: "all", label: "All" },
-                      { id: "pest", label: "Pest & Disease" },
-                      { id: "weather", label: "Weather" },
+                      { id: "all", label: t.category_all },
+                      { id: "pest", label: t.category_pest },
+                      { id: "weather", label: t.category_weather },
                     ].map((t) => {
                       const active = advisoryCategoryFilter === t.id;
                       return (
@@ -7381,7 +7381,7 @@ export default function DashboardPage() {
                 {/* 1. Simple Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                   <div>
-                    <h2 className="text-base font-bold text-[#26352D]">Inventory</h2>
+                    <h2 className="text-base font-bold text-[#26352D]">{t.inventory_title}</h2>
                     <p className="text-xs text-[#55685D] mt-0.5">
                       Store stock, expiry reminders & usages • {isAllFarms ? "All registered holdings" : currentFarm.name}
                     </p>
@@ -7403,7 +7403,7 @@ export default function DashboardPage() {
                       className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition-colors flex-1 sm:flex-initial"
                     >
                       <Building2 className="w-3.5 h-3.5 text-[#0C4B32]" />
-                      <span>+ Store</span>
+                      <span>{t.add_store_btn}</span>
                     </button>
                     <button
                       type="button"
@@ -7411,7 +7411,7 @@ export default function DashboardPage() {
                       className="btn btn-primary text-xs px-3.5 py-1.5 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-xs rounded-xl flex-1 sm:flex-initial"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add Item</span>
+                      <span>{t.add_item_btn}</span>
                     </button>
                   </div>
                 </div>
@@ -7816,7 +7816,7 @@ export default function DashboardPage() {
                 {/* 1. Simple Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
                   <div>
-                    <h2 className="text-base font-bold text-[#26352D]">Equipment & Machinery</h2>
+                    <h2 className="text-base font-bold text-[#26352D]">{t.equipment_title}</h2>
                     <p className="text-xs text-[#55685D] mt-0.5">
                       Fleet tracking, maintenance & issue reports • {isAllFarms ? "All registered holdings" : currentFarm.name}
                     </p>
@@ -7838,7 +7838,7 @@ export default function DashboardPage() {
                       className="px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
                     >
                       <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-                      <span>Report Problem</span>
+                      <span>{t.report_problem_btn}</span>
                     </button>
                     <button
                       type="button"
@@ -7846,7 +7846,7 @@ export default function DashboardPage() {
                       className="btn btn-primary text-xs px-3.5 py-2 sm:py-1.5 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-xs rounded-xl"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Register Equipment</span>
+                      <span>{t.register_equipment_btn}</span>
                     </button>
                   </div>
                 </div>
@@ -8287,7 +8287,7 @@ export default function DashboardPage() {
                 {/* 1. Simple Header */}
                 <div className="flex items-center justify-between pb-1">
                   <div>
-                    <h2 className="text-base font-bold text-[#26352D]">Stats</h2>
+                    <h2 className="text-base font-bold text-[#26352D]">{t.financial_stats_title}</h2>
                     <p className="text-xs text-[#55685D] mt-0.5">
                       Production, losses & expenses • {isAllFarms ? "All registered holdings" : currentFarm.name}
                     </p>
@@ -8532,7 +8532,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#E5ECE7] shadow-xs">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-bold text-[#26352D]">Team & Workforce Management</h2>
+                      <h2 className="text-lg font-bold text-[#26352D]">{t.team_title}</h2>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E7F3EB] text-[#0C4B32] border border-[#C6E2D0]">
                         Role-Based Access Control
                       </span>
@@ -8555,7 +8555,7 @@ export default function DashboardPage() {
                         }`}
                       >
                         <Users className="w-3.5 h-3.5" />
-                        <span className="truncate">Members ({teamMembers.length})</span>
+                        <span className="truncate">{t.members_subtab} ({teamMembers.length})</span>
                       </button>
                       <button
                         type="button"
@@ -8567,7 +8567,7 @@ export default function DashboardPage() {
                         }`}
                       >
                         <ShieldCheck className="w-3.5 h-3.5" />
-                        <span className="truncate">Roles ({designations.length})</span>
+                        <span className="truncate">{t.roles_subtab} ({designations.length})</span>
                       </button>
                     </div>
 
@@ -8578,7 +8578,7 @@ export default function DashboardPage() {
                         className="btn btn-primary text-xs px-4 py-2 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-xs rounded-xl font-semibold w-full sm:w-auto"
                       >
                         <UserPlus className="w-3.5 h-3.5" />
-                        <span>Add Team Member</span>
+                        <span>{t.add_member_btn}</span>
                       </button>
                     ) : (
                       <button
@@ -8587,7 +8587,7 @@ export default function DashboardPage() {
                         className="btn btn-primary text-xs px-4 py-2 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-xs rounded-xl font-semibold w-full sm:w-auto"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Create Designation</span>
+                        <span>{t.create_role_btn}</span>
                       </button>
                     )}
                   </div>
@@ -8762,7 +8762,7 @@ export default function DashboardPage() {
                               className="btn btn-primary text-xs px-4 py-2 inline-flex items-center gap-1.5 cursor-pointer mt-2"
                             >
                               <UserPlus className="w-3.5 h-3.5" />
-                              <span>Add Team Member</span>
+                              <span>{t.add_member_btn}</span>
                             </button>
                           </div>
                         );
@@ -9081,7 +9081,7 @@ export default function DashboardPage() {
                           className="btn btn-primary text-xs px-3.5 py-1.5 inline-flex items-center gap-1.5 cursor-pointer shadow-xs rounded-xl font-semibold"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          <span>Create Designation</span>
+                          <span>{t.create_role_btn}</span>
                         </button>
                       </div>
                     </div>
@@ -9784,7 +9784,7 @@ export default function DashboardPage() {
                       className="btn btn-primary text-xs px-3.5 py-1.5 inline-flex items-center gap-1.5 cursor-pointer shadow-xs rounded-xl font-semibold"
                     >
                       <Download className="w-3.5 h-3.5" />
-                      <span>Export CSV</span>
+                      <span>{t.export_csv_btn}</span>
                     </button>
                   </div>
                 </div>
@@ -10826,10 +10826,10 @@ export default function DashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#E5ECE7]">
                   <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-[#26352D] tracking-tight">
-                      Subscription & Plan
+                      {t.subscription_title}
                     </h2>
                     <p className="text-xs text-[#55685D] mt-0.5">
-                      Manage your farm license, active acreage allocation, and billing receipts.
+                      {t.subscription_subtitle}
                     </p>
                   </div>
 
@@ -10844,7 +10844,7 @@ export default function DashboardPage() {
                           : "text-[#55685D] hover:text-[#26352D]"
                       }`}
                     >
-                      Annual (Save 20%)
+                      {t.annual_billing}
                     </button>
                     <button
                       type="button"
@@ -11102,10 +11102,10 @@ export default function DashboardPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#E5ECE7]">
                   <div>
                     <h2 className="text-xl sm:text-2xl font-bold text-[#26352D] tracking-tight">
-                      Agronomy Help & Support
+                      {t.support_title}
                     </h2>
                     <p className="text-xs text-[#55685D] mt-0.5">
-                      Direct agricultural advisory, crop disease diagnosis, and platform support.
+                      {t.support_subtitle}
                     </p>
                   </div>
 
@@ -11115,7 +11115,7 @@ export default function DashboardPage() {
                     className="btn btn-primary text-xs px-4 py-2 inline-flex items-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Open Support Ticket</span>
+                    <span>{t.open_ticket_btn}</span>
                   </button>
                 </div>
 

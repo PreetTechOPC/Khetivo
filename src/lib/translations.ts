@@ -136,6 +136,61 @@ export interface Translations {
   overdue_by: string;
   due_today: string;
 
+  // My Farms Tab
+  my_farms_title: string;
+  my_farms_subtitle: string;
+  all_farms_view_active: string;
+  switch_to_all_farms: string;
+  add_new_farm: string;
+
+  // Crops Tab
+  crop_planning_title: string;
+  add_crop_to_farm: string;
+
+  // Advisories Tab
+  crop_advisories_title: string;
+  category_all: string;
+  category_pest: string;
+  category_weather: string;
+
+  // Inventory Tab
+  inventory_title: string;
+  add_store_btn: string;
+  add_item_btn: string;
+
+  // Equipment Tab
+  equipment_title: string;
+  report_problem_btn: string;
+  register_equipment_btn: string;
+
+  // Stats / Financials Tab
+  financial_stats_title: string;
+
+  // Team Tab
+  team_title: string;
+  team_subtitle: string;
+  members_subtab: string;
+  roles_subtab: string;
+  add_member_btn: string;
+  create_role_btn: string;
+
+  // Reports Tab
+  reports_title: string;
+  reports_subtitle: string;
+  download_pdf: string;
+  export_csv_btn: string;
+
+  // Subscription Tab
+  subscription_title: string;
+  subscription_subtitle: string;
+  annual_billing: string;
+  monthly_billing: string;
+
+  // Support Tab
+  support_title: string;
+  support_subtitle: string;
+  open_ticket_btn: string;
+
   // Settings Tab
   settings_title: string;
   settings_subtitle: string;
@@ -306,6 +361,51 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     overdue_by: "Overdue by",
     due_today: "Due today",
 
+    my_farms_title: "My Registered Farms",
+    my_farms_subtitle: "Switch between individual farm holdings or view your combined multi-farm portfolio.",
+    all_farms_view_active: "All Farms View Active",
+    switch_to_all_farms: "Switch to All Farms",
+    add_new_farm: "Add New Farm",
+
+    crop_planning_title: "Crop Planning & Timeline",
+    add_crop_to_farm: "Add Crop to Farm",
+
+    crop_advisories_title: "Crop Advisories & Bulletins",
+    category_all: "All",
+    category_pest: "Pest & Disease",
+    category_weather: "Weather",
+
+    inventory_title: "Inventory & Stores",
+    add_store_btn: "+ Store",
+    add_item_btn: "Add Item",
+
+    equipment_title: "Equipment & Machinery",
+    report_problem_btn: "Report Problem",
+    register_equipment_btn: "Register Equipment",
+
+    financial_stats_title: "Stats & Financials",
+
+    team_title: "Team & Workforce Management",
+    team_subtitle: "Configure staff members, roles, and farm holding permissions.",
+    members_subtab: "Members",
+    roles_subtab: "Roles",
+    add_member_btn: "Add Team Member",
+    create_role_btn: "Create Designation",
+
+    reports_title: "Reports & Audits",
+    reports_subtitle: "Official farm audit statement, crop performance and financial summaries.",
+    download_pdf: "Print / Save PDF",
+    export_csv_btn: "Export CSV",
+
+    subscription_title: "Subscription & Plan",
+    subscription_subtitle: "Manage your farm license, active acreage allocation, and billing.",
+    annual_billing: "Annual (Save 20%)",
+    monthly_billing: "Monthly",
+
+    support_title: "Agronomy Help & Support",
+    support_subtitle: "Direct agricultural advisory, crop disease diagnosis, and platform support.",
+    open_ticket_btn: "Open Support Ticket",
+
     settings_title: "Farm & System Settings",
     settings_subtitle: "Configure your farmer identity, regional measurement units, and interface preferences.",
     settings_reset: "Reset",
@@ -472,6 +572,51 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     priority_low: "ਆਮ",
     overdue_by: "ਲੇਟ",
     due_today: "ਅੱਜ ਦਾ ਕੰਮ",
+
+    my_farms_title: "ਮੇਰੇ ਰਜਿਸਟਰਡ ਖੇਤ",
+    my_farms_subtitle: "ਆਪਣੇ ਵੱਖ-ਵੱਖ ਖੇਤਾਂ ਵਿਚਕਾਰ ਬਦਲੋ ਜਾਂ ਸਾਂਝਾ ਪੋਰਟਫੋਲੀਓ ਵੇਖੋ।",
+    all_farms_view_active: "ਸਾਰੇ ਖੇਤਾਂ ਦਾ ਦ੍ਰਿਸ਼ ਸਰਗਰਮ",
+    switch_to_all_farms: "ਸਾਰੇ ਖੇਤ ਵੇਖੋ",
+    add_new_farm: "+ ਨਵਾਂ ਖੇਤ ਜੋੜੋ",
+
+    crop_planning_title: "ਫ਼ਸਲ ਯੋਜਨਾਬੰਦੀ ਅਤੇ ਟਾਈਮਲਾਈਨ",
+    add_crop_to_farm: "+ ਨਵੀਂ ਫ਼ਸਲ ਜੋੜੋ",
+
+    crop_advisories_title: "ਫ਼ਸਲ ਸਲਾਹਾਂ ਅਤੇ ਬੁਲੇਟਿਨ",
+    category_all: "ਸਾਰੇ",
+    category_pest: "ਕੀੜੇ ਅਤੇ ਰੋਗ",
+    category_weather: "ਮੌਸਮ",
+
+    inventory_title: "ਗੋਦਾਮ ਅਤੇ ਸਟਾਕ",
+    add_store_btn: "+ ਗੋਦਾਮ ਜੋੜੋ",
+    add_item_btn: "+ ਵਸਤੂ ਜੋੜੋ",
+
+    equipment_title: "ਮਸ਼ੀਨਰੀ ਅਤੇ ਸੰਦ",
+    report_problem_btn: "ਖ਼ਰਾਬੀ ਦਰਜ ਕਰੋ",
+    register_equipment_btn: "+ ਨਵੀਂ ਮਸ਼ੀਨ ਜੋੜੋ",
+
+    financial_stats_title: "ਖ਼ਰਚ ਅਤੇ ਕਮਾਈ ਅੰਕੜੇ",
+
+    team_title: "ਮਜ਼ਦੂਰ ਅਤੇ ਟੀਮ ਪ੍ਰਬੰਧਨ",
+    team_subtitle: "ਖੇਤ ਮਜ਼ਦੂਰ, ਭੂਮਿਕਾਵਾਂ ਅਤੇ ਅਧਿਕਾਰ ਸੈੱਟ ਕਰੋ।",
+    members_subtab: "ਮੈਂਬਰ",
+    roles_subtab: "ਭੂਮਿਕਾਵਾਂ",
+    add_member_btn: "+ ਟੀਮ ਮੈਂਬਰ ਜੋੜੋ",
+    create_role_btn: "+ ਨਵੀਂ ਭੂਮਿਕਾ ਬਣਾਓ",
+
+    reports_title: "ਰਿਪੋਰਟਾਂ ਅਤੇ ਆਡਿਟ",
+    reports_subtitle: "ਅਧਿਕਾਰਤ ਖੇਤ ਆਡਿਟ ਸਟੇਟਮੈਂਟ, ਉਤਪਾਦਨ ਅਤੇ ਵਿੱਤੀ ਸਾਰ।",
+    download_pdf: "ਪ੍ਰਿੰਟ / PDF ਸੰਭਾਲੋ",
+    export_csv_btn: "CSV ਡਾਊਨਲੋਡ",
+
+    subscription_title: "ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਅਤੇ ਪਲਾਨ",
+    subscription_subtitle: "ਆਪਣਾ ਫਾਰਮ ਲਾਇਸੈਂਸ, ਰਕਬਾ ਕੋਟਾ ਅਤੇ ਬਿਲਿੰਗ ਸੰਭਾਲੋ।",
+    annual_billing: "ਸਾਲਾਨਾ (੨੦% ਛੋਟ)",
+    monthly_billing: "ਮਹੀਨਾਵਾਰ",
+
+    support_title: "ਖੇਤੀ ਮਾਹਰ ਹੈਲਪਲਾਈਨ ਅਤੇ ਸਹਾਇਤਾ",
+    support_subtitle: "ਸਿੱਧੀ ਖੇਤੀਬਾੜੀ ਸਲਾਹ, ਫ਼ਸਲ ਰੋਗ ਨਿਦਾਨ ਅਤੇ ਸਿਸਟਮ ਸਹਾਇਤਾ।",
+    open_ticket_btn: "+ ਸਹਾਇਤਾ ਟਿਕਟ ਖੋਲ੍ਹੋ",
 
     settings_title: "ਖੇਤ ਅਤੇ ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ",
     settings_subtitle: "ਆਪਣੀ ਕਿਸਾਨ ਪਛਾਣ, ਰਕਬਾ ਮਾਪ ਇਕਾਈਆਂ ਅਤੇ ਭਾਸ਼ਾ ਪਸੰਦ ਸੈੱਟ ਕਰੋ।",
@@ -640,6 +785,51 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     overdue_by: "विलंबित",
     due_today: "आज देय",
 
+    my_farms_title: "मेरे पंजीकृत खेत",
+    my_farms_subtitle: "व्यक्तिगत खेत होल्डिंग्स के बीच स्विच करें या संयुक्त पोर्टफोलियो देखें।",
+    all_farms_view_active: "सभी खेत दृश्य सक्रिय",
+    switch_to_all_farms: "सभी खेत देखें",
+    add_new_farm: "+ नया खेत जोड़ें",
+
+    crop_planning_title: "फसल योजना एवं समयरेखा",
+    add_crop_to_farm: "+ नई फसल जोड़ें",
+
+    crop_advisories_title: "फसल सलाह एवं बुलेटिन",
+    category_all: "सभी",
+    category_pest: "कीट एवं रोग",
+    category_weather: "मौसम",
+
+    inventory_title: "गोदाम और स्टॉक",
+    add_store_btn: "+ गोदाम जोड़ें",
+    add_item_btn: "+ सामान जोड़ें",
+
+    equipment_title: "मशीनरी एवं उपकरण",
+    report_problem_btn: "समस्या दर्ज करें",
+    register_equipment_btn: "+ मशीन पंजीकृत करें",
+
+    financial_stats_title: "आंकड़े एवं वित्तीय बहीखाता",
+
+    team_title: "कार्यबल एवं टीम प्रबंधन",
+    team_subtitle: "खेत कर्मचारी, पदनाम और मॉड्यूल अनुमतियां प्रबंधित करें।",
+    members_subtab: "सदस्य",
+    roles_subtab: "पदनाम",
+    add_member_btn: "+ नया सदस्य जोड़ें",
+    create_role_btn: "+ नया पदनाम बनाएं",
+
+    reports_title: "रिपोर्ट्स और ऑडिट",
+    reports_subtitle: "आधिकारिक फार्म ऑडिट विवरण, फसल प्रदर्शन और वित्तीय सारांश।",
+    download_pdf: "प्रिंट / PDF सहेजें",
+    export_csv_btn: "CSV डाउनलोड",
+
+    subscription_title: "सदस्यता और प्लान",
+    subscription_subtitle: "अपना फार्म लाइसेंस, सक्रिय रकबा और बिलिंग प्रबंधित करें।",
+    annual_billing: "वार्षिक (२०% बचत)",
+    monthly_billing: "मासिक",
+
+    support_title: "कृषि विशेषज्ञ एवं सहायता",
+    support_subtitle: "प्रत्यक्ष कृषि सलाह, फसल रोग निदान और सिस्टम सहायता।",
+    open_ticket_btn: "+ सहायता टिकट खोलें",
+
     settings_title: "खेत और सिस्टम सेटिंग्स",
     settings_subtitle: "अपनी किसान पहचान, क्षेत्रीय माप इकाइयां और भाषा प्राथमिकताएं सेट करें।",
     settings_reset: "रीसेट",
@@ -807,6 +997,51 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     overdue_by: "उशीर",
     due_today: "आज देय",
 
+    my_farms_title: "माझी नोंदणीकृत शेते",
+    my_farms_subtitle: "वैयक्तिक शेतांमध्ये स्विच करा किंवा एकत्रित पोर्टफोलिओ पहा.",
+    all_farms_view_active: "सर्व शेत दृश्य सक्रिय",
+    switch_to_all_farms: "सर्व शेते पहा",
+    add_new_farm: "+ नवीन शेत जोडा",
+
+    crop_planning_title: "पीक नियोजन आणि टाइमलाइन",
+    add_crop_to_farm: "+ नवीन पीक जोडा",
+
+    crop_advisories_title: "पीक सल्ला आणि बुलेटिन",
+    category_all: "सर्व",
+    category_pest: "कीटक आणि रोग",
+    category_weather: "हवामान",
+
+    inventory_title: "गोदाम आणि साठा",
+    add_store_btn: "+ गोदाम जोडा",
+    add_item_btn: "+ वस्तू जोडा",
+
+    equipment_title: "यंत्रसामग्री आणि अवजारे",
+    report_problem_btn: "तक्रार नोंदवा",
+    register_equipment_btn: "+ नवीन यंत्र जोडा",
+
+    financial_stats_title: "आकडेवारी आणि हिशेब",
+
+    team_title: "मजूर आणि टीम व्यवस्थापन",
+    team_subtitle: "शेत कामगार, पदे आणि परवानग्या व्यवस्थापित करा.",
+    members_subtab: "सदस्य",
+    roles_subtab: "भूमिका",
+    add_member_btn: "+ नवीन सदस्य जोडा",
+    create_role_btn: "+ नवीन पद तयार करा",
+
+    reports_title: "अहवाल आणि ऑडिट",
+    reports_subtitle: "अधिकृत शेत ऑडिट अहवाल, पीक कामगिरी आणि आर्थिक सारांश.",
+    download_pdf: "प्रिंट / PDF जतन करा",
+    export_csv_btn: "CSV डाउनलोड",
+
+    subscription_title: "सदस्यता आणि प्लॅन",
+    subscription_subtitle: "आपला शेती परवाना, क्षेत्रफळ कोटा आणि बिलिंग व्यवस्थापित करा.",
+    annual_billing: "वार्षिक (२०% बचत)",
+    monthly_billing: "मासिक",
+
+    support_title: "कृषी तज्ञ आणि मदत",
+    support_subtitle: "थेट कृषी सल्ला, पीक रोग निदान आणि तांत्रिक मदत.",
+    open_ticket_btn: "+ नवीन तिकीट उघडा",
+
     settings_title: "शेत आणि सिस्टम सेटिंग्ज",
     settings_subtitle: "आपली शेतकरी ओळख, प्रादेशिक मोजमाप एकके आणि भाषा प्राधान्ये सेट करा.",
     settings_reset: "रीसेट",
@@ -973,6 +1208,51 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     priority_low: "સામાન્ય",
     overdue_by: "વિલંબિત",
     due_today: "આજે પૂર્ણ કરવાનું",
+
+    my_farms_title: "મારા નોંધાયેલા ખેતરો",
+    my_farms_subtitle: "વ્યક્તિગત ખેતરો વચ્ચે સ્વિચ કરો અથવા સંયુક્ત પોર્ટફોલિયો જુઓ.",
+    all_farms_view_active: "તમામ ખેતરો દર્શન સક્રિય",
+    switch_to_all_farms: "બધા ખેતરો જુઓ",
+    add_new_farm: "+ નવું ખેતર ઉમેરો",
+
+    crop_planning_title: "પાક આયોજન અને સમયરેખા",
+    add_crop_to_farm: "+ નવો પાક ઉમેરો",
+
+    crop_advisories_title: "પાક સલાહ અને બુલેટિન",
+    category_all: "બધા",
+    category_pest: "જીવાત અને રોગ",
+    category_weather: "હવામાન",
+
+    inventory_title: "ગોદામ અને સ્ટોક",
+    add_store_btn: "+ સ્ટોર ઉમેરો",
+    add_item_btn: "+ વસ્તુ ઉમેરો",
+
+    equipment_title: "મશીનરી અને સાધનો",
+    report_problem_btn: "ખામી નોંધાવો",
+    register_equipment_btn: "+ મશીન ઉમેરો",
+
+    financial_stats_title: "આંકડા અને હિસાબ",
+
+    team_title: "કામદારો અને ટીમ સંચાલન",
+    team_subtitle: "ખેતર કામદારો, હોદ્દા અને પરવાનગીઓ મેનેજ કરો.",
+    members_subtab: "સભ્યો",
+    roles_subtab: "હોદ્દા",
+    add_member_btn: "+ નવો સભ્ય ઉમેરો",
+    create_role_btn: "+ નવો હોદ્દો બનાવો",
+
+    reports_title: "રિપોર્ટ્સ અને ઓડિટ",
+    reports_subtitle: "સત્તાવાર ફાર્મ ઓડિટ સ્ટેટમેન્ટ, પાક ઉત્પાદન અને નાણાકીય સારાંશ.",
+    download_pdf: "પ્રિન્ટ / PDF સાચવો",
+    export_csv_btn: "CSV ડાઉનલોડ",
+
+    subscription_title: "સબ્સ્ક્રિપ્શન અને પ્લાન",
+    subscription_subtitle: "તમારું ફાર્મ લાઇસન્સ, વિસ્તાર ક્વોટા અને બિલિંગ સંભાળો.",
+    annual_billing: "વાર્ષિક (૨૦% બચત)",
+    monthly_billing: "માસિક",
+
+    support_title: "ખેતી નિષ્ણાત હેલ્પલાઇન અને સપોર્ટ",
+    support_subtitle: "સીધી કૃષિ સલાહ, પાક રોગ નિદાન અને સિસ્ટમ સહાય.",
+    open_ticket_btn: "+ સપોર્ટ ટિકિટ ખોલો",
 
     settings_title: "ખેતર અને સિસ્ટમ સેટિંગ્સ",
     settings_subtitle: "તમારી ખેડૂત ઓળખ, જમીન માપણી એકમો અને ભાષા પસંદ કરો.",
