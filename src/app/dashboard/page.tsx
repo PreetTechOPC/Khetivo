@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -72,7 +72,6 @@ import {
   BarChart2,
   Printer,
   RotateCcw,
-  RefreshCw,
   Mail,
   UserPlus,
   Edit3,
@@ -92,8 +91,6 @@ import {
   deleteTaskFromAppwrite,
   syncCropsFromAppwrite,
   createCropInAppwrite,
-  updateCropInAppwrite,
-  deleteCropInAppwrite,
   syncInventoryFromAppwrite,
   createInventoryItemInAppwrite,
   createFarmStoreInAppwrite,
@@ -101,9 +98,6 @@ import {
   restockItemInAppwrite,
   syncEquipmentFromAppwrite,
   createEquipmentInAppwrite,
-  deleteEquipmentInAppwrite,
-  updateEquipmentStatusInAppwrite,
-  resolveEquipmentIssueInAppwrite,
   reportEquipmentProblemInAppwrite,
   syncSupportFromAppwrite,
   createSupportTicketInAppwrite,
@@ -113,20 +107,15 @@ import {
   deleteFinancialTransactionInAppwrite,
   syncTeamFromAppwrite,
   createTeamMemberInAppwrite,
-  createDesignationInAppwrite,
   deleteTeamMemberInAppwrite,
-  deleteDesignationInAppwrite,
   syncInvoicesFromAppwrite,
   syncAdvisoriesFromAppwrite,
   syncSubscriptionFromAppwrite,
   updateSubscriptionInAppwrite,
   syncCropTemplatesFromAppwrite,
-  syncUserProfileFromAppwrite,
-  saveUserProfileToAppwrite,
   CloudFarm,
 } from "@/lib/appwriteSync";
 import { getCurrentUserId } from "@/lib/currentSession";
-import { TRANSLATIONS, SupportedLanguage } from "@/lib/translations";
 
 declare global {
   interface Window {
@@ -267,7 +256,7 @@ export const INITIAL_DESIGNATIONS: FarmDesignation[] = [
   {
     id: "des-3",
     title: "Consulting Agronomist (Crop Advisor)",
-    description: "Expert advice on pathology, pest scouting, spray windows, and crop performance analytics.",
+    description: "Expert advice on pathology, pest scouting, spray windows, and crop performance telemetry.",
     allowedModules: ["dashboard", "weather", "crops", "reports"],
     color: "#7E22CE",
     isSystemDefault: true,
@@ -275,7 +264,7 @@ export const INITIAL_DESIGNATIONS: FarmDesignation[] = [
   {
     id: "des-4",
     title: "Tractor & Heavy Machinery Driver",
-    description: "Operates tractors, seeders, and harvesters; maintains fuel efficiency and machinery sensors.",
+    description: "Operates tractors, seeders, and harvesters; maintains fuel efficiency and machinery telemetry.",
     allowedModules: ["dashboard", "tasks", "equipment"],
     color: "#B45309",
     isSystemDefault: true,
@@ -335,16 +324,104 @@ export const APP_MODULES: AppModuleDef[] = [
   { id: "weather", label: "Weather & Spray Advisory", description: "Hyper-local GPS forecasts, rain radar & spray advisory windows", category: "Core Daily" },
   { id: "tasks", label: "Tasks & Operations", description: "Calendar schedule, task assignments & kanban workflow", category: "Core Daily" },
   { id: "inventory", label: "Inventory & Stores", description: "Fertilizers, agrochemicals, seed stock & low inventory alerts", category: "Core Daily" },
-  { id: "equipment", label: "Equipment & Fleet", description: "Tractors, machinery sensors, service logs & breakdown reports", category: "Core Daily" },
+  { id: "equipment", label: "Equipment & Fleet", description: "Tractors, machinery telemetry, service logs & breakdown reports", category: "Core Daily" },
   { id: "crops", label: "Crop Management", description: "Crop cycles, phenological stages, NDVI health & harvest tracking", category: "Records & Stats" },
   { id: "expenses", label: "Stats & Financials", description: "Production harvest realization, losses ledger & farm expenses", category: "Records & Stats" },
-  { id: "reports", label: "Reports & Audits", description: "Audit reports, monthly P&L charts & official CSV downloads", category: "Records & Stats" },
+  { id: "reports", label: "Reports & Audits", description: "Audit telemetry, monthly P&L charts & official CSV downloads", category: "Records & Stats" },
   { id: "my-farms", label: "My Farms & Parcels", description: "Land holdings, GPS geo-boundaries, soil data & irrigation pumps", category: "Farm Admin" },
   { id: "team", label: "Team & Workforce", description: "Staff directory, designations & module access control", category: "Farm Admin" },
   { id: "settings", label: "Settings", description: "Farmer profile, currency, SMS alerts & unit preferences", category: "Farm Admin" },
 ];
 
-export const INITIAL_TEAM_MEMBERS: TeamMember[] = [];
+export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: "tm-1",
+    name: "Jaswinder Singh",
+    phone: "+91 98140-54321",
+    email: "jaswinder@khetivo.farm",
+    designationId: "des-1",
+    designationTitle: "Owner & Farm Administrator",
+    roleCategory: "admin",
+    farmId: "all",
+    farmName: "All Holdings",
+    status: "Active",
+    allowedModules: [
+      "dashboard",
+      "weather",
+      "tasks",
+      "inventory",
+      "equipment",
+      "crops",
+      "expenses",
+      "reports",
+      "my-farms",
+      "team",
+      "settings",
+    ],
+    joinedDate: "2024-01-15",
+    notes: "Primary account owner with unrestricted system administrative access.",
+  },
+  {
+    id: "tm-2",
+    name: "Harpreet Singh",
+    phone: "+91 98721-12345",
+    email: "harpreet.field@khetivo.farm",
+    designationId: "des-2",
+    designationTitle: "Field Supervisor & Operations Lead",
+    roleCategory: "supervisor",
+    farmId: "farm-1",
+    farmName: "Khetivo Green Acres (Samrala)",
+    status: "Active",
+    allowedModules: ["dashboard", "weather", "tasks", "inventory", "equipment", "crops"],
+    joinedDate: "2024-06-10",
+    notes: "Supervises sowing schedules, field worker shifts, and irrigation routines.",
+  },
+  {
+    id: "tm-3",
+    name: "Gurmukh Ram",
+    phone: "+91 98882-67890",
+    email: "gurmukh.ram@khetivo.farm",
+    designationId: "des-4",
+    designationTitle: "Tractor & Heavy Machinery Driver",
+    roleCategory: "operator",
+    farmId: "farm-1",
+    farmName: "Khetivo Green Acres (Samrala)",
+    status: "Active",
+    allowedModules: ["dashboard", "tasks", "equipment"],
+    joinedDate: "2024-09-01",
+    notes: "Main operator for John Deere 5050D and laser leveler.",
+  },
+  {
+    id: "tm-4",
+    name: "Dr. R. K. Sharma",
+    phone: "+91 94170-98765",
+    email: "dr.sharma@pau.edu",
+    designationId: "des-3",
+    designationTitle: "Consulting Agronomist (Crop Advisor)",
+    roleCategory: "agronomist",
+    farmId: "all",
+    farmName: "All Holdings",
+    status: "Active",
+    allowedModules: ["dashboard", "weather", "crops", "reports"],
+    joinedDate: "2025-02-14",
+    notes: "Advises on IPM pest scouting, nutrient dosage, and spray windows.",
+  },
+  {
+    id: "tm-5",
+    name: "Balwinder Kaur",
+    phone: "+91 98765-43210",
+    email: "balwinder.store@khetivo.farm",
+    designationId: "des-5",
+    designationTitle: "Store & Inventory Keeper",
+    roleCategory: "inventory",
+    farmId: "farm-1",
+    farmName: "Khetivo Green Acres (Samrala)",
+    status: "Active",
+    allowedModules: ["dashboard", "inventory", "equipment"],
+    joinedDate: "2025-05-20",
+    notes: "Logs seed dispatches, pesticide stocks, and vendor delivery challans.",
+  },
+];
 
 // ==========================================
 // SUBSCRIPTION & PLAN DEFINITIONS
@@ -366,54 +443,58 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanDef[] = [
   {
     id: "starter",
     name: "Kisan Starter",
-    tagline: "Free Forever / No Credit Card",
+    tagline: "Basic record keeping for small farms",
     monthlyPrice: 0,
     annualPrice: 0,
     acreageLimit: "Up to 5 Acres",
-    farmLimit: "1 Farm Plot",
+    farmLimit: "1 Farm Holding",
     seats: "1 Owner Login",
     features: [
-      "1 Registered Farm Plot with GPS boundary auto-detection.",
-      "Full Stock Register: Seeds, fertilizers, chemicals & diesel.",
-      "Expiry Alerts at 90, 30 & 7 days to eliminate inventory waste.",
-      "Equipment & Machinery Register: Service logs & breakdown tracking.",
+      "1 Farm Holding registration",
+      "Up to 5 Cultivable Acres",
+      "5-day basic weather forecast",
+      "Crop calendar tracking",
+      "Standard expense logging",
+      "Community help forum",
     ],
   },
   {
     id: "pro",
     name: "Precision Pro",
-    tagline: "Per Annum (Launch Offer)",
+    tagline: "Satellite diagnostics & spray intelligence",
     monthlyPrice: 249,
     annualPrice: 2999,
     acreageLimit: "Up to 25 Acres",
-    farmLimit: "Up to 5 Farms",
-    seats: "Role-based Team Access",
+    farmLimit: "3 Farm Holdings",
+    seats: "3 Team Operator Accounts",
     features: [
-      "Up to 5 Farms with Multi-Farm portfolio selector.",
-      "Crop Planning & Growth Timeline: Day 1 to 140 tracking.",
-      "7-Day Hyperlocal Weather & smart foliar spray windows.",
-      "Daily Task Operations & field labor assignment.",
-      "Financial Accounting: Input costs vs. harvest P&L margin per acre.",
-      "Team Management: Role-based access for supervisors.",
+      "Up to 3 Farm Holdings",
+      "Up to 25 Cultivable Acres",
+      "10m Sentinel-2 NDVI satellite scans",
+      "Hyper-local GPS spray risk alerts",
+      "Store inventory & low-stock alerts",
+      "Equipment service & maintenance logs",
+      "WhatsApp agronomist support (Office hours)",
     ],
   },
   {
     id: "enterprise",
     name: "Enterprise Agri",
-    tagline: "Per Annum (Launch Offer)",
+    tagline: "Full telemetry, unlimited parcels & 24/7 PAU hotline",
     monthlyPrice: 599,
     annualPrice: 5999,
-    acreageLimit: "Unlimited Acres",
-    farmLimit: "Unlimited Farms",
-    seats: "Dedicated Account Desk",
+    acreageLimit: "Up to 50+ Acres",
+    farmLimit: "Unlimited Farm Holdings",
+    seats: "10 Operator Seats + Custom Roles",
     isCurrent: true,
     features: [
-      "Unlimited Farms & Holdings across all regions.",
-      "Recommended Do's & Don'ts: Stage-wise admin agronomy guides.",
-      "Live Advisories & Alerts: Instant disease & weather bulletins.",
-      "Expert Agronomy Support: Direct tickets & on-site field visits.",
-      "Dedicated Account Manager with priority desk access.",
-      "AI Disease Scanner (Google Lens): Instant leaf diagnosis (Coming Soon).",
+      "Unlimited Farm Holdings & Geo-parcels",
+      "Up to 50+ Cultivable Acres",
+      "High-resolution 5-day NDVI biomass scans",
+      "Automated solar pump IoT solenoid valves",
+      "Multi-role workforce with custom permissions",
+      "Official bank & APMC audit-ready PDF reports",
+      "24/7 Dedicated PAU agronomist hotline & on-site visits",
     ],
   },
 ];
@@ -438,7 +519,7 @@ export interface SupportTicket {
   id: string;
   ticketNo: string;
   subject: string;
-  category: "Crop Health & Pathology" | "Irrigation & Soil" | "Weather & Advisory" | "Billing & Plan" | "IoT & Machinery Sensors";
+  category: "Crop Health & Pathology" | "Irrigation & Soil" | "Weather & Advisory" | "Billing & Plan" | "IoT & Machinery Telemetry";
   farmName: string;
   cropName: string;
   priority: "Low" | "Normal" | "Urgent";
@@ -476,7 +557,7 @@ export const AGRONOMY_FAQS = [
   {
     question: "Can I download official expense & harvest audit records for bank loans/KCC?",
     category: "Billing & Reports",
-    answer: "Yes! Navigate to the 'Reports' module where you can generate bank audit reports and download official harvest ledger CSV and PDF reports formatted for APMC Mandi, crop insurance, and Kisan Credit Card (KCC) verifications.",
+    answer: "Yes! Navigate to the 'Reports' module where you can generate bank audit telemetry and download official harvest ledger CSV and PDF reports formatted for APMC Mandi, crop insurance, and Kisan Credit Card (KCC) verifications.",
   },
 ];
 
@@ -1075,71 +1156,6 @@ export const STANDARD_CROP_STAGES = [
   { step: 5, name: "Stage 5: Maturation & Harvest", typicalDays: "Days 106–140", defaultDay: 120 },
 ];
 
-/**
- * Automatically computes elapsed crop day from sown date so the day advances dynamically each day
- */
-export function computeCropDayAndStage(
-  sownDateStr: string | undefined | null,
-  savedCurrentDay: number | undefined | null,
-  totalDays: number,
-  growthTimeline?: GrowthStageMilestone[]
-): { currentDay: number; stage: string; stageStep: number } {
-  let day = Number(savedCurrentDay) || 1;
-
-  if (sownDateStr) {
-    const sown = new Date(sownDateStr);
-    if (!isNaN(sown.getTime())) {
-      const now = new Date();
-      // Calculate diff in calendar days
-      const diffMs = now.getTime() - sown.getTime();
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1; // 1st day of sowing is Day 1
-      if (diffDays > 0) {
-        day = Math.min(diffDays, totalDays || 120);
-      }
-    }
-  }
-
-  // Derive stage and step based on calculated currentDay
-  let stageName = "Germination & Emergence";
-  let step = 1;
-
-  if (growthTimeline && growthTimeline.length > 0) {
-    const matched = growthTimeline.find(
-      (st) => day >= (st.startDay || 1) && day <= (st.endDay || totalDays)
-    );
-    if (matched) {
-      stageName = matched.stageName;
-      step = growthTimeline.indexOf(matched) + 1;
-    } else if (day > (growthTimeline[growthTimeline.length - 1].endDay || totalDays)) {
-      const last = growthTimeline[growthTimeline.length - 1];
-      stageName = last.stageName;
-      step = growthTimeline.length;
-    } else {
-      stageName = growthTimeline[0].stageName;
-      step = 1;
-    }
-  } else {
-    if (day <= 20) {
-      stageName = "Stage 1: Germination & Emergence";
-      step = 1;
-    } else if (day <= 50) {
-      stageName = "Stage 2: Vegetative / Tillering";
-      step = 2;
-    } else if (day <= 75) {
-      stageName = "Stage 3: Jointing & Bulking";
-      step = 3;
-    } else if (day <= 105) {
-      stageName = "Stage 4: Flowering & Booting";
-      step = 4;
-    } else {
-      stageName = "Stage 5: Maturation & Harvest";
-      step = 5;
-    }
-  }
-
-  return { currentDay: day, stage: stageName, stageStep: step };
-}
-
 export interface CropDetailConfig {
   area: number | "";
   variety?: string;
@@ -1304,46 +1320,14 @@ export const INITIAL_FARMS: FarmData[] = [];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [activeTab, setActiveTabState] = useState<string>("dashboard");
-
-  useEffect(() => {
-    // Restore saved tab or URL hash only on client mount to guarantee 100% hydration matching
-    if (typeof window !== "undefined") {
-      const hash = window.location.hash.replace("#", "");
-      if (hash) {
-        setActiveTabState(hash);
-      } else {
-        const savedTab = localStorage.getItem("khetivo_active_tab");
-        if (savedTab) setActiveTabState(savedTab);
-      }
-    }
-  }, []);
-
-  const setActiveTab = (tab: string) => {
-    setActiveTabState(tab);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("khetivo_active_tab", tab);
-        window.history.replaceState(null, "", `#${tab}`);
-      } catch {}
-    }
-  };
-
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Farms list state (starts with 2 distinct farm holdings, each with multiple crops!)
   const [farms, setFarms] = useState<FarmData[]>(INITIAL_FARMS);
 
-  // Preserve user-selected farm across page reloads (defaults to "all" if not set)
-  const [selectedFarmId, setSelectedFarmIdState] = useState<string>("all");
-  const setSelectedFarmId = (id: string) => {
-    setSelectedFarmIdState(id);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("khetivo_selected_farm_id", id);
-      } catch {}
-    }
-  };
+  // Default to "all" farms view as requested!
+  const [selectedFarmId, setSelectedFarmId] = useState<string>("all");
   const [farmDropdownOpen, setFarmDropdownOpen] = useState(false);
 
   // Selected crop index for detailed crop management inspection
@@ -1384,24 +1368,8 @@ export default function DashboardPage() {
   const [settingsEmail, setSettingsEmail] = useState("");
   const [settingsPhone, setSettingsPhone] = useState("");
   const [settingsMandi, setSettingsMandi] = useState("Local APMC Mandi");
-  const [settingsHeadquartersAddress, setSettingsHeadquartersAddress] = useState("");
   const [settingsDefaultUnit, setSettingsDefaultUnit] = useState<LandAreaUnit>("Acres");
   const [settingsLanguage, setSettingsLanguage] = useState("en");
-  const [settingsLanguage, setSettingsLanguageState] = useState<SupportedLanguage>("en");
-
-  // Helper translation dictionary based on current active language
-  const t = TRANSLATIONS[settingsLanguage] || TRANSLATIONS.en;
-
-  const setSettingsLanguage = (lang: string) => {
-    const validLang: SupportedLanguage = (["en", "pa", "hi", "mr", "gu"].includes(lang) ? lang : "en") as SupportedLanguage;
-    setSettingsLanguageState(validLang);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("khetivo_language", validLang);
-      } catch {}
-    }
-  };
-  const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsMoistureDeficit, setSettingsMoistureDeficit] = useState("30");
   const [settingsWindThreshold, setSettingsWindThreshold] = useState("18");
   const [settingsWhatsappAlerts, setSettingsWhatsappAlerts] = useState(true);
@@ -1415,62 +1383,6 @@ export default function DashboardPage() {
   const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteAccountError, setDeleteAccountError] = useState("");
-
-  // Refresh Window / Page State (In-place data reload without kicking user back to default tab)
-  const [isPageRefreshing, setIsPageRefreshing] = useState(false);
-  const [dataRefreshTrigger, setDataRefreshTrigger] = useState(0);
-
-  // Notification Sidebar Drawer State
-  const [notificationSidebarOpen, setNotificationSidebarOpen] = useState(false);
-  const [readNotifications, setReadNotifications] = useState<Record<string, boolean>>({});
-  const [notificationsClearedAt, setNotificationsClearedAt] = useState<number>(0);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("khetivo_read_notifications");
-        if (saved) setReadNotifications(JSON.parse(saved));
-        const savedCleared = localStorage.getItem("khetivo_notifications_cleared_at");
-        if (savedCleared) setNotificationsClearedAt(Number(savedCleared) || 0);
-      } catch {}
-    }
-  }, []);
-
-  const markNotificationAsRead = (id: string) => {
-    setReadNotifications((prev) => {
-      const updated = { ...prev, [id]: true };
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("khetivo_read_notifications", JSON.stringify(updated));
-        } catch {}
-      }
-      return updated;
-    });
-  };
-
-  const markAllNotificationsAsRead = (allIds: string[]) => {
-    const now = Date.now();
-    setNotificationsClearedAt(now);
-    setReadNotifications((prev) => {
-      const updated = { ...prev };
-      allIds.forEach((id) => {
-        updated[id] = true;
-      });
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("khetivo_read_notifications", JSON.stringify(updated));
-          localStorage.setItem("khetivo_notifications_cleared_at", String(now));
-        } catch {}
-      }
-      return updated;
-    });
-  };
-
-  const handleWindowRefresh = () => {
-    setIsPageRefreshing(true);
-    // In-place refresh trigger re-executes Appwrite synchronization & weather data
-    setDataRefreshTrigger((prev) => prev + 1);
-  };
 
   // Reusable Custom Delete Confirmation Modal State
   const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
@@ -1534,133 +1446,29 @@ export default function DashboardPage() {
       if (uEmail) setSettingsEmail(uEmail);
     } catch {}
 
-    // Fast Hydration: Instantly restore cached farm data from localStorage so page doesn't feel empty
-    try {
-      const savedFarmId = localStorage.getItem("khetivo_selected_farm_id");
-      if (savedFarmId) {
-        setSelectedFarmIdState(savedFarmId);
-      }
-      const cachedFarms = localStorage.getItem("khetivo_cached_farms");
-      if (cachedFarms) {
-        const parsed = JSON.parse(cachedFarms);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setFarms(parsed);
-        }
-      }
-      const cachedTasks = localStorage.getItem("khetivo_cached_tasks");
-      if (cachedTasks) {
-        const parsed = JSON.parse(cachedTasks);
-        if (Array.isArray(parsed) && parsed.length > 0) setTaskList(parsed);
-      }
-      const cachedInv = localStorage.getItem("khetivo_cached_inventory");
-      if (cachedInv) {
-        const parsed = JSON.parse(cachedInv);
-        if (Array.isArray(parsed) && parsed.length > 0) setInventoryItems(parsed);
-      }
-      const cachedEq = localStorage.getItem("khetivo_cached_equipment");
-      if (cachedEq) {
-        const parsed = JSON.parse(cachedEq);
-        if (Array.isArray(parsed) && parsed.length > 0) setEquipmentList(parsed);
-      }
-      const cachedFin = localStorage.getItem("khetivo_cached_financials");
-      if (cachedFin) {
-        const parsed = JSON.parse(cachedFin);
-        if (Array.isArray(parsed) && parsed.length > 0) setTransactions(parsed);
-      }
-      const cachedTickets = localStorage.getItem("khetivo_cached_tickets");
-      if (cachedTickets) {
-        const parsed = JSON.parse(cachedTickets);
-        if (Array.isArray(parsed) && parsed.length > 0) setSupportTickets(parsed);
-      }
-      const cachedDesignations = localStorage.getItem("khetivo_cached_designations");
-      if (cachedDesignations) {
-        const parsed = JSON.parse(cachedDesignations);
-        if (Array.isArray(parsed)) setDesignations(parsed);
-      } else {
-        const deletedDes = localStorage.getItem("khetivo_deleted_designations");
-        if (deletedDes) {
-          const deletedIds = JSON.parse(deletedDes);
-          if (Array.isArray(deletedIds) && deletedIds.length > 0) {
-            setDesignations((prev) => prev.filter((d) => !deletedIds.includes(d.id)));
-          }
-        }
-      }
-    } catch {}
-
-    // 0. Comprehensive Realtime Data Loader from Appwrite Cloud (direct parallel fetch without blocking on health check)
+    // 0. Comprehensive Realtime Data Loader from Appwrite Cloud
     const loadAllRealtimeData = async () => {
       try {
-        // Fetch all live collections in parallel from Appwrite Cloud DB immediately
-        const [
-          cloudFarms,
-          cloudCrops,
-          cloudTasks,
-          cloudInv,
-          cloudEq,
-          cloudSupport,
-          cloudFin,
-          cloudTeam,
-          cloudInvoices,
-          cloudAdvisories,
-          cloudTemplates,
-          cloudSubscription,
-          cloudProfile,
-        ] = await Promise.all([
-          syncFarmsFromAppwrite(),
-          syncCropsFromAppwrite(),
-          syncTasksFromAppwrite(),
-          syncInventoryFromAppwrite(),
-          syncEquipmentFromAppwrite(),
-          syncSupportFromAppwrite(),
-          syncFinancialsFromAppwrite(),
-          syncTeamFromAppwrite(),
-          syncInvoicesFromAppwrite(),
-          syncAdvisoriesFromAppwrite(),
-          syncCropTemplatesFromAppwrite(),
-          syncSubscriptionFromAppwrite(),
-          syncUserProfileFromAppwrite(
-            localStorage.getItem("khetivo_user_id") || undefined,
-            localStorage.getItem("khetivo_user_phone") || undefined,
-            localStorage.getItem("khetivo_user_email") || undefined
-          ),
-        ]);
+        const health = await checkAppwriteHealth();
+        if (health.connected) {
+          setAppwriteStatus("connected");
+          if (health.database) setAppwriteDbName(health.database);
 
-        setAppwriteStatus("connected");
-
-          // Process live user profile from Appwrite Cloud
-          if (cloudProfile) {
-            if (cloudProfile.name) {
-              setSettingsFarmerName(cloudProfile.name);
-              localStorage.setItem("khetivo_farmer_name", cloudProfile.name);
-              localStorage.setItem("khetivo_user_name", cloudProfile.name);
-            }
-            if (cloudProfile.phone) {
-              const formattedPhone = cloudProfile.phone.startsWith("+")
-                ? cloudProfile.phone
-                : `+91 ${cloudProfile.phone}`;
-              setUserPhone(formattedPhone);
-              setSettingsPhone(formattedPhone);
-              localStorage.setItem("khetivo_user_phone", cloudProfile.phone);
-            }
-            if (cloudProfile.email) {
-              setSettingsEmail(cloudProfile.email);
-              localStorage.setItem("khetivo_user_email", cloudProfile.email);
-            }
-            if (cloudProfile.mandiLinkage) {
-              setSettingsMandi(cloudProfile.mandiLinkage);
-            }
-            if (cloudProfile.farmAddress) {
-              setSettingsHeadquartersAddress(cloudProfile.farmAddress);
-            }
-            if (cloudProfile.measurementUnit) {
-              setSettingsDefaultUnit(cloudProfile.measurementUnit);
-              localStorage.setItem("khetivo_default_unit", cloudProfile.measurementUnit);
-            }
-            if (cloudProfile.preferredLanguage) {
-              setSettingsLanguage(cloudProfile.preferredLanguage);
-              localStorage.setItem("khetivo_language", cloudProfile.preferredLanguage);
-            }
-          }
+          // Fetch all live collections in parallel from Appwrite Cloud DB
+          const [cloudFarms, cloudCrops, cloudTasks, cloudInv, cloudEq, cloudSupport, cloudFin, cloudTeam, cloudInvoices, cloudAdvisories, cloudTemplates, cloudSubscription] = await Promise.all([
+            syncFarmsFromAppwrite(),
+            syncCropsFromAppwrite(),
+            syncTasksFromAppwrite(),
+            syncInventoryFromAppwrite(),
+            syncEquipmentFromAppwrite(),
+            syncSupportFromAppwrite(),
+            syncFinancialsFromAppwrite(),
+            syncTeamFromAppwrite(),
+            syncInvoicesFromAppwrite(),
+            syncAdvisoriesFromAppwrite(),
+            syncCropTemplatesFromAppwrite(),
+            syncSubscriptionFromAppwrite(),
+          ]);
 
           // Process live subscription
           if (cloudSubscription && cloudSubscription.planTier) {
@@ -1676,37 +1484,27 @@ export default function DashboardPage() {
             } catch {}
           }
 
-          // 1. Process Live Crops with automated dynamic day & growth stage progression
-          const allCropsList: FarmCrop[] = (cloudCrops || []).map((c: any) => {
-            const rawTotalDays = Number(c.totalDays) || 120;
-            const dynamicProgression = computeCropDayAndStage(
-              c.sownDate,
-              c.currentDay,
-              rawTotalDays
-            );
-
-            return {
-              id: c.$id || `crop-${Date.now()}`,
-              name: c.name,
-              variety: c.variety || "Standard",
-              area: Number(c.area) || 0,
-              areaUnit: c.areaUnit || "Acres",
-              season: c.season || "Rabi",
-              stage: dynamicProgression.stage || c.stage || "Vegetative",
-              stageStep: dynamicProgression.stageStep || Number(c.stageStep) || 1,
-              currentDay: dynamicProgression.currentDay,
-              totalDays: rawTotalDays,
-              health: c.health || "Good",
-              sownDate: c.sownDate ? new Date(c.sownDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "",
-              harvestDate: c.harvestDate ? new Date(c.harvestDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "",
-              nextMilestone: c.nextMilestone || "Next Stage",
-              color: c.color || "#278449",
-              farmId: c.farmId,
-            };
-          });
+          // 1. Process Live Crops
+          const allCropsList: FarmCrop[] = (cloudCrops || []).map((c: any) => ({
+            id: c.$id || `crop-${Date.now()}`,
+            name: c.name,
+            variety: c.variety || "Standard",
+            area: Number(c.area) || 0,
+            areaUnit: c.areaUnit || "Acres",
+            season: c.season || "Rabi",
+            stage: c.stage || "Vegetative",
+            stageStep: Number(c.stageStep) || 1,
+            currentDay: Number(c.currentDay) || 1,
+            totalDays: Number(c.totalDays) || 120,
+            health: c.health || "Good",
+            sownDate: c.sownDate ? new Date(c.sownDate).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "",
+            harvestDate: c.harvestDate ? new Date(c.harvestDate).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "",
+            nextMilestone: c.nextMilestone || "Next Stage",
+            color: c.color || "#278449",
+            farmId: c.farmId,
+          }));
 
           // 2. Process Live Farms
-          let loadedFarms: FarmData[] = [];
           if (cloudFarms) {
             const mappedFarms: FarmData[] = cloudFarms.map((cf: any) => {
               const farmId = cf.$id || cf.id;
@@ -1731,11 +1529,7 @@ export default function DashboardPage() {
                 cropTemplate: cf.cropTemplate || farmCrops.map((c) => `${c.name} (${c.area} ${c.areaUnit})`).join(" & "),
               };
             });
-            loadedFarms = mappedFarms;
             setFarms(mappedFarms);
-            try {
-              localStorage.setItem("khetivo_cached_farms", JSON.stringify(mappedFarms));
-            } catch {}
           }
 
           // 3. Process Live Tasks
@@ -1756,9 +1550,6 @@ export default function DashboardPage() {
               description: ct.description,
             }));
             setTaskList(mappedTasks);
-            try {
-              localStorage.setItem("khetivo_cached_tasks", JSON.stringify(mappedTasks));
-            } catch {}
           }
 
           // 4. Process Live Stores & Inventory
@@ -1777,56 +1568,46 @@ export default function DashboardPage() {
               );
             }
             if (cloudInv.items) {
-              const mappedInv = cloudInv.items.map((it: any) => ({
-                id: it.$id || it.id,
-                farmId: it.farmId || "all",
-                farmName: it.farmName || "Farm",
-                storeId: it.storeId || "store-1",
-                storeName: it.storeName || "Main Store",
-                name: it.name,
-                category: it.category || "General",
-                batchNumber: it.batchNumber || "",
-                purchasedDate: it.purchasedDate ? it.purchasedDate.split("T")[0] : "",
-                expiryDate: it.expiryDate ? it.expiryDate.split("T")[0] : "",
-                quantity: Number(it.quantity) || 0,
-                unit: it.unit || "kg",
-                rate: Number(it.rate) || 0,
-                lowStockThreshold: Number(it.lowStockThreshold) || 5,
-              }));
-              setInventoryItems(mappedInv);
-              try {
-                localStorage.setItem("khetivo_cached_inventory", JSON.stringify(mappedInv));
-              } catch {}
+              setInventoryItems(
+                cloudInv.items.map((it: any) => ({
+                  id: it.$id || it.id,
+                  farmId: it.farmId || "all",
+                  farmName: it.farmName || "Farm",
+                  storeId: it.storeId || "store-1",
+                  storeName: it.storeName || "Main Store",
+                  name: it.name,
+                  category: it.category || "General",
+                  batchNumber: it.batchNumber || "",
+                  purchasedDate: it.purchasedDate ? it.purchasedDate.split("T")[0] : "",
+                  expiryDate: it.expiryDate ? it.expiryDate.split("T")[0] : "",
+                  quantity: Number(it.quantity) || 0,
+                  unit: it.unit || "kg",
+                  rate: Number(it.rate) || 0,
+                  lowStockThreshold: Number(it.lowStockThreshold) || 5,
+                }))
+              );
             }
           }
 
           // 5. Process Live Equipment & Reported Issues
           if (cloudEq) {
-            const currentFarmsList: FarmData[] = loadedFarms.length > 0 ? loadedFarms : farms;
-            const getFarmNameById = (fId: string) => {
-              const matched = currentFarmsList.find((f: FarmData) => f.id === fId);
-              return matched ? matched.name : "Farm";
-            };
-
             if (cloudEq.equipment) {
-              const mappedEq = cloudEq.equipment.map((eq: any) => ({
-                id: eq.$id || eq.id,
-                farmId: eq.farmId || "all",
-                farmName: eq.farmName && eq.farmName !== "Farm" ? eq.farmName : getFarmNameById(eq.farmId),
-                name: eq.name,
-                category: eq.category || "General Implement",
-                modelNumber: eq.model,
-                operator: eq.operator || "Unassigned",
-                status: (eq.status as any) || "Operational",
-                runtimeHours: Number(eq.runtimeHours) || 0,
-                nextServiceDate: eq.nextServiceDate,
-                nextServiceHours: eq.nextServiceHours,
-                fuelEfficiency: eq.fuelEfficiency,
-              }));
-              setEquipmentList(mappedEq);
-              try {
-                localStorage.setItem("khetivo_cached_equipment", JSON.stringify(mappedEq));
-              } catch {}
+              setEquipmentList(
+                cloudEq.equipment.map((eq: any) => ({
+                  id: eq.$id || eq.id,
+                  farmId: eq.farmId || "all",
+                  farmName: eq.farmName || "Farm",
+                  name: eq.name,
+                  category: eq.category || "General Implement",
+                  modelNumber: eq.model,
+                  operator: eq.operator || "Unassigned",
+                  status: (eq.status as any) || "Operational",
+                  runtimeHours: Number(eq.runtimeHours) || 0,
+                  nextServiceDate: eq.nextServiceDate,
+                  nextServiceHours: eq.nextServiceHours,
+                  fuelEfficiency: eq.fuelEfficiency,
+                }))
+              );
             }
             if (cloudEq.issues) {
               setEquipmentIssues(
@@ -1835,7 +1616,7 @@ export default function DashboardPage() {
                   equipmentId: iss.equipmentId,
                   equipmentName: iss.equipmentName || "Equipment",
                   farmId: iss.farmId || "all",
-                  farmName: iss.farmName && iss.farmName !== "Farm" ? iss.farmName : getFarmNameById(iss.farmId),
+                  farmName: iss.farmName || "Farm",
                   issueType: iss.issueType || "Defect",
                   severity: (iss.severity as any) || "Medium",
                   description: iss.description || "",
@@ -1850,94 +1631,81 @@ export default function DashboardPage() {
           // 6. Process Live Support Tickets & Field Visits
           if (cloudSupport) {
             if (cloudSupport.tickets) {
-              const mappedTkts = cloudSupport.tickets.map((t: any) => ({
-                id: t.$id || t.id,
-                ticketNo: t.ticketNo || `TKT-${(t.$id || "").slice(-4)}`,
-                subject: t.subject,
-                category: t.category || "Crop Health & Pathology",
-                farmName: t.farmName || "Farm",
-                cropName: t.cropName || "Crop",
-                priority: (t.priority as any) || "Normal",
-                status: (t.status as any) || "Open",
-                createdAt: t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-IN") : "Recent",
-                lastReply: t.lastReply || "Dispatched to PAU agronomy helpdesk.",
-                assignedAgronomist: t.assignedAgronomist || "Duty Agronomist",
-                description: t.description || "",
-                resolution: t.resolution,
-              }));
-              setSupportTickets(mappedTkts);
-              try {
-                localStorage.setItem("khetivo_cached_tickets", JSON.stringify(mappedTkts));
-              } catch {}
+              setSupportTickets(
+                cloudSupport.tickets.map((t: any) => ({
+                  id: t.$id || t.id,
+                  ticketNo: t.ticketNo || `TKT-${(t.$id || "").slice(-4)}`,
+                  subject: t.subject,
+                  category: t.category || "Crop Health & Pathology",
+                  farmName: t.farmName || "Farm",
+                  cropName: t.cropName || "Crop",
+                  priority: (t.priority as any) || "Normal",
+                  status: (t.status as any) || "Open",
+                  createdAt: t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-IN") : "Recent",
+                  lastReply: t.lastReply || "Dispatched to PAU agronomy helpdesk.",
+                  assignedAgronomist: t.assignedAgronomist || "Duty Agronomist",
+                  description: t.description || "",
+                  resolution: t.resolution,
+                }))
+              );
             }
           }
 
           // 7. Process Live Financial Transactions
           if (cloudFin) {
-            const mappedFin = cloudFin.map((tx: any) => ({
-              id: tx.$id || tx.id,
-              farmId: tx.farmId || "all",
-              farmName: tx.farmName || "Farm",
-              type: tx.type || "expense",
-              title: tx.title,
-              category: tx.category || "General",
-              amount: Number(tx.amount) || 0,
-              date: tx.date ? tx.date.split("T")[0] : currentDateStr,
-              quantity: tx.quantity,
-              status: (tx.status as any) || "Cleared",
-              reference: tx.reference,
-              crop: tx.crop,
-              notes: tx.notes,
-            }));
-            setTransactions(mappedFin);
-            try {
-              localStorage.setItem("khetivo_cached_financials", JSON.stringify(mappedFin));
-            } catch {}
+            setTransactions(
+              cloudFin.map((tx: any) => ({
+                id: tx.$id || tx.id,
+                farmId: tx.farmId || "all",
+                farmName: tx.farmName || "Farm",
+                type: tx.type || "expense",
+                title: tx.title,
+                category: tx.category || "General",
+                amount: Number(tx.amount) || 0,
+                date: tx.date ? tx.date.split("T")[0] : currentDateStr,
+                quantity: tx.quantity,
+                status: (tx.status as any) || "Cleared",
+                reference: tx.reference,
+                crop: tx.crop,
+                notes: tx.notes,
+              }))
+            );
           }
 
           // 8. Process Live Team Members & Designations
           if (cloudTeam) {
-            setTeamMembers(
-              (cloudTeam.members || []).map((m: any) => ({
-                id: m.$id || m.id,
-                name: m.name,
-                phone: m.phone,
-                email: m.email || "",
-                designationId: m.designationId || "des-custom",
-                designationTitle: m.designationTitle || "Team Member",
-                roleCategory: m.roleCategory || "worker",
-                farmId: m.farmId || "all",
-                farmName: m.farmName || "Farm",
-                status: (m.status as any) || "Active",
-                allowedModules: m.allowedModules || ["dashboard"],
-                joinedDate: m.joinedDate ? m.joinedDate.split("T")[0] : currentDateStr,
-                notes: m.notes,
-              }))
-            );
+            if (cloudTeam.members && cloudTeam.members.length > 0) {
+              setTeamMembers(
+                cloudTeam.members.map((m: any) => ({
+                  id: m.$id || m.id,
+                  name: m.name,
+                  phone: m.phone,
+                  email: m.email || "",
+                  designationId: m.designationId || "des-custom",
+                  designationTitle: m.designationTitle || "Team Member",
+                  roleCategory: m.roleCategory || "worker",
+                  farmId: m.farmId || "all",
+                  farmName: m.farmName || "Farm",
+                  status: (m.status as any) || "Active",
+                  allowedModules: m.allowedModules || ["dashboard"],
+                  joinedDate: m.joinedDate ? m.joinedDate.split("T")[0] : currentDateStr,
+                  notes: m.notes,
+                }))
+              );
+            }
             if (cloudTeam.designations && cloudTeam.designations.length > 0) {
-              const deletedDes = typeof window !== "undefined" ? localStorage.getItem("khetivo_deleted_designations") : null;
-              const deletedIds: string[] = deletedDes ? JSON.parse(deletedDes) : [];
-
               setDesignations((prev) => {
                 const prevMap = new Map(prev.map((d) => [d.id, d]));
                 cloudTeam.designations.forEach((cd: any) => {
-                  const desId = cd.$id || cd.id;
-                  if (!deletedIds.includes(desId)) {
-                    prevMap.set(desId, {
-                      id: desId,
-                      title: cd.title,
-                      description: cd.description || "",
-                      allowedModules: cd.allowedModules || ["dashboard"],
-                      color: cd.color || "#15803D",
-                      isSystemDefault: Boolean(cd.isSystemDefault),
-                    });
-                  }
+                  prevMap.set(cd.$id || cd.id, {
+                    id: cd.$id || cd.id,
+                    title: cd.title,
+                    description: cd.description || "",
+                    allowedModules: cd.allowedModules || ["dashboard"],
+                    color: cd.color || "#15803D",
+                  });
                 });
-                const merged = Array.from(prevMap.values()).filter((d) => !deletedIds.includes(d.id));
-                try {
-                  localStorage.setItem("khetivo_cached_designations", JSON.stringify(merged));
-                } catch {}
-                return merged;
+                return Array.from(prevMap.values());
               });
             }
           }
@@ -1962,11 +1730,12 @@ export default function DashboardPage() {
           if (cloudAdvisories && cloudAdvisories.length > 0) {
             setActiveAdminBroadcasts(cloudAdvisories);
           }
+        } else {
+          setAppwriteStatus("offline");
+        }
       } catch (err) {
         console.warn("[Realtime Sync] Error updating data from Appwrite:", err);
         setAppwriteStatus("offline");
-      } finally {
-        setIsPageRefreshing(false);
       }
     };
 
@@ -2048,7 +1817,7 @@ export default function DashboardPage() {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("khetivo_crops_updated", handleCustomCropsUpdate);
     };
-  }, [dataRefreshTrigger]);
+  }, []);
 
   // ========================================================
   // PAID FIELD VISIT BOOKING STATE & HANDLERS (2-STAGE FUNNEL)
@@ -2367,34 +2136,6 @@ export default function DashboardPage() {
       return dateStr;
     }
   };
-
-  // ===================== REAL WEATHER API STATE =====================
-  const [realWeather, setRealWeather] = useState<{
-    locationName: string;
-    region: string;
-    tempC: number;
-    conditionText: string;
-    conditionIcon: string;
-    windKph: number;
-    windDir: string;
-    humidity: number;
-    chanceOfRain: number;
-    precipMm: number;
-    isDay: boolean;
-    lastUpdated: string;
-    sprayWindow: string;
-    forecastDays: {
-      date: string;
-      dayName: string;
-      maxTemp: number;
-      minTemp: number;
-      rainChance: number;
-      precipMm: number;
-      conditionText: string;
-      conditionIcon: string;
-    }[];
-  } | null>(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
 
   // ===================== INVENTORY & STORE MANAGEMENT STATES =====================
   const [stores, setStores] = useState<FarmStore[]>(INITIAL_STORES);
@@ -2884,8 +2625,7 @@ export default function DashboardPage() {
 
   // Open Register Equipment Modal
   const handleOpenRegisterEquipment = () => {
-    const defaultFarmId = selectedFarmId === "all" ? (farms[0]?.id || "farm-1") : selectedFarmId;
-    setEqFarmId(defaultFarmId);
+    setEqFarmId(selectedFarmId === "all" ? "farm-1" : selectedFarmId);
     setEqName("");
     setEqCategory(EQUIPMENT_CATEGORIES[0]);
     setEqModelNumber("");
@@ -2903,10 +2643,6 @@ export default function DashboardPage() {
       return;
     }
     const targetFarm = farms.find((f) => f.id === eqFarmId) || farms[0];
-    if (!targetFarm) {
-      alert("No farm selected or found.");
-      return;
-    }
     const newEq: FarmEquipment = {
       id: `eq-${Date.now()}`,
       farmId: targetFarm.id,
@@ -2919,7 +2655,7 @@ export default function DashboardPage() {
       runtimeHours: Number(eqRuntimeHours) || 0,
       nextServiceDate: eqNextServiceDate || undefined,
       fuelEfficiency: eqFuelEfficiency.trim() || undefined,
-      lastServiceDate: new Date().toISOString().split("T")[0],
+      lastServiceDate: "2026-10-01",
     };
     setEquipmentList((prev) => [newEq, ...prev]);
     setRegisterEquipmentModalOpen(false);
@@ -2934,8 +2670,6 @@ export default function DashboardPage() {
       status: newEq.status,
       runtimeHours: newEq.runtimeHours,
       fuelEfficiency: newEq.fuelEfficiency,
-      lastServiceDate: newEq.lastServiceDate,
-      nextServiceDate: newEq.nextServiceDate,
     }).then((created) => {
       if (created && (created.$id || (created as any).id)) {
         const realId = created.$id || (created as any).id;
@@ -3018,9 +2752,7 @@ export default function DashboardPage() {
       setEquipmentList((prev) =>
         prev.map((eq) => (eq.id === equipmentId ? { ...eq, status: "Operational" } : eq))
       );
-      updateEquipmentStatusInAppwrite(equipmentId, "Operational");
     }
-    resolveEquipmentIssueInAppwrite(issueId);
   };
 
   const handleDeleteEquipment = (id: string) => {
@@ -3029,11 +2761,10 @@ export default function DashboardPage() {
       title: "Delete Equipment Record",
       itemType: targetEq?.category || "Machinery",
       itemName: targetEq?.name || "Equipment Record",
-      description: "Are you sure you want to remove this equipment from your machinery roster? Runtime hours, fuel efficiency data, and maintenance records will be removed.",
+      description: "Are you sure you want to remove this equipment from your machinery roster? Runtime hours, fuel efficiency telemetry, and maintenance records will be removed.",
       confirmText: "Yes, Remove Equipment",
       onConfirm: () => {
         setEquipmentList((prev) => prev.filter((eq) => eq.id !== id));
-        deleteEquipmentInAppwrite(id);
       },
     });
   };
@@ -3043,39 +2774,24 @@ export default function DashboardPage() {
   const [reportCategory, setReportCategory] = useState<"financial" | "crops" | "inputs" | "machinery">("financial");
   const [reportTimeframe, setReportTimeframe] = useState<"season" | "month" | "quarter" | "year" | "custom">("season");
   const [reportStartDate, setReportStartDate] = useState<string>("2026-10-01");
-  const [reportEndDate, setReportEndDate] = useState<string>("2026-11-26");
-  const [reportGeneratedAt, setReportGeneratedAt] = useState<string>("");
+  const [reportEndDate, setReportEndDate] = useState<string>("2026-10-26");
   const [reportFarmFilter, setReportFarmFilter] = useState<string>("all");
   const [reportSearch, setReportSearch] = useState<string>("");
 
-  // Sync real-time dates on client mount (avoids Next.js prerender evaluation errors)
-  useEffect(() => {
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    const seasonStartYear = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
-    setReportStartDate(`${seasonStartYear}-10-01`);
-    setReportEndDate(todayStr);
-    setReportGeneratedAt(now.toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }));
-  }, []);
-
   const handleTimeframeChange = (val: "season" | "month" | "quarter" | "year" | "custom") => {
     setReportTimeframe(val);
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    setReportEndDate(todayStr);
-
     if (val === "season") {
-      // Rabi season typically runs Oct 1 to present/March
-      const seasonStartYear = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
-      setReportStartDate(`${seasonStartYear}-10-01`);
+      setReportStartDate("2026-10-01");
+      setReportEndDate("2026-10-26");
     } else if (val === "month") {
-      const past30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      setReportStartDate(`${past30.getFullYear()}-${String(past30.getMonth() + 1).padStart(2, "0")}-${String(past30.getDate()).padStart(2, "0")}`);
+      setReportStartDate("2026-09-26");
+      setReportEndDate("2026-10-26");
     } else if (val === "quarter") {
-      const past90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      setReportStartDate(`${past90.getFullYear()}-${String(past90.getMonth() + 1).padStart(2, "0")}-${String(past90.getDate()).padStart(2, "0")}`);
+      setReportStartDate("2026-07-28");
+      setReportEndDate("2026-10-26");
     } else if (val === "year") {
-      setReportStartDate(`${now.getFullYear()}-01-01`);
+      setReportStartDate("2026-01-01");
+      setReportEndDate("2026-12-31");
     }
   };
 
@@ -3084,11 +2800,8 @@ export default function DashboardPage() {
     setReportTimeframe("season");
     setReportFarmFilter("all");
     setReportSearch("");
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    const seasonStartYear = now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1;
-    setReportStartDate(`${seasonStartYear}-10-01`);
-    setReportEndDate(todayStr);
+    setReportStartDate("2026-10-01");
+    setReportEndDate("2026-10-26");
   };
 
   // ===================== TEAM & WORKFORCE STATES =====================
@@ -3103,8 +2816,6 @@ export default function DashboardPage() {
 
   // Search for Designations Tab
   const [designationSearch, setDesignationSearch] = useState("");
-  // Selected roles for bulk deletion / management
-  const [selectedDesignationIds, setSelectedDesignationIds] = useState<string[]>([]);
 
   // Modals
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
@@ -3560,20 +3271,7 @@ export default function DashboardPage() {
         color: "#166534",
         isSystemDefault: false,
       };
-      setDesignations((prev) => {
-        const next = [...prev, newDes];
-        try {
-          localStorage.setItem("khetivo_cached_designations", JSON.stringify(next));
-        } catch {}
-        return next;
-      });
-      createDesignationInAppwrite({
-        title: newDes.title,
-        description: newDes.description,
-        allowedModules: newDes.allowedModules,
-        color: newDes.color,
-        isSystemDefault: false,
-      });
+      setDesignations((prev) => [...prev, newDes]);
     }
 
     setIsDesignationModalOpen(false);
@@ -3595,78 +3293,12 @@ export default function DashboardPage() {
     }
     requestDeleteConfirmation({
       title: "Delete Staff Designation",
-      itemType: "Role",
+      itemType: "Custom Role",
       itemName: title,
       description: `Are you sure you want to delete the '${title}' designation? This role will no longer be available when assigning modules to staff.`,
       confirmText: "Yes, Delete Role",
       onConfirm: () => {
-        setDesignations((prev) => {
-          const next = prev.filter((d) => d.id !== id);
-          try {
-            localStorage.setItem("khetivo_cached_designations", JSON.stringify(next));
-            const deleted = localStorage.getItem("khetivo_deleted_designations");
-            const arr = deleted ? JSON.parse(deleted) : [];
-            if (!arr.includes(id)) arr.push(id);
-            localStorage.setItem("khetivo_deleted_designations", JSON.stringify(arr));
-          } catch {}
-          return next;
-        });
-        setSelectedDesignationIds((prev) => prev.filter((selId) => selId !== id));
-        deleteDesignationInAppwrite(id);
-      },
-    });
-  };
-
-  const handleBulkDeleteDesignations = () => {
-    if (selectedDesignationIds.length === 0) return;
-
-    // Check if any selected designation has staff assigned
-    const assignedMap = selectedDesignationIds
-      .map((id) => {
-        const des = designations.find((d) => d.id === id);
-        const count = teamMembers.filter((m) => m.designationId === id).length;
-        return { id, title: des?.title || id, count };
-      })
-      .filter((item) => item.count > 0);
-
-    if (assignedMap.length > 0) {
-      const names = assignedMap.map((a) => `'${a.title}' (${a.count} staff)`).join(", ");
-      requestDeleteConfirmation({
-        title: "Roles Reassignment Required",
-        itemType: "Restricted Roles",
-        itemName: `${assignedMap.length} Role(s)`,
-        description: `Cannot delete the following roles because staff members are actively assigned: ${names}. Please reassign them before deleting.`,
-        confirmText: "Understood",
-        cancelText: "Close",
-        onConfirm: () => {},
-      });
-      return;
-    }
-
-    const count = selectedDesignationIds.length;
-    requestDeleteConfirmation({
-      title: "Delete Selected Roles",
-      itemType: "Multiple Roles",
-      itemName: `${count} Selected Role(s)`,
-      description: `Are you sure you want to delete all ${count} selected role(s)? This action cannot be undone.`,
-      confirmText: `Yes, Delete ${count} Role(s)`,
-      onConfirm: () => {
-        const idsToDelete = [...selectedDesignationIds];
-        setDesignations((prev) => {
-          const next = prev.filter((d) => !idsToDelete.includes(d.id));
-          try {
-            localStorage.setItem("khetivo_cached_designations", JSON.stringify(next));
-            const deleted = localStorage.getItem("khetivo_deleted_designations");
-            const arr = deleted ? JSON.parse(deleted) : [];
-            idsToDelete.forEach((id) => {
-              if (!arr.includes(id)) arr.push(id);
-            });
-            localStorage.setItem("khetivo_deleted_designations", JSON.stringify(arr));
-          } catch {}
-          return next;
-        });
-        setSelectedDesignationIds([]);
-        idsToDelete.forEach((id) => deleteDesignationInAppwrite(id));
+        setDesignations((prev) => prev.filter((d) => d.id !== id));
       },
     });
   };
@@ -3810,65 +3442,29 @@ export default function DashboardPage() {
     if (typeof window !== "undefined") {
       const storedPhone = localStorage.getItem("khetivo_user_phone");
       if (storedPhone) {
-        const clean = storedPhone.startsWith("+91") ? storedPhone : `+91 ${storedPhone}`;
-        setUserPhone(clean);
-        setSettingsPhone(clean);
+        setUserPhone(storedPhone.startsWith("+91") ? storedPhone : `+91 ${storedPhone}`);
+        setSettingsPhone(storedPhone.startsWith("+91") ? storedPhone : `+91 ${storedPhone}`);
       }
-      const storedName = localStorage.getItem("khetivo_farmer_name") || localStorage.getItem("khetivo_user_name");
+      const storedName = localStorage.getItem("khetivo_farmer_name");
       if (storedName) setSettingsFarmerName(storedName);
-      const storedEmail = localStorage.getItem("khetivo_user_email");
-      if (storedEmail) setSettingsEmail(storedEmail);
       const storedUnit = localStorage.getItem("khetivo_default_unit");
       if (storedUnit) setSettingsDefaultUnit(storedUnit);
       const storedLang = localStorage.getItem("khetivo_language");
       if (storedLang) setSettingsLanguage(storedLang);
-      const storedMandi = localStorage.getItem("khetivo_mandi");
-      if (storedMandi) setSettingsMandi(storedMandi);
-      const storedAddress = localStorage.getItem("khetivo_farm_address");
-      if (storedAddress) setSettingsHeadquartersAddress(storedAddress);
     }
   }, []);
 
-  const handleSaveSettings = async (e?: React.FormEvent) => {
+  const handleSaveSettings = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setIsSavingSettings(true);
     setUserPhone(settingsPhone);
-
-    const cleanRawPhone = settingsPhone ? settingsPhone.replace(/^\+91/, "").replace(/\D/g, "") : "";
-
     if (typeof window !== "undefined") {
-      localStorage.setItem("khetivo_user_phone", cleanRawPhone || settingsPhone);
+      localStorage.setItem("khetivo_user_phone", settingsPhone);
       localStorage.setItem("khetivo_farmer_name", settingsFarmerName);
-      localStorage.setItem("khetivo_user_name", settingsFarmerName);
-      if (settingsEmail) localStorage.setItem("khetivo_user_email", settingsEmail);
       localStorage.setItem("khetivo_default_unit", settingsDefaultUnit);
       localStorage.setItem("khetivo_language", settingsLanguage);
-      localStorage.setItem("khetivo_mandi", settingsMandi);
-      localStorage.setItem("khetivo_farm_address", settingsHeadquartersAddress);
     }
-
-    try {
-      const currentUid = typeof window !== "undefined" ? localStorage.getItem("khetivo_user_id") || undefined : undefined;
-      await saveUserProfileToAppwrite({
-        userId: currentUid,
-        name: settingsFarmerName,
-        phone: cleanRawPhone || settingsPhone,
-        email: settingsEmail,
-        district: currentFarm?.district || "Ludhiana",
-        state: currentFarm?.state || "Punjab",
-        measurementUnit: settingsDefaultUnit,
-        preferredLanguage: settingsLanguage,
-        mandiLinkage: settingsMandi,
-        farmAddress: settingsHeadquartersAddress,
-      });
-      setSettingsToast("Your farm settings & system preferences have been saved to database successfully.");
-    } catch (err) {
-      console.warn("Failed to persist user profile to Appwrite:", err);
-      setSettingsToast("Preferences saved locally. Reconnect to sync with cloud.");
-    } finally {
-      setIsSavingSettings(false);
-      setTimeout(() => setSettingsToast(null), 4000);
-    }
+    setSettingsToast("Your farm settings & system preferences have been saved successfully.");
+    setTimeout(() => setSettingsToast(null), 4000);
   };
 
   const handleResetSettings = () => {
@@ -3878,8 +3474,7 @@ export default function DashboardPage() {
     setSettingsFarmerName(uName);
     setSettingsPhone(uPhone ? (uPhone.startsWith("+") ? uPhone : `+91 ${uPhone}`) : "");
     setSettingsEmail(uEmail);
-    setSettingsMandi("Khanna Mandi (Asia's Largest Grain Market - Ludhiana)");
-    setSettingsHeadquartersAddress("Village Samrala, GT Road Belt, Ludhiana, Punjab 141001");
+    setSettingsMandi("Local APMC Mandi");
     setSettingsDefaultUnit("Acres");
     setSettingsLanguage("en");
     setSettingsMoistureDeficit("30");
@@ -3888,7 +3483,7 @@ export default function DashboardPage() {
     setSettingsSmsAlerts(true);
     setSettingsServiceReminders(true);
     setSettingsAutoIrrigationNotice(true);
-    setSettingsToast("Settings reset to default profile values.");
+    setSettingsToast("Settings reset to user profile values.");
     setTimeout(() => setSettingsToast(null), 3000);
   };
 
@@ -3920,184 +3515,6 @@ export default function DashboardPage() {
   // Consolidated multi-farm calculations
   const isAllFarms = selectedFarmId === "all";
   const totalCombinedArea = farms.reduce((sum, f) => sum + (Number(f.totalArea) || 0), 0);
-
-  // Compute all crops active in the current view (1 farm can have multiple crops!)
-  const allFlattenedCrops: FarmCrop[] = farms.flatMap((f) =>
-    (f.crops || []).map((c) => ({
-      ...c,
-      farmId: f.id,
-      farmName: f.name,
-    }))
-  );
-
-  const fallbackEmptyFarm: FarmData = {
-    id: "no-farm",
-    name: "No Farm Registered",
-    address: "Please register your first farm",
-    district: "",
-    state: "",
-    pinCode: "",
-    totalArea: 0,
-    areaUnit: "Acres",
-    ownership: "Owned",
-    latitude: 30.901,
-    longitude: 75.8573,
-    soilType: "Alluvial Loam",
-    irrigationType: "Standard",
-    waterSource: "Groundwater",
-    crops: [],
-    cropTemplate: "",
-  };
-
-  const currentFarmRaw = farms.find((f) => f.id === selectedFarmId) || farms[0] || fallbackEmptyFarm;
-
-  const currentFarm: FarmData = isAllFarms
-    ? {
-        id: "all",
-        name: farms.length > 0 ? "All Farms (Consolidated)" : "No Farms Registered",
-        address: farms.length > 0 ? "Consolidated Farm Holdings" : "Please register your farm",
-        district: farms.length > 0 ? "Consolidated Holdings" : "",
-        state: farms[0]?.state || "Punjab",
-        pinCode: "",
-        totalArea: totalCombinedArea,
-        areaUnit: farms[0]?.areaUnit || "Acres",
-        ownership: `${farms.length} Registered Farms`,
-        latitude: farms[0]?.latitude || 30.901,
-        longitude: farms[0]?.longitude || 75.8573,
-        soilType: farms[0]?.soilType || "Alluvial Loam",
-        irrigationType: farms[0]?.irrigationType || "Standard",
-        waterSource: farms[0]?.waterSource || "Groundwater",
-        cropTemplate: allFlattenedCrops.length > 0 ? allFlattenedCrops.map((c) => `${c.name} (${c.area} ${c.areaUnit})`).join(", ") : "No active crops",
-        crops: allFlattenedCrops,
-      }
-    : (currentFarmRaw || fallbackEmptyFarm);
-
-  const activeCrops: FarmCrop[] = isAllFarms
-    ? allFlattenedCrops
-    : (currentFarm?.crops || []).map((c) => ({
-        ...c,
-        farmId: currentFarm?.id,
-        farmName: currentFarm?.name,
-      }));
-
-  // Dynamically computed farmer notifications list
-  const farmNotificationsList = useMemo(() => {
-    const list: {
-      id: string;
-      title: string;
-      message: string;
-      time: string;
-      createdAtMs: number;
-      type: "advisory" | "weather" | "inventory" | "task" | "support";
-      unread: boolean;
-      actionTab?: string;
-    }[] = [];
-
-    // Helper: stable identifier string sanitizer
-    const makeKey = (str: string) => (str || "").toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 40);
-
-    // 1. Advisories & Pest Bulletins
-    (activeAdminBroadcasts || []).forEach((b: any, idx: number) => {
-      const bKey = b.$id || b.id || makeKey(b.title || `adv_${idx}`);
-      const bId = `adv_${bKey}`;
-      const timeMs = b.$createdAt ? new Date(b.$createdAt).getTime() : 0;
-      const isUnread = !readNotifications[bId] && (!notificationsClearedAt || timeMs > notificationsClearedAt);
-      list.push({
-        id: bId,
-        title: b.title || "Crop Advisory Bulletin",
-        message: b.message || b.description || "PAU extension recommendation available.",
-        time: b.date || "Today",
-        createdAtMs: timeMs,
-        type: "advisory",
-        unread: isUnread,
-        actionTab: "advisories",
-      });
-    });
-
-    // 2. Weather Alert / Spray window
-    if (realWeather) {
-      const farmKey = makeKey(realWeather.locationName || currentFarm?.name || "farm");
-      const wId = `weather_${farmKey}`;
-      const isUnread = !readNotifications[wId] && (!notificationsClearedAt || notificationsClearedAt < 1);
-      list.push({
-        id: wId,
-        title: `Weather: ${realWeather.sprayWindow}`,
-        message: `${realWeather.conditionText} in ${realWeather.locationName} (${realWeather.tempC}°C, Wind: ${realWeather.windKph} km/h, Rain chance: ${realWeather.chanceOfRain}%).`,
-        time: realWeather.lastUpdated ? `Live (${realWeather.lastUpdated})` : "Live",
-        createdAtMs: 0,
-        type: "weather",
-        unread: isUnread,
-        actionTab: "weather",
-      });
-    }
-
-    // 3. Low stock inventory warnings
-    (inventoryItems || [])
-      .filter((i) => i.quantity <= i.lowStockThreshold)
-      .slice(0, 3)
-      .forEach((item) => {
-        const itemKey = item.id || makeKey(item.name);
-        const invId = `inv_low_${itemKey}`;
-        const isUnread = !readNotifications[invId] && (!notificationsClearedAt || notificationsClearedAt < 1);
-        list.push({
-          id: invId,
-          title: `Low Stock: ${item.name}`,
-          message: `Only ${item.quantity} ${item.unit} remaining in ${item.storeName || "godown"} (reorder limit: ${item.lowStockThreshold} ${item.unit}).`,
-          time: "Attention",
-          createdAtMs: 0,
-          type: "inventory",
-          unread: isUnread,
-          actionTab: "inventory",
-        });
-      });
-
-    // 4. Critical / High Priority Tasks
-    (taskList || [])
-      .filter((t) => t.status !== "Completed" && (t.priority === "Urgent" || t.priority === "High"))
-      .slice(0, 3)
-      .forEach((t) => {
-        const taskKey = t.id || makeKey(t.title);
-        const tId = `task_prio_${taskKey}`;
-        const isUnread = !readNotifications[tId] && (!notificationsClearedAt || notificationsClearedAt < 1);
-        list.push({
-          id: tId,
-          title: `Priority Task: ${t.title}`,
-          message: `Assigned to ${t.assignedTo || "team"} • Due on ${t.dueDate || "today"}.`,
-          time: t.dueDate || "Pending",
-          createdAtMs: 0,
-          type: "task",
-          unread: isUnread,
-          actionTab: "tasks",
-        });
-      });
-
-    // 5. Open support agronomy tickets
-    (supportTickets || [])
-      .filter((tk) => tk.status === "Open" || tk.status === "In Review")
-      .slice(0, 2)
-      .forEach((tk) => {
-        const ticketKey = tk.id || makeKey(tk.subject);
-        const sId = `support_${ticketKey}`;
-        const isUnread = !readNotifications[sId] && (!notificationsClearedAt || notificationsClearedAt < 1);
-        list.push({
-          id: sId,
-          title: `Agronomy Ticket: ${tk.subject}`,
-          message: `Status: ${tk.status} • Assigned to ${tk.assignedAgronomist || "Duty Agronomist"}.`,
-          time: tk.createdAt || "Recent",
-          createdAtMs: 0,
-          type: "support",
-          unread: isUnread,
-          actionTab: "support",
-        });
-      });
-
-    return list;
-  }, [activeAdminBroadcasts, realWeather, inventoryItems, taskList, supportTickets, readNotifications, notificationsClearedAt, selectedFarmId]);
-
-  const unreadNotificationsCount = farmNotificationsList.filter((n) => n.unread).length;
-
-  // Consolidated multi-farm calculations
-  // (Moved above notifications list)
 
   // Dynamic financial calculations scoped by farm context
   const farmScopedTransactions = transactions.filter((tx) => {
@@ -4305,113 +3722,64 @@ export default function DashboardPage() {
   const inProgressTaskCount = scopedTasks.filter((t) => t.status === "In Progress").length;
   const completedTaskCount = scopedTasks.filter((t) => t.status === "Completed").length;
 
-  // Fetch real weather for currently selected farm coordinates or location
-  useEffect(() => {
-    let isMounted = true;
-    const fetchRealWeather = async () => {
-      try {
-        setWeatherLoading(true);
-        // Determine precision search query: Priority 1 is exact GPS Coordinates from the Farm/Map!
-        let query = "India";
-        if (!isAllFarms && currentFarm) {
-          // If the farm has custom coordinates, or if it doesn't have the default Ludhiana coords
-          const hasCustomCoords = currentFarm.latitude && currentFarm.longitude && 
-            !(Math.abs(currentFarm.latitude - 30.901) < 0.0001 && Math.abs(currentFarm.longitude - 75.8573) < 0.0001 && currentFarm.district && !currentFarm.district.toLowerCase().includes("ludhiana"));
+  // Compute all crops active in the current view (1 farm can have multiple crops!)
+  const allFlattenedCrops: FarmCrop[] = farms.flatMap((f) =>
+    (f.crops || []).map((c) => ({
+      ...c,
+      farmId: f.id,
+      farmName: f.name,
+    }))
+  );
 
-          if (hasCustomCoords) {
-            query = `${currentFarm.latitude},${currentFarm.longitude}`;
-          } else if (currentFarm.district) {
-            query = `${currentFarm.district}, ${currentFarm.state || "India"}`;
-          } else if (currentFarm.village) {
-            query = `${currentFarm.village}, ${currentFarm.state || "India"}`;
-          } else if (currentFarm.address) {
-            query = currentFarm.address;
-          } else if (currentFarm.latitude && currentFarm.longitude) {
-            query = `${currentFarm.latitude},${currentFarm.longitude}`;
-          }
-        } else if (isAllFarms && farms.length > 0) {
-          // If all farms consolidated, use the first farm's coordinates or district
-          const f0 = farms[0];
-          const hasCustomCoords = f0.latitude && f0.longitude && 
-            !(Math.abs(f0.latitude - 30.901) < 0.0001 && Math.abs(f0.longitude - 75.8573) < 0.0001 && f0.district && !f0.district.toLowerCase().includes("ludhiana"));
+  const fallbackEmptyFarm: FarmData = {
+    id: "no-farm",
+    name: "No Farm Registered",
+    address: "Please register your first farm",
+    district: "",
+    state: "",
+    pinCode: "",
+    totalArea: 0,
+    areaUnit: "Acres",
+    ownership: "Owned",
+    latitude: 30.901,
+    longitude: 75.8573,
+    soilType: "Alluvial Loam",
+    irrigationType: "Standard",
+    waterSource: "Groundwater",
+    crops: [],
+    cropTemplate: "",
+  };
 
-          if (hasCustomCoords) {
-            query = `${f0.latitude},${f0.longitude}`;
-          } else if (f0.district) {
-            query = `${f0.district}, ${f0.state || "India"}`;
-          } else if (f0.latitude && f0.longitude) {
-            query = `${f0.latitude},${f0.longitude}`;
-          }
-        }
+  const currentFarmRaw = farms.find((f) => f.id === selectedFarmId) || farms[0] || fallbackEmptyFarm;
 
-        const res = await fetch(`/api/weather?q=${encodeURIComponent(query)}&days=7`);
-        if (!res.ok) throw new Error("Failed to fetch weather");
-        const data = await res.json();
-
-        if (isMounted && data?.current) {
-          const wind = Number(data.current.wind_kph) || 0;
-          const rain = Number(data.current.chance_of_rain) || Number(data.forecast?.forecastday?.[0]?.day?.daily_chance_of_rain) || 0;
-          const humidity = Number(data.current.humidity) || 0;
-
-          // Compute agronomic spray window
-          let sprayMsg = "Optimal Today";
-          if (wind > 15) {
-            sprayMsg = "High Wind • Avoid Spraying";
-          } else if (rain > 40) {
-            sprayMsg = "Rain Expected • Delay Spray";
-          } else if (humidity > 80) {
-            sprayMsg = "High Humidity • Early Morning Only";
-          } else {
-            sprayMsg = "Optimal Window • Safe to Spray";
-          }
-
-          const mappedDays = (data.forecast?.forecastday || []).map((fd: any) => {
-            const dateObj = new Date(fd.date);
-            const dayName = dateObj.toLocaleDateString("en-IN", { weekday: "short" });
-            return {
-              date: fd.date,
-              dayName: dayName || "Day",
-              maxTemp: Math.round(Number(fd.day?.maxtemp_c) || 26),
-              minTemp: Math.round(Number(fd.day?.mintemp_c) || 14),
-              rainChance: Number(fd.day?.daily_chance_of_rain) || 0,
-              precipMm: Number(fd.day?.totalprecip_mm) || 0,
-              conditionText: fd.day?.condition?.text || "Clear",
-              conditionIcon: fd.day?.condition?.icon ? `https:${fd.day.condition.icon}` : "",
-            };
-          });
-
-          setRealWeather({
-            locationName: data.location?.name || query,
-            region: data.location?.region || "Punjab",
-            tempC: Math.round(Number(data.current.temp_c) || 22),
-            conditionText: data.current.condition?.text || "Clear",
-            conditionIcon: data.current.condition?.icon ? `https:${data.current.condition.icon}` : "",
-            windKph: Math.round(wind),
-            windDir: data.current.wind_dir || "NW",
-            humidity: humidity,
-            chanceOfRain: rain,
-            precipMm: Number(data.current.precip_mm) || 0,
-            isDay: Boolean(data.current.is_day),
-            lastUpdated: data.current.last_updated ? data.current.last_updated.split(" ")[1] : "Just now",
-            sprayWindow: sprayMsg,
-            forecastDays: mappedDays,
-          });
-        }
-      } catch (err) {
-        console.warn("[WeatherAPI fetch error]:", err);
-      } finally {
-        if (isMounted) setWeatherLoading(false);
+  const currentFarm: FarmData = isAllFarms
+    ? {
+        id: "all",
+        name: farms.length > 0 ? "All Farms (Consolidated)" : "No Farms Registered",
+        address: farms.length > 0 ? "Consolidated Farm Holdings" : "Please register your farm",
+        district: farms.length > 0 ? "Consolidated Holdings" : "",
+        state: farms[0]?.state || "Punjab",
+        pinCode: "",
+        totalArea: totalCombinedArea,
+        areaUnit: farms[0]?.areaUnit || "Acres",
+        ownership: `${farms.length} Registered Farms`,
+        latitude: farms[0]?.latitude || 30.901,
+        longitude: farms[0]?.longitude || 75.8573,
+        soilType: farms[0]?.soilType || "Alluvial Loam",
+        irrigationType: farms[0]?.irrigationType || "Standard",
+        waterSource: farms[0]?.waterSource || "Groundwater",
+        cropTemplate: allFlattenedCrops.length > 0 ? allFlattenedCrops.map((c) => `${c.name} (${c.area} ${c.areaUnit})`).join(", ") : "No active crops",
+        crops: allFlattenedCrops,
       }
-    };
+    : (currentFarmRaw || fallbackEmptyFarm);
 
-    fetchRealWeather();
-    // Refresh weather every 10 minutes
-    const interval = setInterval(fetchRealWeather, 10 * 60 * 1000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [selectedFarmId, currentFarm?.latitude, currentFarm?.longitude, currentFarm?.district, currentFarm?.state, isAllFarms, dataRefreshTrigger]);
+  const activeCrops: FarmCrop[] = isAllFarms
+    ? allFlattenedCrops
+    : (currentFarm?.crops || []).map((c) => ({
+        ...c,
+        farmId: currentFarm?.id,
+        farmName: currentFarm?.name,
+      }));
 
   const handleOpenSetup = () => {
     // Reset to fresh form without dummy content
@@ -4424,28 +3792,9 @@ export default function DashboardPage() {
     setTotalArea("");
     setAreaUnit("Acres");
     setOwnership(OWNERSHIP_OPTIONS[0]);
-
-    // Use current active farm coordinates or detect browser location rather than Ludhiana
-    if (currentFarm && currentFarm.latitude && currentFarm.longitude && (currentFarm.latitude !== 30.901 || currentFarm.longitude !== 75.8573)) {
-      setLatitude(currentFarm.latitude);
-      setLongitude(currentFarm.longitude);
-      setMapSearch(`${currentFarm.latitude},${currentFarm.longitude}`);
-    } else if (typeof window !== "undefined" && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLatitude(Number(pos.coords.latitude.toFixed(5)));
-          setLongitude(Number(pos.coords.longitude.toFixed(5)));
-          setMapSearch(`${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`);
-        },
-        () => {},
-        { timeout: 3000 }
-      );
-    } else {
-      setLatitude(29.2145);
-      setLongitude(79.5280);
-      setMapSearch("");
-    }
-
+    setLatitude(30.901);
+    setLongitude(75.8573);
+    setMapSearch("");
     setSelectedCropTemplates([]);
     setCropConfigs({});
     setSoilType(SOIL_TYPES[0]);
@@ -4523,16 +3872,11 @@ export default function DashboardPage() {
     const y = e.clientY - rect.top;
     const xRatio = (x / rect.width - 0.5) * 0.08;
     const yRatio = (y / rect.height - 0.5) * 0.08;
-    const baseLat = latitude || 30.901;
-    const baseLon = longitude || 75.8573;
-    const newLat = Number((baseLat - yRatio).toFixed(5));
-    const newLon = Number((baseLon + xRatio).toFixed(5));
-    setLatitude(newLat);
-    setLongitude(newLon);
-    setMapSearch(`${newLat},${newLon}`);
+    setLatitude(Number((30.901 - yRatio).toFixed(5)));
+    setLongitude(Number((75.8573 + xRatio).toFixed(5)));
   };
 
-  const handleNextStep = async (e?: React.MouseEvent | React.FormEvent) => {
+  const handleNextStep = (e?: React.MouseEvent | React.FormEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -4547,25 +3891,6 @@ export default function DashboardPage() {
         setErrorMsg("Please specify the total area of your farm.");
         return;
       }
-
-      // Auto-geocode entered district/state/address if coordinates are still at default
-      const locationKeywords = [district, village, state, farmAddress].filter(Boolean).join(", ");
-      if (locationKeywords && (latitude === 30.901 || latitude === 29.2145)) {
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationKeywords)}&limit=1`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.length > 0 && data[0].lat && data[0].lon) {
-              const detectedLat = Number(Number(data[0].lat).toFixed(5));
-              const detectedLon = Number(Number(data[0].lon).toFixed(5));
-              setLatitude(detectedLat);
-              setLongitude(detectedLon);
-              setMapSearch(`${detectedLat},${detectedLon}`);
-            }
-          }
-        } catch {}
-      }
-
       setSetupStep(2);
     } else if (setupStep === 2) {
       setSetupStep(3);
@@ -4602,19 +3927,10 @@ export default function DashboardPage() {
       const cropArea = cfg && cfg.area !== "" ? Number(cfg.area) : perCropArea;
       const cropVariety = cfg?.variety || tmpl.variety || (tmpl.varieties && tmpl.varieties[0]) || "Standard Regional";
       const cropSownDate = cfg?.sownDate || new Date().toISOString().split("T")[0];
+      const cropStage = cfg?.stage || (tmpl.growthTimeline?.[0]?.stageName) || "Stage 1: Germination & Emergence";
+      const cropStageStep = cfg?.stageStep || 1;
+      const cropDay = cfg && cfg.currentDay !== "" ? Number(cfg.currentDay) : 1;
       const cropTotalDays = cfg && cfg.totalDays !== "" ? Number(cfg.totalDays) : (tmpl.durationDays || 120);
-
-      // Compute dynamic progression from sowing date
-      const progression = computeCropDayAndStage(
-        cropSownDate,
-        cfg && cfg.currentDay !== "" ? Number(cfg.currentDay) : 1,
-        cropTotalDays,
-        tmpl.growthTimeline
-      );
-
-      const cropStage = cfg?.stage || progression.stage;
-      const cropStageStep = cfg?.stageStep || progression.stageStep;
-      const cropDay = progression.currentDay;
 
       return {
         id: `crop-${Date.now()}-${idx}`,
@@ -4742,14 +4058,6 @@ export default function DashboardPage() {
     const targetFarm = farms.find((f) => f.id === newCropFarmId) || farms[0];
     if (!targetFarm) return;
 
-    const targetTotalDays = Number(newCropTotalDays) || tmpl.durationDays || 120;
-    const progression = computeCropDayAndStage(
-      newCropSownDate,
-      Number(newCropCurrentDay) || 20,
-      targetTotalDays,
-      tmpl.growthTimeline
-    );
-
     const newCropObj: FarmCrop = {
       id: `crop-${Date.now()}`,
       name: tmpl.name,
@@ -4757,10 +4065,10 @@ export default function DashboardPage() {
       area: Number(newCropArea) || 5,
       areaUnit: targetFarm.areaUnit || "Acres",
       season: tmpl.season,
-      stage: newCropStage || progression.stage,
-      stageStep: newCropStageStep || progression.stageStep,
-      currentDay: progression.currentDay,
-      totalDays: targetTotalDays,
+      stage: newCropStage,
+      stageStep: newCropStageStep,
+      currentDay: Number(newCropCurrentDay) || 20,
+      totalDays: Number(newCropTotalDays) || tmpl.durationDays || 120,
       health: "Healthy (96% NDVI)",
       sownDate: newCropSownDate || "Oct 15, 2026",
       nextMilestone: newCropStageStep <= 2 ? "1st Nitrogen Top-Dressing" : "Harvest Inspection",
@@ -4887,7 +4195,6 @@ export default function DashboardPage() {
                 <div className="absolute left-3 right-3 top-14 z-40 bg-white rounded-xl border border-[#DCE6DE] shadow-xl p-2 space-y-1 animate-in fade-in zoom-in-95 duration-100">
                   <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#55685D]">
                     Select Farm View
-                    {t.select_farm_view}
                   </div>
 
                   {/* Option 1: ALL FARMS */}
@@ -4910,10 +4217,8 @@ export default function DashboardPage() {
                       </div>
                       <div className="truncate">
                         <div className="truncate">All Farms (Consolidated)</div>
-                        <div className="truncate">{t.all_farms_consolidated}</div>
                         <div className="text-[10px] text-[#55685D]">
                           {farms.length} Holdings • {totalCombinedArea} Acres Total
-                          {farms.length} {t.holdings_total} • {totalCombinedArea} {currentFarm.areaUnit}
                         </div>
                       </div>
                     </div>
@@ -5012,66 +4317,6 @@ export default function DashboardPage() {
                         <Icon
                           className={`w-4 h-4 shrink-0 transition-colors ${
                             isActive ? "text-white" : "text-[#475C4E] group-hover:text-[#0C4B32]"
-            {NAV_SECTIONS.map((section) => {
-              const sectionTitle =
-                section.title === "DAILY"
-                  ? t.nav_daily
-                  : section.title === "RECORDS"
-                  ? t.nav_records
-                  : t.nav_manage;
-
-              return (
-                <div key={section.title} className="space-y-1">
-                  <div className="px-3 py-1 text-[11px] font-bold tracking-wider text-[#64796C] uppercase">
-                    {sectionTitle}
-                  </div>
-                  <div className="space-y-0.5">
-                    {section.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeTab === item.id;
-                      const translatedLabel =
-                        item.id === "dashboard"
-                          ? t.nav_dashboard
-                          : item.id === "advisories"
-                          ? t.nav_advisories
-                          : item.id === "weather"
-                          ? t.nav_weather
-                          : item.id === "tasks"
-                          ? t.nav_tasks
-                          : item.id === "inventory"
-                          ? t.nav_inventory
-                          : item.id === "equipment"
-                          ? t.nav_equipment
-                          : item.id === "crops"
-                          ? t.nav_crops
-                          : item.id === "expenses"
-                          ? t.nav_stats
-                          : item.id === "reports"
-                          ? t.nav_reports
-                          : item.id === "my-farms"
-                          ? t.nav_my_farms
-                          : item.id === "team"
-                          ? t.nav_team
-                          : item.id === "subscription"
-                          ? t.nav_subscription
-                          : item.id === "support"
-                          ? t.nav_support
-                          : item.id === "settings"
-                          ? t.nav_settings
-                          : item.label;
-
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => {
-                            setActiveTab(item.id);
-                            setSidebarOpen(false);
-                          }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs transition-colors text-left cursor-pointer group ${
-                            isActive
-                              ? "bg-[#0C4B32] text-white shadow-xs font-semibold"
-                              : "text-[#26352D] hover:text-[#0C4B32] hover:bg-[#F4F8F4] font-medium"
                           }`}
                         />
                         <span className="flex-1 truncate">{item.label}</span>
@@ -5081,10 +4326,6 @@ export default function DashboardPage() {
                               isActive
                                 ? "bg-white/20 text-white"
                                 : "bg-[#E7F3EB] text-[#0C4B32]"
-                        >
-                          <Icon
-                            className={`w-4 h-4 shrink-0 transition-colors ${
-                              isActive ? "text-white" : "text-[#475C4E] group-hover:text-[#0C4B32]"
                             }`}
                           >
                             {item.badge}
@@ -5093,28 +4334,9 @@ export default function DashboardPage() {
                       </button>
                     );
                   })}
-                          />
-                          <span className="flex-1 truncate">{translatedLabel}</span>
-                          {item.badge && (
-                            <span
-                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                                isActive
-                                  ? "bg-white/20 text-white"
-                                  : "bg-[#E7F3EB] text-[#0C4B32]"
-                              }`}
-                            >
-                              {item.badge}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
                 </div>
               </div>
             ))}
-              );
-            })}
           </nav>
         </div>
 
@@ -5195,26 +4417,35 @@ export default function DashboardPage() {
 
           {/* Right: Farm Switcher Pill + Notifications & Field Visit Action */}
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Right: Language Pill + Farm Switcher Pill + Notifications & Field Visit Action */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Quick Language Selector Pill */}
-            <div className="relative inline-flex items-center">
-              <select
-                value={settingsLanguage}
-                onChange={(e) => {
-                  setSettingsLanguage(e.target.value);
-                  setSettingsToast(t.language_updated_toast);
-                }}
-                title={t.interface_language}
-                className="appearance-none bg-[#F4F8F4] hover:bg-[#E7F3EB] border border-[#DCE6DE] hover:border-[#0C4B32] text-[#0C4B32] text-xs font-semibold py-1.5 pl-2.5 pr-6 rounded-xl cursor-pointer outline-none transition-all shadow-2xs"
-              >
-                <option value="en">English</option>
-                <option value="pa">ਪੰਜਾਬੀ</option>
-                <option value="hi">हिन्दी</option>
-                <option value="mr">मराठी</option>
-                <option value="gu">ગુજરાતી</option>
-              </select>
-              <ChevronDown className="w-3 h-3 text-[#0C4B32] absolute right-2 pointer-events-none" />
+            {/* Appwrite Cloud Sync Badge */}
+            <div
+              title={
+                appwriteStatus === "connected"
+                  ? `Connected to Appwrite Cloud Database (${appwriteDbName})`
+                  : appwriteStatus === "checking"
+                  ? "Verifying Appwrite Cloud connection..."
+                  : "Operating in local cache mode"
+              }
+              className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                appwriteStatus === "connected"
+                  ? "bg-[#EAF3EC] text-[#0C4B32] border-[#C6E2D0]"
+                  : appwriteStatus === "checking"
+                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                  : "bg-gray-100 text-gray-700 border-gray-200"
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  appwriteStatus === "connected"
+                    ? "bg-[#278449] animate-pulse"
+                    : appwriteStatus === "checking"
+                    ? "bg-amber-500 animate-spin"
+                    : "bg-gray-400"
+                }`}
+              />
+              <span className="font-semibold">
+                {appwriteStatus === "connected" ? "Appwrite Connected" : appwriteStatus === "checking" ? "Connecting..." : "Local Mode"}
+              </span>
             </div>
 
             {/* Quick Farm Switcher Indicator on Mobile */}
@@ -5231,31 +4462,14 @@ export default function DashboardPage() {
               <span className="truncate">{isAllFarms ? "All Farms" : currentFarm?.name ? currentFarm.name.split(" ")[0] : "Farm"}</span>
             </button>
 
-            {/* Refresh Window Button (Available across Dashboard, Advisories, Weather, Tasks, Inventory, Equipment, etc.) */}
+            {/* Notification Bell */}
             <button
               type="button"
-              onClick={handleWindowRefresh}
-              title="Refresh Window / Reload Page"
-              disabled={isPageRefreshing}
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-[#0C4B32] bg-[#F4F8F4] hover:bg-[#E7F3EB] border border-[#DCE6DE] hover:border-[#0C4B32] transition-all cursor-pointer shadow-2xs shrink-0 disabled:opacity-75"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-[#0C4B32] ${isPageRefreshing ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">{isPageRefreshing ? "Refreshing..." : "Refresh"}</span>
-            </button>
-
-            {/* Notification Bell with Badge & Click to Open Drawer */}
-            <button
-              type="button"
-              onClick={() => setNotificationSidebarOpen(true)}
               title="Notifications"
               className="relative p-2 rounded-xl text-[#55685D] hover:text-[#0C4B32] hover:bg-[#F4F8F4] border border-transparent hover:border-[#DCE6DE] transition-colors cursor-pointer"
             >
               <Bell className="w-4 h-4" />
-              {unreadNotificationsCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#F9B21B] text-[#26352D] font-bold text-[9px] flex items-center justify-center shadow-xs">
-                  {unreadNotificationsCount}
-                </span>
-              )}
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#F9B21B]" />
             </button>
 
             {/* USER CLICKS "Raise a Field Visit" BUTTON */}
@@ -5641,64 +4855,39 @@ export default function DashboardPage() {
                   {/* RIGHT COLUMN: WEATHER, INVENTORY & EXPENSES (5 Cols) */}
                   <div className="lg:col-span-5 space-y-6">
 
-                    {/* WEATHER & SPRAY WINDOW (Real-time live weather from WeatherAPI) */}
+                    {/* WEATHER & SPRAY WINDOW */}
                     <div className="bg-white rounded-2xl border border-[#E5ECE7] p-5 sm:p-6 shadow-xs space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <CloudSun className="w-4 h-4 text-amber-600" />
                           <h3 className="text-sm font-bold text-[#26352D]">Weather & Spray Conditions</h3>
                         </div>
-                        <span className="text-xs text-[#55685D] flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
-                          {realWeather?.locationName || (isAllFarms ? "Ludhiana (All Farms)" : currentFarm.district || "Punjab")}
+                        <span className="text-xs text-[#55685D]">
+                          {isAllFarms ? "Ludhiana & Sangrur" : currentFarm.district || "Punjab"}
                         </span>
                       </div>
 
                       <div className="p-4 rounded-xl bg-[#F8FAF8] border border-[#E5ECE7]">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            {realWeather?.conditionIcon ? (
-                              <img
-                                src={realWeather.conditionIcon}
-                                alt={realWeather.conditionText}
-                                className="w-12 h-12 -my-2 object-contain"
-                              />
-                            ) : null}
-                            <div>
-                              <div className="text-3xl font-extrabold text-[#0C4B32]">
-                                {realWeather ? `${realWeather.tempC}°C` : "24°C"}
-                              </div>
-                              <div className="text-xs font-medium text-[#26352D] mt-0.5">
-                                {realWeather ? realWeather.conditionText : "Sunny & Clear Skies"}
-                              </div>
+                          <div>
+                            <div className="text-3xl font-extrabold text-[#0C4B32]">
+                              {isAllFarms ? "25°C" : selectedFarmId === "farm-2" ? "26°C" : "24°C"}
+                            </div>
+                            <div className="text-xs font-medium text-[#26352D] mt-0.5">
+                              {isAllFarms ? "Clear Across All Holdings" : "Sunny & Clear Skies"}
                             </div>
                           </div>
                           <div className="text-right text-xs text-[#55685D] space-y-0.5">
-                            <div>Wind: <strong className="text-[#26352D]">{realWeather ? `${realWeather.windKph} km/h ${realWeather.windDir}` : "8 km/h NW"}</strong></div>
-                            <div>Humidity: <strong className="text-[#26352D]">{realWeather ? `${realWeather.humidity}%` : "44%"}</strong></div>
-                            <div>Rain Chance: <strong className="text-[#26352D]">{realWeather ? `${realWeather.chanceOfRain}%` : "0%"}</strong></div>
+                            <div>Wind: <strong className="text-[#26352D]">{selectedFarmId === "farm-2" ? "10 km/h NW" : "8 km/h NW"}</strong></div>
+                            <div>Humidity: <strong className="text-[#26352D]">{selectedFarmId === "farm-2" ? "38%" : "42%"}</strong></div>
+                            <div>Rain: <strong className="text-[#26352D]">0%</strong></div>
                           </div>
                         </div>
 
                         <div className="mt-3 pt-2.5 border-t border-[#E5ECE7] flex items-center justify-between text-xs">
                           <span className="text-[#55685D]">Foliar Spray Window</span>
                           <span className="font-semibold text-emerald-800 bg-[#E7F3EB] px-2 py-0.5 rounded">
-                            {realWeather ? realWeather.sprayWindow : "Optimal Today"}
-                          </span>
-                        </div>
-
-                        {/* Interactive Mini Farm Map Link & Preview */}
-                        <div className="mt-3 pt-2.5 border-t border-[#E5ECE7] flex items-center justify-between text-xs">
-                          <button
-                            type="button"
-                            onClick={() => setActiveTab("weather")}
-                            className="inline-flex items-center gap-1.5 text-[#0C4B32] hover:underline font-semibold cursor-pointer"
-                          >
-                            <MapPin className="w-3.5 h-3.5 text-[#0C4B32]" />
-                            <span>View Weather Satellite Map</span>
-                          </button>
-                          <span className="text-[11px] text-[#55685D] font-mono">
-                            {currentFarm.latitude.toFixed(3)}°N, {currentFarm.longitude.toFixed(3)}°E
+                            Open until 12:00 PM
                           </span>
                         </div>
                       </div>
@@ -6307,16 +5496,6 @@ export default function DashboardPage() {
 
                   {/* Category Filter Buttons */}
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <button
-                      type="button"
-                      onClick={handleWindowRefresh}
-                      disabled={isPageRefreshing}
-                      title="Refresh Advisories"
-                      className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors mr-1"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 text-[#0C4B32] ${isPageRefreshing ? "animate-spin" : ""}`} />
-                      <span>Refresh</span>
-                    </button>
                     {[
                       { id: "all", label: "All" },
                       { id: "pest", label: "Pest & Disease" },
@@ -6373,22 +5552,19 @@ export default function DashboardPage() {
 
                   return (
                     <div className="space-y-3">
-                      {filtered.map((alert: any, idx: number) => {
-                        const alertKey = alert.$id || alert.id || `adv-alert-${idx}-${alert.title || "item"}`;
-                        return (
-                          <div
-                            key={alertKey}
-                            className="bg-white rounded-xl border border-[#E5ECE7] p-4.5 space-y-1.5 hover:border-[#CCD9D0] transition-colors"
-                          >
-                            <h3 className="text-sm font-bold text-[#26352D] leading-snug">
-                              {alert.title}
-                            </h3>
-                            <p className="text-xs text-[#55685D] leading-relaxed">
-                              {alert.message}
-                            </p>
-                          </div>
-                        );
-                      })}
+                      {filtered.map((alert: any) => (
+                        <div
+                          key={alert.id}
+                          className="bg-white rounded-xl border border-[#E5ECE7] p-4.5 space-y-1.5 hover:border-[#CCD9D0] transition-colors"
+                        >
+                          <h3 className="text-sm font-bold text-[#26352D] leading-snug">
+                            {alert.title}
+                          </h3>
+                          <p className="text-xs text-[#55685D] leading-relaxed">
+                            {alert.message}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   );
                 })()}
@@ -6403,73 +5579,37 @@ export default function DashboardPage() {
                     <div>
                       <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0C4B32] bg-[#E7F3EB] px-2.5 py-1 rounded-full mb-1">
                         <MapPin className="w-3.5 h-3.5 text-[#0C4B32]" />
-                        <span>Hyper-Local Farm Weather • Live WeatherAPI</span>
+                        <span>Hyper-Local Farm GPS Telemetry</span>
                       </div>
-                      <h2 className="text-lg font-semibold text-[#26352D] flex items-center gap-2">
-                        <span>Weather Advisory ({realWeather?.locationName || currentFarm.district || "Ludhiana"}, {realWeather?.region || currentFarm.state || "Punjab"})</span>
-                        {weatherLoading && (
-                          <span className="text-xs text-[#55685D] font-normal animate-pulse">(updating...)</span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={handleWindowRefresh}
-                          disabled={isPageRefreshing}
-                          title="Refresh Weather Data"
-                          className="ml-auto sm:ml-2 px-2.5 py-1 text-xs font-semibold rounded-lg border border-[#DCE6DE] bg-[#F4F8F4] hover:bg-[#EAF3EC] text-[#0C4B32] inline-flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
-                        >
-                          <RefreshCw className={`w-3 h-3 text-[#0C4B32] ${isPageRefreshing ? "animate-spin" : ""}`} />
-                          <span>Refresh</span>
-                        </button>
+                      <h2 className="text-lg font-semibold text-[#26352D]">
+                        Weather Advisory ({currentFarm.district || "Ludhiana"}, {currentFarm.state || "Punjab"})
                       </h2>
                       <p className="text-xs text-[#55685D]">
-                        Coordinates: {currentFarm.latitude.toFixed(4)}°N, {currentFarm.longitude.toFixed(4)}°E • Updated {realWeather?.lastUpdated || "recently"}
+                        Coordinates: {currentFarm.latitude.toFixed(4)}°N, {currentFarm.longitude.toFixed(4)}°E • Updated 10 mins ago
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      {realWeather?.conditionIcon ? (
-                        <img
-                          src={realWeather.conditionIcon}
-                          alt={realWeather.conditionText}
-                          className="w-14 h-14 object-contain"
-                        />
-                      ) : (
-                        <CloudSun className="w-10 h-10 text-amber-500" />
-                      )}
-                      <div>
-                        <div className="text-3xl font-bold text-[#0C4B32]">
-                          {realWeather ? `${realWeather.tempC}°C` : "24°C"}
-                        </div>
-                        <div className="text-xs font-medium text-[#55685D]">
-                          {realWeather ? realWeather.conditionText : "Clear"}
-                        </div>
-                      </div>
+                      <div className="text-3xl font-bold text-[#0C4B32]">28°C</div>
+                      <CloudSun className="w-9 h-9 text-amber-500" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-[#E5ECE7]">
                     <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs">
                       <span className="text-[#55685D] block text-[11px]">Relative Humidity</span>
-                      <strong className="text-sm text-[#26352D] font-semibold">
-                        {realWeather ? `${realWeather.humidity}%` : "58%"}
-                      </strong>
+                      <strong className="text-sm text-[#26352D] font-semibold">58%</strong>
                     </div>
                     <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs">
                       <span className="text-[#55685D] block text-[11px]">Wind Velocity</span>
-                      <strong className="text-sm text-[#26352D] font-semibold">
-                        {realWeather ? `${realWeather.windKph} km/h ${realWeather.windDir}` : "12 km/h NW"}
-                      </strong>
+                      <strong className="text-sm text-[#26352D] font-semibold">12 km/h NW</strong>
                     </div>
                     <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs">
                       <span className="text-[#55685D] block text-[11px]">Precipitation Probability</span>
-                      <strong className="text-sm text-[#26352D] font-semibold">
-                        {realWeather ? `${realWeather.chanceOfRain}% (${realWeather.precipMm} mm)` : "5% (Dry)"}
-                      </strong>
+                      <strong className="text-sm text-[#26352D] font-semibold">5% (Dry)</strong>
                     </div>
                     <div className="p-3 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs">
                       <span className="text-[#55685D] block text-[11px]">Foliar Spray Window</span>
-                      <strong className="text-sm text-emerald-700 font-semibold">
-                        {realWeather ? realWeather.sprayWindow : "Optimal Today"}
-                      </strong>
+                      <strong className="text-sm text-emerald-700 font-semibold">Optimal Today</strong>
                     </div>
                   </div>
 
@@ -6477,83 +5617,16 @@ export default function DashboardPage() {
                   <div className="mt-6 pt-5 border-t border-[#E5ECE7]">
                     <div className="text-xs font-semibold text-[#26352D] mb-3">7-Day Agricultural Forecast</div>
                     <div className="flex sm:grid sm:grid-cols-7 gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden text-center text-xs">
-                      {(realWeather?.forecastDays && realWeather.forecastDays.length > 0
-                        ? realWeather.forecastDays
-                        : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d, i) => ({
-                            dayName: d,
-                            maxTemp: 27 + (i % 3),
-                            minTemp: 15 + (i % 2),
-                            rainChance: i === 2 ? 40 : 0,
-                            precipMm: i === 2 ? 3.2 : 0,
-                            conditionText: i === 2 ? "Rain" : "Sunny",
-                            conditionIcon: "",
-                          }))
-                      ).map((dayItem: any, idx: number) => (
-                        <div key={dayItem.date || idx} className="min-w-[95px] sm:min-w-0 flex-1 shrink-0 p-2.5 rounded-xl border border-[#DCE6DE] bg-[#FBFDFB]">
-                          <div className="font-semibold text-[#26352D]">{dayItem.dayName}</div>
-                          <div className="my-1.5 flex justify-center items-center h-8">
-                            {dayItem.conditionIcon ? (
-                              <img src={dayItem.conditionIcon} alt={dayItem.conditionText} className="w-7 h-7 object-contain" />
-                            ) : dayItem.rainChance > 20 ? (
-                              <CloudRain className="w-5 h-5 text-blue-500" />
-                            ) : (
-                              <Sun className="w-5 h-5 text-amber-500" />
-                            )}
+                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, idx) => (
+                        <div key={day} className="min-w-[85px] sm:min-w-0 flex-1 shrink-0 p-2.5 rounded-xl border border-[#DCE6DE] bg-[#FBFDFB]">
+                          <div className="font-semibold text-[#26352D]">{day}</div>
+                          <div className="my-1.5 flex justify-center">
+                            {idx === 2 ? <CloudRain className="w-5 h-5 text-blue-500" /> : <Sun className="w-5 h-5 text-amber-500" />}
                           </div>
-                          <div className="text-[11px] font-bold text-[#0C4B32]">
-                            {dayItem.maxTemp}° / {dayItem.minTemp}°
-                          </div>
-                          <div className="text-[10px] text-[#55685D] mt-0.5 truncate">
-                            {dayItem.precipMm > 0 ? `${dayItem.precipMm}mm rain` : `${dayItem.conditionText}`}
-                          </div>
+                          <div className="text-[11px] font-bold text-[#0C4B32]">{27 + (idx % 3)}° / {15 + (idx % 2)}°</div>
+                          <div className="text-[10px] text-[#55685D] mt-0.5">{idx === 2 ? "3.2mm rain" : "0mm"}</div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-
-                  {/* Interactive Farm Location & Satellite Weather Radar Map */}
-                  <div className="mt-6 pt-5 border-t border-[#E5ECE7] space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-[#0C4B32]" />
-                        <h3 className="text-sm font-bold text-[#26352D]">
-                          Farm Location & Satellite Weather Map ({currentFarm.name})
-                        </h3>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs">
-                        <span className="text-[#55685D]">
-                          GPS: <strong className="text-[#26352D] font-mono">{currentFarm.latitude.toFixed(5)}°N, {currentFarm.longitude.toFixed(5)}°E</strong>
-                        </span>
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${currentFarm.latitude},${currentFarm.longitude}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 font-semibold text-[#0C4B32] hover:underline"
-                        >
-                          <span>Open Map</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    </div>
-
-                    <div className="relative w-full h-72 sm:h-80 rounded-2xl overflow-hidden border border-[#DCE6DE] shadow-inner bg-[#E5ECE7]">
-                      <iframe
-                        title="Farm Satellite Weather Location Map"
-                        width="100%"
-                        height="100%"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                        allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                          `${currentFarm.latitude},${currentFarm.longitude}`
-                        )}&t=k&z=15&ie=UTF8&iwloc=&output=embed`}
-                      />
-                      <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-[#DCE6DE] shadow-xs text-xs flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping inline-block" />
-                        <span className="font-semibold text-[#26352D]">{currentFarm.name}</span>
-                        <span className="text-[#55685D]">• {realWeather?.tempC || 24}°C ({realWeather?.conditionText || "Live"})</span>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -6599,17 +5672,6 @@ export default function DashboardPage() {
                         <span>Calendar</span>
                       </button>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={handleWindowRefresh}
-                      disabled={isPageRefreshing}
-                      title="Refresh Tasks"
-                      className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 text-[#0C4B32] ${isPageRefreshing ? "animate-spin" : ""}`} />
-                      <span className="hidden sm:inline">Refresh</span>
-                    </button>
 
                     <button
                       type="button"
@@ -7390,16 +6452,6 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
-                      onClick={handleWindowRefresh}
-                      disabled={isPageRefreshing}
-                      title="Refresh Inventory"
-                      className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 text-[#0C4B32] ${isPageRefreshing ? "animate-spin" : ""}`} />
-                      <span className="hidden sm:inline">Refresh</span>
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => handleOpenAddStore()}
                       className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition-colors flex-1 sm:flex-initial"
                     >
@@ -7823,16 +6875,6 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      onClick={handleWindowRefresh}
-                      disabled={isPageRefreshing}
-                      title="Refresh Equipment"
-                      className="px-3.5 py-2 sm:py-1.5 text-xs font-semibold rounded-xl border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 text-[#0C4B32] ${isPageRefreshing ? "animate-spin" : ""}`} />
-                      <span className="hidden sm:inline">Refresh</span>
-                    </button>
                     <button
                       type="button"
                       onClick={() => handleOpenReportProblem()}
@@ -9019,55 +8061,19 @@ export default function DashboardPage() {
 
                     {/* Search & Filter Bar */}
                     <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-[#E5ECE7] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 sm:max-w-md">
-                        {/* Select All Checkbox for Roles */}
-                        <label className="flex items-center gap-2 cursor-pointer select-none shrink-0" title="Select all roles for bulk deletion">
-                          <input
-                            type="checkbox"
-                            checked={
-                              designations.length > 0 &&
-                              selectedDesignationIds.length === designations.length
-                            }
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedDesignationIds(designations.map((d) => d.id));
-                              } else {
-                                setSelectedDesignationIds([]);
-                              }
-                            }}
-                            className="w-4 h-4 rounded text-[#0C4B32] border-[#DCE6DE] focus:ring-[#0C4B32] cursor-pointer"
-                          />
-                          <span className="text-xs font-semibold text-[#26352D] hidden md:inline">
-                            Select All
-                          </span>
-                        </label>
-
-                        <div className="relative flex-1">
-                          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#889B90]" />
-                          <input
-                            type="text"
-                            placeholder="Search designations by title or responsibilities..."
-                            value={designationSearch}
-                            onChange={(e) => setDesignationSearch(e.target.value)}
-                            className="pl-8 pr-3 py-1.5 text-xs text-[#26352D] bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl outline-none focus:border-[#0C4B32] placeholder:text-[#889B90] w-full"
-                          />
-                        </div>
+                      <div className="relative flex-1 sm:max-w-md">
+                        <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#889B90]" />
+                        <input
+                          type="text"
+                          placeholder="Search designations by title or responsibilities..."
+                          value={designationSearch}
+                          onChange={(e) => setDesignationSearch(e.target.value)}
+                          className="pl-8 pr-3 py-1.5 text-xs text-[#26352D] bg-[#F4F8F4] border border-[#DCE6DE] rounded-xl outline-none focus:border-[#0C4B32] placeholder:text-[#889B90] w-full"
+                        />
                       </div>
 
-                      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                        {/* Bulk Delete Button when roles are selected */}
-                        {selectedDesignationIds.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={handleBulkDeleteDesignations}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-xl bg-red-600 hover:bg-red-700 text-white inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Delete Selected ({selectedDesignationIds.length})</span>
-                          </button>
-                        )}
-
-                        <span className="text-[11px] font-medium text-[#55685D] hidden lg:inline">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-medium text-[#55685D]">
                           Showing <span className="font-bold text-[#26352D]">{
                             designations.filter((d) => {
                               if (!designationSearch.trim()) return true;
@@ -9122,51 +8128,31 @@ export default function DashboardPage() {
                           {filteredDes.map((des) => {
                             const assignedMembers = teamMembers.filter((m) => m.designationId === des.id);
                             const isFullAdmin = des.allowedModules.length === APP_MODULES.length;
-                            const isSelected = selectedDesignationIds.includes(des.id);
 
                             return (
                               <div
                                 key={des.id}
-                                className={`bg-white p-5 rounded-2xl border shadow-xs hover:border-[#C6E2D0] hover:shadow-sm transition-all space-y-4 flex flex-col justify-between ${
-                                  isSelected ? "border-[#0C4B32] ring-1 ring-[#0C4B32]/30 bg-[#FBFDFB]" : "border-[#E5ECE7]"
-                                }`}
+                                className="bg-white p-5 rounded-2xl border border-[#E5ECE7] shadow-xs hover:border-[#C6E2D0] hover:shadow-sm transition-all space-y-4 flex flex-col justify-between"
                               >
                                 <div className="space-y-3">
-                                  {/* Designation Title & Badge with Selection Checkbox */}
+                                  {/* Designation Title & Badge */}
                                   <div className="flex items-start justify-between gap-3">
-                                    <div className="flex items-start gap-3">
-                                      {/* Individual Select Checkbox */}
-                                      <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={(e) => {
-                                          if (e.target.checked) {
-                                            setSelectedDesignationIds((prev) => [...prev, des.id]);
-                                          } else {
-                                            setSelectedDesignationIds((prev) => prev.filter((id) => id !== des.id));
-                                          }
-                                        }}
-                                        className="w-4 h-4 rounded text-[#0C4B32] border-[#DCE6DE] focus:ring-[#0C4B32] cursor-pointer mt-1 shrink-0"
-                                        title={`Select ${des.title}`}
-                                      />
-
-                                      <div className="space-y-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                          <h3 className="font-bold text-base text-[#26352D]">{des.title}</h3>
-                                          <span
-                                            className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
-                                              des.isSystemDefault
-                                                ? "bg-[#E7F3EB] text-[#0C4B32] border-[#C6E2D0]"
-                                                : "bg-purple-50 text-purple-800 border-purple-200"
-                                            }`}
-                                          >
-                                            {des.isSystemDefault ? "Default Role" : "Custom Role"}
-                                          </span>
-                                        </div>
-                                        <p className="text-xs text-[#55685D] line-clamp-2">
-                                          {des.description}
-                                        </p>
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <h3 className="font-bold text-base text-[#26352D]">{des.title}</h3>
+                                        <span
+                                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                                            des.isSystemDefault
+                                              ? "bg-[#E7F3EB] text-[#0C4B32] border-[#C6E2D0]"
+                                              : "bg-purple-50 text-purple-800 border-purple-200"
+                                          }`}
+                                        >
+                                          {des.isSystemDefault ? "Default Role" : "Custom Role"}
+                                        </span>
                                       </div>
+                                      <p className="text-xs text-[#55685D] line-clamp-2">
+                                        {des.description}
+                                      </p>
                                     </div>
 
                                     {/* Member count pill */}
@@ -9261,14 +8247,16 @@ export default function DashboardPage() {
                                       <Edit3 className="w-3.5 h-3.5 text-[#0C4B32]" />
                                       <span>Edit Role & Permissions</span>
                                     </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDeleteDesignation(des.id, des.title)}
-                                      title="Delete role"
-                                      className="p-1.5 text-[#889B90] hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
+                                    {!des.isSystemDefault && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteDesignation(des.id, des.title)}
+                                        title="Delete designation"
+                                        className="p-1.5 text-[#889B90] hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -9285,393 +8273,17 @@ export default function DashboardPage() {
             {/* TAB: REPORTS AND ANALYTICS (Interactive Chart & Table Views) */}
             {activeTab === "reports" && (
               <div className="space-y-6">
-                {/* ===================== PRINT-ONLY DEDICATED REPORT DOCUMENT ===================== */}
-                <div className="hidden print:block khetivo-print-container print-avoid-break bg-white text-[#0F172A] font-sans antialiased">
-                  {/* Decorative Top Accent Bar */}
-                  <div className="h-2 w-full bg-linear-to-r from-[#0C4B32] via-[#1B704C] to-[#2E8B57] rounded-t-sm mb-5"></div>
-
-                  {/* Header: Company & Farm Details + Official Seal / Audit Stamp */}
-                  <div className="flex items-start justify-between pb-5 border-b-2 border-[#0C4B32]/30 mb-5">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-9 h-9 rounded-lg bg-[#0C4B32] text-white flex items-center justify-center font-black text-xl shadow-xs">
-                          K
-                        </div>
-                        <div>
-                          <span className="text-2xl font-black text-[#0C4B32] tracking-tight uppercase">KHETIVO</span>
-                          <span className="ml-2.5 inline-flex items-center gap-1 text-[9px] font-bold tracking-widest px-2.5 py-0.5 rounded-full bg-[#E7F3EB] text-[#0C4B32] border border-[#A7D7B9] uppercase">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0C4B32]"></span>
-                            Official Farm Audit Report
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-[11px] font-semibold text-[#3D5A47] tracking-wide pt-0.5">
-                        Autonomous Precision Agronomic & Financial Intelligence
-                      </p>
-                      <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-[10px] text-[#475C4E] pt-1">
-                        <div className="flex items-center gap-1">
-                          <span className="text-[#64748B] font-medium">Holding:</span>
-                          <strong className="text-[#0F172A] font-semibold">{isAllFarms ? "Consolidated Farms Portfolio" : currentFarm.name}</strong>
-                        </div>
-                        <span>•</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[#64748B] font-medium">Location:</span>
-                          <strong className="text-[#0F172A] font-semibold">{[currentFarm.village, currentFarm.district, currentFarm.state].filter(Boolean).join(", ") || "India"}</strong>
-                        </div>
-                        <span>•</span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[#64748B] font-medium">Total Area:</span>
-                          <strong className="text-[#0F172A] font-semibold">{isAllFarms ? `${totalCombinedArea} ${currentFarm.areaUnit}` : `${currentFarm.totalArea} ${currentFarm.areaUnit}`}</strong>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right space-y-1 min-w-[220px]">
-                      <div className="inline-block bg-[#F8FAF9] border border-[#DCE6DE] rounded-lg px-3 py-1.5 text-right shadow-2xs">
-                        <div className="text-[9px] font-bold uppercase tracking-wider text-[#64748B]">Report Category</div>
-                        <div className="text-xs font-black text-[#0C4B32]">
-                          {reportCategory === "financial" ? "Financial & P&L Statement" : reportCategory === "crops" ? "Crop Performance & Acreage" : reportCategory === "inputs" ? "Input & Inventory Audit" : "Machinery & Fleet Utilization"}
-                        </div>
-                      </div>
-                      <div className="text-[10px] text-[#475569] pt-1">
-                        Period: <strong className="text-[#0F172A] font-semibold">{reportStartDate ? formatDisplayDate(reportStartDate) : "Start"}</strong> — <strong className="text-[#0F172A] font-semibold">{reportEndDate ? formatDisplayDate(reportEndDate) : "Present"}</strong>
-                      </div>
-                      <div className="text-[9px] text-[#94A3B8]">
-                        Generated: {reportGeneratedAt || "Live Report"}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Summary Metric Strip for Print */}
-                  {reportCategory === "financial" && (
-                    <div className="grid grid-cols-4 gap-3 mb-5 print-avoid-break">
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Net Realization</span>
-                        <div className="text-xl font-black text-[#0C4B32] mt-0.5">₹{reportNetRealization.toLocaleString("en-IN")}</div>
-                        <span className="text-[9px] text-emerald-700 font-semibold">{reportTotalProduction > 0 ? ((reportNetRealization / reportTotalProduction) * 100).toFixed(1) : "0"}% Farm Margin</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Gross Production Inflow</span>
-                        <div className="text-xl font-black text-emerald-800 mt-0.5">₹{reportTotalProduction.toLocaleString("en-IN")}</div>
-                        <span className="text-[9px] text-[#64748B]">Harvest Sales Realized</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Damage & Loss Value</span>
-                        <div className="text-xl font-black text-amber-900 mt-0.5">₹{reportTotalLosses.toLocaleString("en-IN")}</div>
-                        <span className="text-[9px] text-amber-700">Field & Storage Losses</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Total Operating Outflow</span>
-                        <div className="text-xl font-black text-rose-700 mt-0.5">₹{reportTotalExpenses.toLocaleString("en-IN")}</div>
-                        <span className="text-[9px] text-rose-700">Inputs, Labor & Fleet</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {reportCategory === "crops" && (
-                    <div className="grid grid-cols-4 gap-3 mb-5 print-avoid-break">
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Total Cultivated</span>
-                        <div className="text-xl font-black text-[#0C4B32] mt-0.5">{activeCrops.reduce((acc, c) => acc + (c.area || 0), 0)} {currentFarm.areaUnit}</div>
-                        <span className="text-[9px] text-[#64748B]">Across Active Parcels</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Active Batches</span>
-                        <div className="text-xl font-black text-[#0C4B32] mt-0.5">{activeCrops.length} Crops</div>
-                        <span className="text-[9px] text-[#64748B]">Logged in Rotation</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Primary Variety</span>
-                        <div className="text-lg font-black text-[#0C4B32] mt-0.5 truncate">{activeCrops[0]?.name || "N/A"}</div>
-                        <span className="text-[9px] text-[#64748B]">Major Commodity</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Crop Health Index</span>
-                        <div className="text-xl font-black text-emerald-700 mt-0.5">Optimal (94%)</div>
-                        <span className="text-[9px] text-emerald-700 font-semibold">Sentinel-2 NDVI Normalized</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {reportCategory === "inputs" && (
-                    <div className="grid grid-cols-3 gap-3 mb-5 print-avoid-break">
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Total Inventory Valuation</span>
-                        <div className="text-xl font-black text-[#0C4B32] mt-0.5">
-                          ₹{scopedInventoryItems.reduce((acc, item) => acc + item.quantity * item.rate, 0).toLocaleString("en-IN")}
-                        </div>
-                        <span className="text-[9px] text-[#64748B]">Warehouse Balance</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Tracked Stock Items</span>
-                        <div className="text-xl font-black text-[#0C4B32] mt-0.5">{scopedInventoryItems.length} Commodities</div>
-                        <span className="text-[9px] text-[#64748B]">Seeds, Nutrients & Fuel</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Low Stock / Reorder</span>
-                        <div className="text-xl font-black text-amber-700 mt-0.5">
-                          {scopedInventoryItems.filter(i => i.quantity <= (i.lowStockThreshold || 5)).length} Items
-                        </div>
-                        <span className="text-[9px] text-amber-700 font-semibold">Immediate Attention</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {reportCategory === "machinery" && (
-                    <div className="grid grid-cols-3 gap-3 mb-5 print-avoid-break">
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Total Equipment Count</span>
-                        <div className="text-xl font-black text-[#0C4B32] mt-0.5">{scopedEquipment.length} Assets</div>
-                        <span className="text-[9px] text-[#64748B]">Active Motor Fleet</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Cumulative Hours Run</span>
-                        <div className="text-xl font-black text-[#0C4B32] mt-0.5">
-                          {scopedEquipment.reduce((acc, eq) => acc + (Number(eq.runtimeHours) || 0), 0)} Hours
-                        </div>
-                        <span className="text-[9px] text-[#64748B]">Fleet Telemetry Logged</span>
-                      </div>
-                      <div className="border border-[#CBD5E1] rounded-xl p-3 bg-linear-to-b from-[#F8FAFC] to-[#F1F5F9] shadow-2xs">
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-[#64748B] block">Service Readiness</span>
-                        <div className="text-xl font-black text-emerald-700 mt-0.5">
-                          {scopedEquipment.filter(eq => eq.status === "Operational" || eq.status === "In Field").length} / {scopedEquipment.length}
-                        </div>
-                        <span className="text-[9px] text-emerald-700 font-semibold">Ready for Field Work</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Clean, Elegant Audit Tables for Print */}
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#CBD5E1]">
-                      <h3 className="text-[11px] font-black uppercase tracking-wider text-[#1E293B]">
-                        Detailed Audit Records & Ledger
-                      </h3>
-                      <span className="text-[9px] text-[#64748B] font-medium">
-                        Verified entries certified for official audits
-                      </span>
-                    </div>
-
-                    {reportCategory === "financial" && (
-                      <table className="w-full text-left text-[10px] border border-[#CBD5E1] rounded-lg overflow-hidden shadow-2xs">
-                        <thead className="bg-[#0C4B32] text-white font-semibold">
-                          <tr>
-                            <th className="p-2.5 border-r border-[#1B704C]">Date</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Type</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Title & Description</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Category</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Holding / Crop</th>
-                            <th className="p-2.5 text-right border-r border-[#1B704C]">Amount (₹)</th>
-                            <th className="p-2.5 text-center">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E2E8F0]">
-                          {reportScopedTransactions.length === 0 ? (
-                            <tr>
-                              <td colSpan={7} className="p-4 text-center text-[#64748B] italic">
-                                No transactions recorded for this period.
-                              </td>
-                            </tr>
-                          ) : (
-                            reportScopedTransactions.map((tx, idx) => (
-                              <tr key={tx.id} className={`print-avoid-break ${idx % 2 === 1 ? "bg-[#F8FAF9]" : "bg-white"}`}>
-                                <td className="p-2 border-r border-[#E2E8F0] whitespace-nowrap text-[#475569] font-medium">{formatDisplayDate(tx.date)}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] uppercase font-bold text-[9px]">
-                                  <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-bold ${tx.type === "production" ? "bg-emerald-100 text-emerald-800" : tx.type === "loss" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}>
-                                    {tx.type}
-                                  </span>
-                                </td>
-                                <td className="p-2 border-r border-[#E2E8F0] font-semibold text-[#0F172A]">{tx.title}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{tx.category}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{tx.farmName || "Primary"} • {tx.crop || "General"}</td>
-                                <td className={`p-2 border-r border-[#E2E8F0] text-right font-bold whitespace-nowrap ${tx.type === "production" ? "text-emerald-800" : tx.type === "loss" ? "text-amber-800" : "text-rose-700"}`}>
-                                  {tx.type === "production" ? "+" : "-"}₹{Number(tx.amount || 0).toLocaleString("en-IN")}
-                                </td>
-                                <td className="p-2 text-center whitespace-nowrap">
-                                  <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
-                                    {tx.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    )}
-
-                    {reportCategory === "crops" && (
-                      <table className="w-full text-left text-[10px] border border-[#CBD5E1] rounded-lg overflow-hidden shadow-2xs">
-                        <thead className="bg-[#0C4B32] text-white font-semibold">
-                          <tr>
-                            <th className="p-2.5 border-r border-[#1B704C]">Crop Name</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Variety</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Season</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Area</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Sown Date</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Stage</th>
-                            <th className="p-2.5 text-center">Health Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E2E8F0]">
-                          {activeCrops.length === 0 ? (
-                            <tr>
-                              <td colSpan={7} className="p-4 text-center text-[#64748B] italic">
-                                No active crops logged for this farm.
-                              </td>
-                            </tr>
-                          ) : (
-                            activeCrops.map((c, idx) => (
-                              <tr key={c.id} className={`print-avoid-break ${idx % 2 === 1 ? "bg-[#F8FAF9]" : "bg-white"}`}>
-                                <td className="p-2 border-r border-[#E2E8F0] font-black text-[#0C4B32] text-[11px]">{c.name}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{c.variety || "Local"}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{c.season || "Rabi"}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] font-bold text-[#0F172A]">{c.area} {c.areaUnit}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{c.sownDate ? formatDisplayDate(c.sownDate) : "Recent"}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{c.stage || "Active"}</td>
-                                <td className="p-2 text-center">
-                                  <span className="inline-block px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800">
-                                    {c.health || "Healthy (95% NDVI)"}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    )}
-
-                    {reportCategory === "inputs" && (
-                      <table className="w-full text-left text-[10px] border border-[#CBD5E1] rounded-lg overflow-hidden shadow-2xs">
-                        <thead className="bg-[#0C4B32] text-white font-semibold">
-                          <tr>
-                            <th className="p-2.5 border-r border-[#1B704C]">Item Name</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Category</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Location / Store</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Quantity</th>
-                            <th className="p-2.5 border-r border-[#1B704C] text-right">Unit Rate (₹)</th>
-                            <th className="p-2.5 border-r border-[#1B704C] text-right">Total Valuation (₹)</th>
-                            <th className="p-2.5 text-center">Expiry Date</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E2E8F0]">
-                          {scopedInventoryItems.length === 0 ? (
-                            <tr>
-                              <td colSpan={7} className="p-4 text-center text-[#64748B] italic">
-                                No input inventory logged.
-                              </td>
-                            </tr>
-                          ) : (
-                            scopedInventoryItems.map((item, idx) => (
-                              <tr key={item.id} className={`print-avoid-break ${idx % 2 === 1 ? "bg-[#F8FAF9]" : "bg-white"}`}>
-                                <td className="p-2 border-r border-[#E2E8F0] font-bold text-[#0F172A]">{item.name}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{item.category}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{item.storeName || "Farm Godown"}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] font-bold text-[#0F172A]">{item.quantity} {item.unit}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-right text-[#475569]">₹{Number(item.rate || 0).toLocaleString("en-IN")}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-right font-black text-[#0C4B32]">
-                                  ₹{(item.quantity * item.rate).toLocaleString("en-IN")}
-                                </td>
-                                <td className="p-2 text-center text-[#475569]">{item.expiryDate ? formatDisplayDate(item.expiryDate) : "N/A"}</td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    )}
-
-                    {reportCategory === "machinery" && (
-                      <table className="w-full text-left text-[10px] border border-[#CBD5E1] rounded-lg overflow-hidden shadow-2xs">
-                        <thead className="bg-[#0C4B32] text-white font-semibold">
-                          <tr>
-                            <th className="p-2.5 border-r border-[#1B704C]">Equipment Name</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Category</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Assigned Operator</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Runtime Hours</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Fuel Specs</th>
-                            <th className="p-2.5 border-r border-[#1B704C]">Next Service</th>
-                            <th className="p-2.5 text-center">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E2E8F0]">
-                          {scopedEquipment.length === 0 ? (
-                            <tr>
-                              <td colSpan={7} className="p-4 text-center text-[#64748B] italic">
-                                No machinery logged.
-                              </td>
-                            </tr>
-                          ) : (
-                            scopedEquipment.map((eq, idx) => (
-                              <tr key={eq.id} className={`print-avoid-break ${idx % 2 === 1 ? "bg-[#F8FAF9]" : "bg-white"}`}>
-                                <td className="p-2 border-r border-[#E2E8F0] font-bold text-[#0F172A]">{eq.name}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{eq.category}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{eq.operator}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] font-black text-[#0C4B32]">{eq.runtimeHours} Hrs</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{eq.fuelEfficiency || "Standard"}</td>
-                                <td className="p-2 border-r border-[#E2E8F0] text-[#475569]">{eq.nextServiceDate ? formatDisplayDate(eq.nextServiceDate) : "N/A"}</td>
-                                <td className="p-2 text-center">
-                                  <span className={`inline-block px-2 py-0.5 rounded text-[8px] font-bold ${eq.status === "Operational" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
-                                    {eq.status}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-
-                  {/* Agronomic Advisory & Compliance Note */}
-                  <div className="mb-5 p-3 rounded-lg border border-[#CBD5E1] bg-[#F8FAF9] print-avoid-break">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="w-2 h-2 rounded-full bg-[#0C4B32]"></span>
-                      <h4 className="text-[10px] font-bold uppercase tracking-wider text-[#0C4B32]">Agronomic Assurance & Audit Notes</h4>
-                    </div>
-                    <p className="text-[9px] text-[#475569] leading-relaxed">
-                      This statement is authenticated by Khetivo's cloud farm management architecture. Field geometries and vegetation indices are calibrated via Sentinel-2 multi-spectral remote sensing. Records comply with standard agricultural accounting standards and are valid for submission to credit institutions, crop insurance adjusters, and APMC authorities.
-                    </p>
-                  </div>
-
-                  {/* Formal Signature & Verification Footer */}
-                  <div className="border-t-2 border-[#0C4B32]/30 pt-4 mt-6 flex items-end justify-between print-avoid-break text-[10px] text-[#475569]">
-                    <div className="space-y-1 max-w-[380px]">
-                      <div className="flex items-center gap-1.5 font-bold text-[#0F172A]">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                        Khetivo Certified Agricultural Intelligence
-                      </div>
-                      <p className="text-[9px] text-[#64748B]">System generated report authenticated with cryptographically hashed ledger proofs.</p>
-                      <p className="text-[8px] font-mono text-[#94A3B8]">Security Hash: KHETIVO-AUDIT-{Math.random().toString(36).substring(2, 10).toUpperCase()}-VERIFIED</p>
-                    </div>
-
-                    <div className="flex items-center gap-8">
-                      {/* Stamp Seal */}
-                      <div className="w-16 h-16 rounded-full border-2 border-dashed border-[#0C4B32]/50 flex flex-col items-center justify-center text-[7px] text-[#0C4B32] font-black uppercase tracking-widest text-center rotate-[-6deg] bg-[#F0FDF4]/50">
-                        <span>KHETIVO</span>
-                        <span className="text-[6px] tracking-normal">AUDIT VERIFIED</span>
-                        <span className="text-[5px]">★ 2026 ★</span>
-                      </div>
-
-                      {/* Signature line */}
-                      <div className="text-right">
-                        <div className="h-10 border-b-2 border-slate-400 w-48 mb-1"></div>
-                        <p className="font-bold text-[#0F172A] text-[10px]">Authorized Farm Administrator</p>
-                        <p className="text-[9px] text-[#64748B]">{settingsFarmerName || "Khetivo Farmer"}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 1. Top Header with View Switcher (Chart vs Table) & Actions (Screen View) */}
-                <div className="no-print print:hidden flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#E5ECE7] shadow-xs">
+                {/* 1. Top Header with View Switcher (Chart vs Table) & Actions */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#E5ECE7] shadow-xs">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-bold text-[#26352D]">Farm Reports & Analytics</h2>
+                      <h2 className="text-lg font-bold text-[#26352D]">Farm Reports & Telemetry</h2>
                       <span className="text-[10px] font-semibold text-[#0C4B32] bg-[#E7F3EB] px-2 py-0.5 rounded-full border border-[#C6E2D0]">
                         Audit Ready
                       </span>
                     </div>
                     <p className="text-xs text-[#55685D] mt-1">
-                      Comprehensive farm audits, financial statements, crop performance & input tracking •{" "}
+                      Comprehensive farm audits, financial statements, crop performance & input telemetry •{" "}
                       {isAllFarms ? "All registered holdings" : currentFarm.name}
                     </p>
                   </div>
@@ -9712,10 +8324,10 @@ export default function DashboardPage() {
                         if (typeof window !== "undefined") window.print();
                       }}
                       title="Print or save as PDF"
-                      className="no-print px-3 py-1.5 text-xs font-semibold rounded-xl border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
+                      className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-[#DCE6DE] bg-white hover:bg-[#F4F8F4] text-[#26352D] inline-flex items-center gap-1.5 cursor-pointer shadow-2xs transition-colors"
                     >
                       <Printer className="w-3.5 h-3.5 text-[#55685D]" />
-                      <span className="hidden sm:inline">Print / Save PDF</span>
+                      <span className="hidden sm:inline">Print</span>
                     </button>
 
                     {/* Export Active Report CSV */}
@@ -9753,7 +8365,7 @@ export default function DashboardPage() {
                           );
                         } else if (reportCategory === "inputs") {
                           handleExportCSV(
-                            `khetivo_inventory_report_${currentDateStr}.csv`,
+                            `khetivo_inventory_telemetry_${currentDateStr}.csv`,
                             ["Item Name", "Category", "Store", "Quantity", "Unit", "Rate (INR)", "Total Value (INR)", "Expiry Date"],
                             scopedInventoryItems.map((item) => [
                               item.name,
@@ -9790,8 +8402,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* 2. Report Category Strip & Filters (Hidden on Print) */}
-                <div className="no-print print:hidden bg-white p-3.5 sm:p-4 rounded-2xl border border-[#E5ECE7] shadow-xs space-y-3.5">
+                {/* 2. Report Category Strip & Filters */}
+                <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-[#E5ECE7] shadow-xs space-y-3.5">
                   {/* Top Row: Category Tabs + Reset Filters Button */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E5ECE7] pb-3">
                     {/* Category Navigation Pills with hidden scrollbar */}
@@ -9832,7 +8444,7 @@ export default function DashboardPage() {
                         }`}
                       >
                         <Package className="w-3.5 h-3.5" />
-                        <span>Input Analytics</span>
+                        <span>Input Telemetry</span>
                       </button>
 
                       <button
@@ -9945,8 +8557,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {/* 3. DYNAMIC CONTENT: CHART VIEW vs TABLE VIEW (Hidden on Print) */}
-                <div className="no-print print:hidden">
+                {/* 3. DYNAMIC CONTENT: CHART VIEW vs TABLE VIEW */}
                 {reportViewMode === "chart" ? (
                   /* ===================== VIEW 1: CHART & ANALYTICS VIEW ===================== */
                   <div className="space-y-6">
@@ -10065,7 +8676,7 @@ export default function DashboardPage() {
                                     <div className="h-48 flex flex-col items-center justify-center text-center p-6 bg-[#FBFDFB] rounded-xl border border-dashed border-[#DCE6DE]">
                                       <Receipt className="w-8 h-8 text-[#889B90] mb-2 opacity-50" />
                                       <p className="text-xs font-semibold text-[#26352D]">No Financial Inflow / Outflow Data</p>
-                                      <p className="text-[11px] text-[#55685D] mt-0.5">Record harvest sales or operational expenses to see monthly trends.</p>
+                                      <p className="text-[11px] text-[#55685D] mt-0.5">Record harvest sales or operational expenses to see monthly telemetry.</p>
                                       <button
                                         type="button"
                                         onClick={() => handleOpenRecordModal("production")}
@@ -10085,50 +8696,6 @@ export default function DashboardPage() {
                                         const outflowH = Math.min(100, (d.outflow / maxVal) * 100);
                                         return (
                                           <div key={d.month} className="flex-1 flex flex-col items-center h-full justify-end group">
-                                            <div className="w-full flex items-end justify-center gap-1 sm:gap-1.5 h-full">
-                                              {/* Inflow Bar */}
-                                              <div
-                                                style={{ height: Math.max(4, inflowH) + "%" }}
-                                                title={"Inflow: ₹" + d.inflow + "k"}
-                                                className="w-1/2 max-w-[20px] bg-[#0C4B32] hover:bg-[#083624] rounded-t-md transition-all duration-300 relative group/bar"
-                                              >
-                                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 bg-[#26352D] text-white text-[9px] font-bold px-1 py-0.5 rounded shadow pointer-events-none whitespace-nowrap transition-opacity">
-                                                  ₹{d.inflow}k
-                                                </div>
-                                              </div>
-                                              {/* Outflow Bar */}
-                                              <div
-                                                style={{ height: Math.max(4, outflowH) + "%" }}
-                                                title={"Outflow: ₹" + d.outflow + "k"}
-                                                className="w-1/2 max-w-[20px] bg-[#E06D53] hover:bg-[#c95b42] rounded-t-md transition-all duration-300 relative group/bar"
-                                              >
-                                                <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 bg-[#26352D] text-white text-[9px] font-bold px-1 py-0.5 rounded shadow pointer-events-none whitespace-nowrap transition-opacity">
-                                                  ₹{d.outflow}k
-                                                </div>
-                                              </div>
-                                            </div>
-                                            <span className="text-[11px] font-semibold text-[#55685D] mt-2 group-hover:text-[#0C4B32]">
-                                              {d.month}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                    <div className="flex items-center justify-between text-[10px] text-[#889B90] pt-1">
-                                      <span>Scale: ₹ Thousands (INR)</span>
-                                      <span>Real-time cloud database ledger</span>
-                                    </div>
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          </div>
-
-                          {/* Expense Breakdown Distribution (5 cols) - Dynamic */}
-                          <div className="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl border border-[#E5ECE7] shadow-xs space-y-4 flex flex-col justify-between">
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-[#26352D]">Expense Allocation</h3>
                                             <div className="w-full flex items-end justify-center gap-1 sm:gap-1.5 h-full">
                                               {/* Inflow Bar */}
                                               <div
@@ -10286,7 +8853,7 @@ export default function DashboardPage() {
                           <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-[#DCE6DE]">
                             <Sprout className="w-8 h-8 text-[#889B90] mx-auto mb-2 opacity-50" />
                             <p className="text-xs font-semibold text-[#26352D]">No Active Crops Recorded</p>
-                            <p className="text-[11px] text-[#55685D] mt-0.5">Add your farm parcels and crops in the Crops module to generate acreage and growth analytics.</p>
+                            <p className="text-[11px] text-[#55685D] mt-0.5">Add your farm parcels and crops in the Crops module to generate acreage and growth telemetry.</p>
                           </div>
                         ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -10362,7 +8929,7 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    {/* CATEGORY 3: INPUT ANALYTICS CHARTS */}
+                    {/* CATEGORY 3: INPUT TELEMETRY CHARTS */}
                     {reportCategory === "inputs" && (
                       <div className="space-y-6">
                         {/* 4 Metric Summary Cards */}
@@ -10509,7 +9076,7 @@ export default function DashboardPage() {
                             <div className="p-8 text-center bg-[#FBFDFB] rounded-xl border border-dashed border-[#DCE6DE]">
                               <Wrench className="w-8 h-8 text-[#889B90] mx-auto mb-2 opacity-50" />
                               <p className="text-xs font-semibold text-[#26352D]">No Machinery or Equipment Registered</p>
-                              <p className="text-[11px] text-[#55685D] mt-0.5">Register tractors, pumps, and harvesters in the Equipment module to view runtime stats.</p>
+                              <p className="text-[11px] text-[#55685D] mt-0.5">Register tractors, pumps, and harvesters in the Equipment module to view runtime telemetry.</p>
                             </div>
                           ) : (
                           <div className="space-y-4 pt-2">
@@ -10644,7 +9211,7 @@ export default function DashboardPage() {
                             {activeCrops.length === 0 ? (
                               <tr>
                                 <td colSpan={8} className="px-5 py-8 text-center text-xs text-[#55685D] bg-[#FBFDFB]">
-                                  No crops recorded yet. Add crops to generate performance reports.
+                                  No crops recorded yet. Add crops to generate performance telemetry.
                                 </td>
                               </tr>
                             ) : activeCrops
@@ -10690,7 +9257,7 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    {/* TABLE: INPUT INVENTORY ANALYTICS */}
+                    {/* TABLE: INPUT INVENTORY TELEMETRY */}
                     {reportCategory === "inputs" && (
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
@@ -10843,7 +9410,6 @@ export default function DashboardPage() {
                     )}
                   </div>
                 )}
-                </div>
               </div>
             )}
 
@@ -11019,22 +9585,11 @@ export default function DashboardPage() {
                               <p className="text-[11px] text-[#55685D] mt-0.5">{plan.acreageLimit} • {plan.farmLimit}</p>
                             </div>
 
-                            <ul className="space-y-2 border-t border-[#E5ECE7] pt-3 text-xs text-[#26352D] mb-4">
-                              {plan.features.map((feat, fIdx) => (
-                                <li key={fIdx} className="flex items-start gap-2">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-[#0C4B32] mt-1.5 shrink-0" />
-                                  <span className="text-[11px] leading-snug">
-                                    {feat.includes("(Coming Soon)") ? (
-                                      <>
-                                        {feat.replace("(Coming Soon)", "").trim()}{" "}
-                                        <span className="inline-block px-1.5 py-0.2 text-[9px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded">
-                                          Coming Soon
-                                        </span>
-                                      </>
-                                    ) : (
-                                      feat
-                                    )}
-                                  </span>
+                            <ul className="space-y-1.5 border-t border-[#E5ECE7] pt-3 text-xs text-[#26352D] mb-4">
+                              {plan.features.slice(0, 4).map((feat, fIdx) => (
+                                <li key={fIdx} className="flex items-center gap-2">
+                                  <Check className="w-3.5 h-3.5 text-[#0C4B32] shrink-0" />
+                                  <span className="truncate">{feat}</span>
                                 </li>
                               ))}
                             </ul>
@@ -11526,9 +10081,7 @@ export default function DashboardPage() {
                         </label>
                         <input
                           type="text"
-                          value={settingsHeadquartersAddress}
-                          placeholder="Village Samrala, GT Road Belt, Ludhiana, Punjab 141001"
-                          onChange={(e) => setSettingsHeadquartersAddress(e.target.value)}
+                          defaultValue="Village Samrala, GT Road Belt, Ludhiana, Punjab 141001"
                           className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
                         />
                       </div>
@@ -11729,7 +10282,7 @@ export default function DashboardPage() {
             <div className={`p-1 rounded-lg transition-colors ${activeTab === "dashboard" ? "bg-[#EAF3EC]" : ""}`}>
               <LayoutDashboard className="w-5 h-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight">{t.nav_dashboard}</span>
+            <span className="text-[10px] mt-0.5 tracking-tight">Overview</span>
           </button>
 
           <button
@@ -11747,7 +10300,7 @@ export default function DashboardPage() {
             <div className={`p-1 rounded-lg transition-colors ${activeTab === "crops" || activeTab === "crop-planning" ? "bg-[#EAF3EC]" : ""}`}>
               <Sprout className="w-5 h-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight">{t.nav_crops}</span>
+            <span className="text-[10px] mt-0.5 tracking-tight">Crops</span>
           </button>
 
           <button
@@ -11765,7 +10318,7 @@ export default function DashboardPage() {
             <div className={`p-1 rounded-lg transition-colors ${activeTab === "tasks" ? "bg-[#EAF3EC]" : ""}`}>
               <CheckSquare className="w-5 h-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight">{t.nav_tasks}</span>
+            <span className="text-[10px] mt-0.5 tracking-tight">Tasks</span>
           </button>
 
           <button
@@ -11783,7 +10336,7 @@ export default function DashboardPage() {
             <div className={`p-1 rounded-lg transition-colors ${activeTab === "weather" ? "bg-[#EAF3EC]" : ""}`}>
               <CloudSun className="w-5 h-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight">{t.nav_weather}</span>
+            <span className="text-[10px] mt-0.5 tracking-tight">Weather</span>
           </button>
 
           <button
@@ -11794,7 +10347,7 @@ export default function DashboardPage() {
             <div className="p-1 rounded-lg">
               <Menu className="w-5 h-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight">{t.filter || "Menu"}</span>
+            <span className="text-[10px] mt-0.5 tracking-tight">More</span>
           </button>
         </nav>
       </div>
@@ -14803,7 +13356,7 @@ export default function DashboardPage() {
                   Open Agronomy Support Ticket
                 </h3>
                 <p className="text-xs text-[#55685D] mt-0.5">
-                  Submit a crop diagnosis or field sensor inquiry to PAU extension officers.
+                  Submit a crop diagnosis or field telemetry inquiry to PAU extension officers.
                 </p>
               </div>
               <button
@@ -14851,7 +13404,7 @@ export default function DashboardPage() {
                     <option value="Irrigation & Soil">Irrigation & Soil</option>
                     <option value="Weather & Advisory">Weather & Advisory</option>
                     <option value="Billing & Plan">Billing & Plan</option>
-                    <option value="IoT & Machinery Sensors">IoT & Machinery Sensors</option>
+                    <option value="IoT & Machinery Telemetry">IoT & Machinery Telemetry</option>
                   </select>
                 </div>
 
@@ -15871,149 +14424,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-      {/* NOTIFICATIONS RIGHT SIDEBAR DRAWER */}
-      {notificationSidebarOpen && (
-        <div
-          onClick={() => setNotificationSidebarOpen(false)}
-          className="fixed inset-0 bg-black/30 backdrop-blur-xs z-50 transition-opacity"
-        />
-      )}
-
-      <aside
-        className={`fixed inset-y-0 right-0 z-55 w-84 sm:w-96 max-w-[90vw] h-screen bg-white border-l border-[#E5ECE7] flex flex-col justify-between shadow-2xl transition-transform duration-300 ease-in-out ${
-          notificationSidebarOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Drawer Header */}
-        <div className="h-16 px-5 border-b border-[#E5ECE7] flex items-center justify-between shrink-0 bg-[#FBFDFB]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#EAF3EC] border border-[#C6E2D0] flex items-center justify-center text-[#0C4B32]">
-              <Bell className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-[#26352D]">Notifications</h3>
-                {unreadNotificationsCount > 0 && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#F9B21B] text-[#26352D]">
-                    {unreadNotificationsCount} new
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-[#55685D]">Live advisories & farm alerts</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            {unreadNotificationsCount > 0 && (
-              <button
-                type="button"
-                onClick={() => markAllNotificationsAsRead(farmNotificationsList.map((n) => n.id))}
-                className="text-[11px] font-semibold text-[#0C4B32] hover:underline px-2 py-1 rounded cursor-pointer"
-              >
-                Mark all read
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setNotificationSidebarOpen(false)}
-              className="p-1.5 rounded-lg text-[#55685D] hover:text-[#26352D] hover:bg-[#F4F8F4] transition-colors cursor-pointer"
-              aria-label="Close notifications"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Drawer Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {farmNotificationsList.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-[#55685D]">
-              <div className="w-12 h-12 rounded-full bg-[#F4F8F4] flex items-center justify-center mb-3">
-                <Bell className="w-6 h-6 text-[#889B90]" />
-              </div>
-              <p className="text-xs font-semibold text-[#26352D]">No notifications right now</p>
-              <p className="text-[11px] mt-1 text-[#889B90]">
-                Crop advisories, weather updates, and task alerts will appear here.
-              </p>
-            </div>
-          ) : (
-            farmNotificationsList.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => {
-                  markNotificationAsRead(item.id);
-                  if (item.actionTab) {
-                    setActiveTab(item.actionTab);
-                    setNotificationSidebarOpen(false);
-                  }
-                }}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer relative ${
-                  item.unread
-                    ? "bg-[#F9FCFA] border-[#C6E2D0] hover:bg-[#EAF3EC]/60 shadow-2xs"
-                    : "bg-white border-[#E5ECE7] hover:bg-[#F9FCFA] opacity-80"
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center mt-0.5 ${
-                      item.type === "advisory"
-                        ? "bg-amber-100 text-amber-800"
-                        : item.type === "weather"
-                        ? "bg-blue-100 text-blue-800"
-                        : item.type === "inventory"
-                        ? "bg-rose-100 text-rose-800"
-                        : item.type === "task"
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-purple-100 text-purple-800"
-                    }`}
-                  >
-                    {item.type === "advisory" && <AlertTriangle className="w-3.5 h-3.5" />}
-                    {item.type === "weather" && <CloudSun className="w-3.5 h-3.5" />}
-                    {item.type === "inventory" && <Package className="w-3.5 h-3.5" />}
-                    {item.type === "task" && <CheckSquare className="w-3.5 h-3.5" />}
-                    {item.type === "support" && <HelpCircle className="w-3.5 h-3.5" />}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="text-xs font-bold text-[#26352D] truncate">{item.title}</h4>
-                      <span className="text-[10px] text-[#889B90] shrink-0 font-medium">{item.time}</span>
-                    </div>
-                    <p className="text-[11px] text-[#55685D] mt-1 line-clamp-2 leading-relaxed">
-                      {item.message}
-                    </p>
-                    {item.actionTab && (
-                      <span className="inline-block text-[10px] font-semibold text-[#0C4B32] mt-2 hover:underline">
-                        View in {item.actionTab.charAt(0).toUpperCase() + item.actionTab.slice(1)} &rarr;
-                      </span>
-                    )}
-                  </div>
-
-                  {item.unread && (
-                    <span className="w-2 h-2 rounded-full bg-[#F9B21B] shrink-0 mt-1" />
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Drawer Footer */}
-        <div className="p-3.5 border-t border-[#E5ECE7] bg-[#FBFDFB] flex items-center justify-between text-[11px] text-[#55685D]">
-          <span>Connected to PAU Kisan Advisory</span>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab("advisories");
-              setNotificationSidebarOpen(false);
-            }}
-            className="font-semibold text-[#0C4B32] hover:underline cursor-pointer"
-          >
-            All Advisories
-          </button>
-        </div>
-      </aside>
     </div>
   );
 }

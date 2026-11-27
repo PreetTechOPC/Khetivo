@@ -681,6 +681,8 @@ export default function AdminPage() {
 
     // Load from local cache first
     try {
+      const savedPlans = localStorage.getItem("khetivo_admin_plans");
+      if (savedPlans) setPlans(JSON.parse(savedPlans));
       const savedClients = localStorage.getItem("khetivo_admin_clients");
       if (savedClients) setClients(JSON.parse(savedClients));
       const savedCrops = localStorage.getItem("khetivo_admin_crops");
@@ -4227,11 +4229,16 @@ export default function AdminPage() {
       {/* ========================================================================= */}
       {editingPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-[#DCE6DE] shadow-2xl max-w-md w-full p-5 sm:p-6 space-y-4 my-8 animate-in fade-in zoom-in-95 text-xs">
-            <div className="flex items-start justify-between pb-3 border-b border-[#E5ECE7]">
+          <div className="bg-white rounded-2xl border border-[#DCE6DE] shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 my-8 animate-in fade-in zoom-in-95 text-xs max-h-[90vh] flex flex-col">
+            <div className="flex items-start justify-between pb-3 border-b border-[#E5ECE7] shrink-0">
               <div>
-                <h3 className="text-base font-bold text-[#26352D]">Configure {editingPlan.id} Plan</h3>
-                <p className="text-xs text-[#55685D] mt-0.5">Modify pricing and entitlements.</p>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-[#26352D]">Configure {editingPlan.id} Tier</h3>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${editingPlan.badgeColor}`}>
+                    {editingPlan.id}
+                  </span>
+                </div>
+                <p className="text-xs text-[#55685D] mt-0.5">Modify pricing, limits, hardware specs, and entitlements.</p>
               </div>
               <button
                 type="button"
@@ -4242,55 +4249,171 @@ export default function AdminPage() {
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
-                  Price Per Year (₹)
-                </label>
-                <input
-                  type="number"
-                  value={editingPlan.pricePerYear}
-                  onChange={(e) =>
-                    setEditingPlan({ ...editingPlan, pricePerYear: Number(e.target.value) })
-                  }
-                  className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
-                />
+            <div className="space-y-3.5 overflow-y-auto pr-1 flex-1">
+              {/* Plan Name & Tagline */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                    Plan Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editingPlan.name}
+                    onChange={(e) => setEditingPlan({ ...editingPlan, name: e.target.value })}
+                    className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                    Price Per Year (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={editingPlan.pricePerYear}
+                    onChange={(e) =>
+                      setEditingPlan({ ...editingPlan, pricePerYear: Number(e.target.value) })
+                    }
+                    className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
-                  Max Farms Allowed
+                  Tagline / Description
                 </label>
                 <input
                   type="text"
-                  value={editingPlan.maxFarms}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, maxFarms: e.target.value })}
+                  value={editingPlan.tagline}
+                  onChange={(e) => setEditingPlan({ ...editingPlan, tagline: e.target.value })}
                   className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
                 />
               </div>
 
+              {/* Limits and Specifications */}
+              <div className="p-3 bg-[#F8FAF8] rounded-xl border border-[#E5ECE7] space-y-3">
+                <span className="text-[10px] font-bold text-[#64796C] uppercase tracking-wider block">
+                  Capacity & Hardware Limits
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      Max Holdings (Farms)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingPlan.maxFarms}
+                      onChange={(e) => setEditingPlan({ ...editingPlan, maxFarms: e.target.value })}
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      Max Cultivated Area
+                    </label>
+                    <input
+                      type="text"
+                      value={editingPlan.maxAcreage}
+                      onChange={(e) => setEditingPlan({ ...editingPlan, maxAcreage: e.target.value })}
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      NDVI Satellite Refresh
+                    </label>
+                    <input
+                      type="text"
+                      value={editingPlan.satelliteRefresh}
+                      onChange={(e) => setEditingPlan({ ...editingPlan, satelliteRefresh: e.target.value })}
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
+                      Team Seats / Logins
+                    </label>
+                    <input
+                      type="text"
+                      value={editingPlan.teamSeats}
+                      onChange={(e) => setEditingPlan({ ...editingPlan, teamSeats: e.target.value })}
+                      className="w-full px-3 py-2 bg-white rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Entitlements / Feature Bullets */}
               <div>
-                <label className="block text-[11px] font-semibold text-[#26352D] mb-1">
-                  Max Land Area (Acres)
-                </label>
-                <input
-                  type="text"
-                  value={editingPlan.maxAcreage}
-                  onChange={(e) => setEditingPlan({ ...editingPlan, maxAcreage: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[11px] font-semibold text-[#26352D]">
+                    Included Entitlements & Features
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingPlan({
+                        ...editingPlan,
+                        features: [...editingPlan.features, "New Entitlement / Benefit"],
+                      });
+                    }}
+                    className="text-[11px] font-bold text-[#0C4B32] hover:underline cursor-pointer"
+                  >
+                    + Add Entitlement
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {editingPlan.features.map((feat, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={feat}
+                        onChange={(e) => {
+                          const updated = [...editingPlan.features];
+                          updated[idx] = e.target.value;
+                          setEditingPlan({ ...editingPlan, features: updated });
+                        }}
+                        className="flex-1 px-2.5 py-1.5 bg-[#FBFDFB] rounded-lg border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D] text-xs"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = editingPlan.features.filter((_, i) => i !== idx);
+                          setEditingPlan({ ...editingPlan, features: updated });
+                        }}
+                        className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg cursor-pointer"
+                        title="Remove Entitlement"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-[#E5ECE7] flex justify-end gap-2">
+            <div className="pt-3 border-t border-[#E5ECE7] flex justify-end gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setEditingPlan(null)}
+                className="px-3.5 py-2 text-xs font-semibold text-[#55685D] hover:bg-[#F4F8F4] rounded-xl cursor-pointer"
+              >
+                Cancel
+              </button>
               <button
                 type="button"
                 onClick={() => {
-                  setPlans((prev) => prev.map((p) => (p.id === editingPlan.id ? editingPlan : p)));
+                  const updated = plans.map((p) => (p.id === editingPlan.id ? editingPlan : p));
+                  setPlans(updated);
+                  if (typeof window !== "undefined") {
+                    try {
+                      localStorage.setItem("khetivo_admin_plans", JSON.stringify(updated));
+                    } catch {}
+                  }
                   setEditingPlan(null);
-                  showToast(`${editingPlan.id} plan updated.`);
+                  showToast(`${editingPlan.name} plan & entitlements updated successfully.`);
                 }}
-                className="btn btn-primary text-xs px-4 py-2 font-medium"
+                className="btn btn-primary text-xs px-4 py-2 font-medium cursor-pointer"
               >
                 Save Configuration
               </button>
