@@ -2033,6 +2033,23 @@ export default function DashboardPage() {
     loadAdminCrops();
 
     // 3. Storage event listener for live cross-tab sync between /admin and /dashboard
+    const loadFieldVisitLocations = () => {
+      try {
+        const saved = localStorage.getItem("khetivo_field_visit_locations");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === "object") {
+            setFieldVisitLocationConfig({
+              mode: parsed.mode || "selected",
+              locations: Array.isArray(parsed.locations) ? parsed.locations : [],
+            });
+          }
+        }
+      } catch {}
+    };
+
+    loadFieldVisitLocations();
+
     const handleStorageChange = (e: StorageEvent) => {
       if (!e.key) return;
       if (e.key === "khetivo_admin_crops") {
@@ -2045,6 +2062,8 @@ export default function DashboardPage() {
             if (actives.length > 0) setActiveAdminBroadcasts(actives);
           }
         } catch {}
+      } else if (e.key === "khetivo_field_visit_locations") {
+        loadFieldVisitLocations();
       }
     };
 
@@ -2052,14 +2071,29 @@ export default function DashboardPage() {
       loadAdminCrops();
     };
 
+    const handleCustomLocationsUpdate = () => {
+      loadFieldVisitLocations();
+    };
+
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("khetivo_crops_updated", handleCustomCropsUpdate);
+    window.addEventListener("khetivo_field_visit_locations_updated", handleCustomLocationsUpdate);
     return () => {
       unsubscribeRealtime();
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("khetivo_crops_updated", handleCustomCropsUpdate);
+      window.removeEventListener("khetivo_field_visit_locations_updated", handleCustomLocationsUpdate);
     };
   }, [dataRefreshTrigger]);
+
+  // Field Visit Location Access Settings (synced live with Admin portal)
+  const [fieldVisitLocationConfig, setFieldVisitLocationConfig] = useState<{
+    mode: "all" | "selected";
+    locations: string[];
+  }>({
+    mode: "selected",
+    locations: ["Ludhiana", "Khanna", "Sangrur", "Samrala", "Haldwani"],
+  });
 
   // ========================================================
   // PAID FIELD VISIT BOOKING STATE & HANDLERS (2-STAGE FUNNEL)
@@ -3966,6 +4000,35 @@ export default function DashboardPage() {
     cropTemplate: "",
   };
 
+  // Determine if "Raise a Field Visit" is permitted in the current farm location based on Admin rules
+  const isFieldVisitEligibleForLocation = useMemo(() => {
+    if (fieldVisitLocationConfig.mode === "all") return true;
+    const allowed = (fieldVisitLocationConfig.locations || []).map((l) => l.trim().toLowerCase());
+    if (allowed.length === 0) return false;
+
+    // Check all farms if consolidated view, or check selected farm
+    const candidateFarms = isAllFarms ? farms : (farms.filter((f) => f.id === selectedFarmId));
+    if (candidateFarms.length === 0) {
+      // If user has no registered farm yet, check profile district or default location
+      const profileDistrict = (typeof window !== "undefined" ? localStorage.getItem("khetivo_mandi") || "" : "").toLowerCase();
+      return allowed.some((loc) => profileDistrict.includes(loc));
+    }
+
+    return candidateFarms.some((farm) => {
+      const textsToMatch = [
+        farm.district || "",
+        farm.name || "",
+        farm.address || "",
+        farm.village || "",
+        farm.state || "",
+      ].map((t) => t.toLowerCase());
+
+      return allowed.some((loc) =>
+        textsToMatch.some((txt) => txt.includes(loc) || loc.includes(txt))
+      );
+    });
+  }, [fieldVisitLocationConfig, isAllFarms, farms, selectedFarmId]);
+
   const currentFarmRaw = farms.find((f) => f.id === selectedFarmId) || farms[0] || fallbackEmptyFarm;
 
   const currentFarm: FarmData = isAllFarms
@@ -5258,15 +5321,17 @@ export default function DashboardPage() {
               )}
             </button>
 
-            {/* USER CLICKS "Raise a Field Visit" BUTTON */}
-            <button
-              type="button"
-              onClick={handleOpenFieldVisit}
-              className="btn btn-primary text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 inline-flex items-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer font-medium"
-            >
-              <MapPin className="w-3.5 h-3.5 text-[#F9B21B]" />
-              <span>{t.raise_field_visit}</span>
-            </button>
+            {/* USER CLICKS "Raise a Field Visit" BUTTON (Shown ONLY in locations permitted by Admin) */}
+            {isFieldVisitEligibleForLocation && (
+              <button
+                type="button"
+                onClick={handleOpenFieldVisit}
+                className="btn btn-primary text-xs px-2.5 sm:px-3.5 py-1.5 sm:py-2 inline-flex items-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer font-medium animate-in fade-in"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#F9B21B]" />
+                <span>{t.raise_field_visit}</span>
+              </button>
+            )}
           </div>
         </header>
 

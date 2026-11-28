@@ -609,6 +609,16 @@ export default function AdminPage() {
   const [visitStatusFilter, setVisitStatusFilter] = useState("all");
   const [selectedVisitModal, setSelectedVisitModal] = useState<FieldVisitLead | null>(null);
 
+  // Field Visits Location Eligibility Access Control
+  const [fieldVisitLocationMode, setFieldVisitLocationMode] = useState<"all" | "selected">("selected");
+  const [fieldVisitAllowedLocations, setFieldVisitAllowedLocations] = useState<string[]>([
+    "Ludhiana",
+    "Khanna",
+    "Sangrur",
+    "Samrala",
+  ]);
+  const [newLocationInput, setNewLocationInput] = useState("");
+
   // 7: Role-Based Admin Access State
   const [roles, setRoles] = useState<AdminRoleMember[]>(INITIAL_ROLES);
   const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
@@ -689,6 +699,14 @@ export default function AdminPage() {
       if (savedCrops) setCrops(JSON.parse(savedCrops));
       const savedVisits = localStorage.getItem("khetivo_admin_visits");
       if (savedVisits) setFieldVisits(JSON.parse(savedVisits));
+      const savedLocConfig = localStorage.getItem("khetivo_field_visit_locations");
+      if (savedLocConfig) {
+        try {
+          const parsed = JSON.parse(savedLocConfig);
+          if (parsed.mode) setFieldVisitLocationMode(parsed.mode);
+          if (Array.isArray(parsed.locations)) setFieldVisitAllowedLocations(parsed.locations);
+        } catch {}
+      }
       const savedTickets = localStorage.getItem("khetivo_admin_tickets");
       if (savedTickets) setTickets(JSON.parse(savedTickets));
       const savedRoles = localStorage.getItem("khetivo_admin_roles");
@@ -1005,6 +1023,45 @@ export default function AdminPage() {
       localStorage.setItem("khetivo_admin_roles", JSON.stringify(roles));
     } catch (e) { }
   }, [roles]);
+
+  // Save Field Visit Location Config
+  const handleSaveFieldVisitLocations = (
+    mode = fieldVisitLocationMode,
+    locations = fieldVisitAllowedLocations
+  ) => {
+    try {
+      const config = { mode, locations };
+      localStorage.setItem("khetivo_field_visit_locations", JSON.stringify(config));
+      window.dispatchEvent(new Event("khetivo_field_visit_locations_updated"));
+      showToast(
+        mode === "all"
+          ? "Raise a Field Visit button is enabled in ALL locations."
+          : `Raise a Field Visit button enabled only in ${locations.length} selected locations.`
+      );
+    } catch (e) {
+      console.warn("Failed to save field visit locations:", e);
+    }
+  };
+
+  const handleAddAllowedLocation = (locName: string) => {
+    const trimmed = locName.trim();
+    if (!trimmed) return;
+    if (fieldVisitAllowedLocations.some((l) => l.toLowerCase() === trimmed.toLowerCase())) {
+      showToast(`"${trimmed}" is already in the allowed list.`);
+      return;
+    }
+    const updated = [...fieldVisitAllowedLocations, trimmed];
+    setFieldVisitAllowedLocations(updated);
+    handleSaveFieldVisitLocations(fieldVisitLocationMode, updated);
+    setNewLocationInput("");
+  };
+
+  const handleRemoveAllowedLocation = (locName: string) => {
+    const updated = fieldVisitAllowedLocations.filter((l) => l !== locName);
+    setFieldVisitAllowedLocations(updated);
+    handleSaveFieldVisitLocations(fieldVisitLocationMode, updated);
+    showToast(`Removed "${locName}" from allowed locations.`);
+  };
 
   // Feedback Toast
   const [adminToast, setAdminToast] = useState<string | null>(null);
@@ -3226,6 +3283,155 @@ export default function AdminPage() {
             )}
             {activeTab === "field-visits" && (
               <div className="space-y-5 animate-in fade-in">
+
+                {/* ========================================================= */}
+                {/* ADMIN LOCATION ACCESS CONTROL FOR "RAISE A FIELD VISIT"   */}
+                {/* ========================================================= */}
+                <div className="bg-white rounded-2xl border border-[#DCE6DE] p-5 shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5ECE7]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#E7F3EB] text-[#0C4B32] flex items-center justify-center shrink-0">
+                        <MapPin className="w-5 h-5 text-[#0C4B32]" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-[#26352D]">
+                            "Raise a Field Visit" Location Access Control
+                          </h3>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            fieldVisitLocationMode === "selected"
+                              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                              : "bg-blue-50 text-blue-800 border-blue-200"
+                          }`}>
+                            {fieldVisitLocationMode === "selected" ? "Selective Locations Active" : "Universal (All Locations)"}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#55685D] mt-0.5">
+                          Control which farm locations and districts display the <strong className="text-[#0C4B32]">"Raise a Field Visit"</strong> button on the farmer dashboard.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Mode Toggle Switcher */}
+                    <div className="flex items-center p-1 bg-[#F4F8F4] rounded-xl border border-[#DCE6DE] self-start sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFieldVisitLocationMode("selected");
+                          handleSaveFieldVisitLocations("selected", fieldVisitAllowedLocations);
+                        }}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                          fieldVisitLocationMode === "selected"
+                            ? "bg-[#0C4B32] text-white shadow-2xs"
+                            : "text-[#55685D] hover:text-[#26352D]"
+                        }`}
+                      >
+                        Selected Locations Only
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFieldVisitLocationMode("all");
+                          handleSaveFieldVisitLocations("all", fieldVisitAllowedLocations);
+                        }}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                          fieldVisitLocationMode === "all"
+                            ? "bg-[#0C4B32] text-white shadow-2xs"
+                            : "text-[#55685D] hover:text-[#26352D]"
+                        }`}
+                      >
+                        All Locations
+                      </button>
+                    </div>
+                  </div>
+
+                  {fieldVisitLocationMode === "selected" ? (
+                    <div className="space-y-3 pt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-[#26352D]">
+                          Active Eligible Locations ({fieldVisitAllowedLocations.length}):
+                        </span>
+                        <span className="text-[11px] text-[#55685D]">
+                          Farmers with farms registered in these districts/cities will see the button.
+                        </span>
+                      </div>
+
+                      {/* Chips list of currently active locations */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {fieldVisitAllowedLocations.map((loc) => (
+                          <span
+                            key={loc}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F4F8F4] border border-[#DCE6DE] text-xs font-medium text-[#26352D]"
+                          >
+                            <MapPin className="w-3.5 h-3.5 text-[#0C4B32]" />
+                            <span>{loc}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAllowedLocation(loc)}
+                              title={`Remove ${loc}`}
+                              className="text-[#889B90] hover:text-red-600 transition-colors ml-0.5 cursor-pointer"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Add new location input + Quick Presets */}
+                      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                        <div className="relative flex-1 max-w-md">
+                          <input
+                            type="text"
+                            placeholder="Add district or city name (e.g. Ludhiana, Khanna, Karnal, Patiala)..."
+                            value={newLocationInput}
+                            onChange={(e) => setNewLocationInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddAllowedLocation(newLocationInput);
+                              }
+                            }}
+                            className="w-full px-3.5 py-2 text-xs bg-[#FBFDFB] rounded-xl border border-[#DCE6DE] focus:border-[#0C4B32] outline-none text-[#26352D]"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleAddAllowedLocation(newLocationInput)}
+                          className="btn btn-primary text-xs px-4 py-2 inline-flex items-center justify-center gap-1.5 rounded-xl shadow-xs cursor-pointer font-medium"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Location</span>
+                        </button>
+
+                        {/* Quick Presets */}
+                        <div className="hidden lg:flex items-center gap-1.5 ml-auto text-[11px] text-[#55685D]">
+                          <span>Quick add:</span>
+                          {["Ludhiana", "Khanna", "Sangrur", "Bathinda", "Karnal", "Haldwani", "Jalandhar", "Patiala", "Amritsar"]
+                            .filter((item) => !fieldVisitAllowedLocations.some((l) => l.toLowerCase() === item.toLowerCase()))
+                            .slice(0, 4)
+                            .map((preset) => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => handleAddAllowedLocation(preset)}
+                                className="px-2 py-0.5 rounded-lg bg-[#F4F8F4] hover:bg-[#E7F3EB] text-[#0C4B32] border border-[#DCE6DE] cursor-pointer font-medium transition-colors"
+                              >
+                                + {preset}
+                              </button>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                      <span>
+                        <strong>Universal Mode Active:</strong> The <strong>"Raise a Field Visit"</strong> button is currently visible to all registered farmers across all geographic regions and districts.
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 <div className="bg-white p-4 rounded-2xl border border-[#E5ECE7] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1">
                     <div className="relative flex-1 max-w-md">
