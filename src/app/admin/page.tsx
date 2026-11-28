@@ -611,12 +611,7 @@ export default function AdminPage() {
 
   // Field Visits Location Eligibility Access Control
   const [fieldVisitLocationMode, setFieldVisitLocationMode] = useState<"all" | "selected">("selected");
-  const [fieldVisitAllowedLocations, setFieldVisitAllowedLocations] = useState<string[]>([
-    "Ludhiana",
-    "Khanna",
-    "Sangrur",
-    "Samrala",
-  ]);
+  const [fieldVisitAllowedLocations, setFieldVisitAllowedLocations] = useState<string[]>([]);
   const [newLocationInput, setNewLocationInput] = useState("");
 
   // 7: Role-Based Admin Access State
@@ -973,6 +968,12 @@ export default function AdminPage() {
           setBroadcasts(JSON.parse(e.newValue));
         } else if (e.key === "khetivo_admin_tickets") {
           setTickets(JSON.parse(e.newValue));
+        } else if (e.key === "khetivo_field_visit_locations") {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed && typeof parsed === "object") {
+            if (parsed.mode) setFieldVisitLocationMode(parsed.mode);
+            if (Array.isArray(parsed.locations)) setFieldVisitAllowedLocations(parsed.locations);
+          }
         }
       } catch (err) {
         console.warn("Error syncing storage in admin", err);

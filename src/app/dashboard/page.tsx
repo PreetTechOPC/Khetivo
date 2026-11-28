@@ -1545,6 +1545,20 @@ export default function DashboardPage() {
         setActiveLanguage(savedLang as SupportedLanguage);
         setDraftSettingsLanguage(savedLang as SupportedLanguage);
       }
+      // Fast Hydrate Field Visit Location Configuration from Admin
+      const savedLocConfig = localStorage.getItem("khetivo_field_visit_locations");
+      if (savedLocConfig) {
+        try {
+          const parsed = JSON.parse(savedLocConfig);
+          if (parsed && typeof parsed === "object") {
+            setFieldVisitLocationConfig({
+              mode: parsed.mode || "selected",
+              locations: Array.isArray(parsed.locations) ? parsed.locations : [],
+            });
+          }
+        } catch {}
+      }
+
       const savedFarmId = localStorage.getItem("khetivo_selected_farm_id");
       if (savedFarmId) {
         setSelectedFarmIdState(savedFarmId);
@@ -2092,7 +2106,7 @@ export default function DashboardPage() {
     locations: string[];
   }>({
     mode: "selected",
-    locations: ["Ludhiana", "Khanna", "Sangrur", "Samrala", "Haldwani"],
+    locations: [],
   });
 
   // ========================================================
@@ -4003,30 +4017,40 @@ export default function DashboardPage() {
   // Determine if "Raise a Field Visit" is permitted in the current farm location based on Admin rules
   const isFieldVisitEligibleForLocation = useMemo(() => {
     if (fieldVisitLocationConfig.mode === "all") return true;
-    const allowed = (fieldVisitLocationConfig.locations || []).map((l) => l.trim().toLowerCase());
+    const allowed = (fieldVisitLocationConfig.locations || [])
+      .map((l) => l.trim().toLowerCase())
+      .filter(Boolean);
     if (allowed.length === 0) return false;
 
-    // Check all farms if consolidated view, or check selected farm
-    const candidateFarms = isAllFarms ? farms : (farms.filter((f) => f.id === selectedFarmId));
-    if (candidateFarms.length === 0) {
-      // If user has no registered farm yet, check profile district or default location
-      const profileDistrict = (typeof window !== "undefined" ? localStorage.getItem("khetivo_mandi") || "" : "").toLowerCase();
-      return allowed.some((loc) => profileDistrict.includes(loc));
+    // Helper: test if any candidate location token matches an allowed location name
+    const matchesAllowed = (text?: string) => {
+      if (!text) return false;
+      const clean = text.toLowerCase().trim();
+      // Match whole word or exact token match, e.g. "Ludhiana" in "Khanna, Ludhiana"
+      return allowed.some((loc) => {
+        if (!loc) return false;
+        // Exact equality
+        if (clean === loc) return true;
+        // Word boundary match: loc appears as a distinct word in text
+        const regex = new RegExp(`\\b${loc}\\b`, "i");
+        return regex.test(clean);
+      });
+    };
+
+    if (isAllFarms) {
+      if (farms.length === 0) return false;
+      return farms.some((f) => matchesAllowed(f.district) || matchesAllowed(f.village) || matchesAllowed(f.address));
     }
 
-    return candidateFarms.some((farm) => {
-      const textsToMatch = [
-        farm.district || "",
-        farm.name || "",
-        farm.address || "",
-        farm.village || "",
-        farm.state || "",
-      ].map((t) => t.toLowerCase());
+    // Selected individual farm
+    const targetFarm = farms.find((f) => f.id === selectedFarmId) || farms[0];
+    if (!targetFarm) return false;
 
-      return allowed.some((loc) =>
-        textsToMatch.some((txt) => txt.includes(loc) || loc.includes(txt))
-      );
-    });
+    return (
+      matchesAllowed(targetFarm.district) ||
+      matchesAllowed(targetFarm.village) ||
+      matchesAllowed(targetFarm.address)
+    );
   }, [fieldVisitLocationConfig, isAllFarms, farms, selectedFarmId]);
 
   const currentFarmRaw = farms.find((f) => f.id === selectedFarmId) || farms[0] || fallbackEmptyFarm;
