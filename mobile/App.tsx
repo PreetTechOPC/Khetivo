@@ -37,12 +37,16 @@ import {
   fetchTransactionsFromDB,
   createTransactionInDB,
   deleteTransactionInDB,
+  fetchCropsFromDB,
+  fetchInventoryFromDB,
+  fetchAdvisoriesFromDB,
+  fetchEquipmentFromDB,
 } from './src/services/appwrite';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
 export default function App() {
-  const [farms, setFarms] = useState<Farm[]>(initialFarms);
-  const [activeFarmId, setActiveFarmId] = useState<string>('farm-1');
+  const [farms, setFarms] = useState<Farm[]>([]);
+  const [activeFarmId, setActiveFarmId] = useState<string>('');
   const [currentScreen, setCurrentScreen] = useState<string>('auth');
   const [currentUser, setCurrentUser] = useState<{
     name: string;
@@ -54,18 +58,48 @@ export default function App() {
   const [tutorialVisible, setTutorialVisible] = useState(false);
   const [openAddFarmDirectly, setOpenAddFarmDirectly] = useState(false);
   const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]);
+  const [crops, setCrops] = useState<any[]>([]);
+  const [advisories, setAdvisories] = useState<any[]>([]);
+  const [equipment, setEquipment] = useState<any[]>([]);
+
+  // Function to load all live database records from Appwrite
+  const loadDatabaseData = async (userId?: string) => {
+    try {
+      const [dbFarms, dbTxs, dbInv, dbCrops, dbAdvisories, dbEq] = await Promise.all([
+        fetchFarmsFromDB(userId),
+        fetchTransactionsFromDB(),
+        fetchInventoryFromDB(),
+        fetchCropsFromDB(),
+        fetchAdvisoriesFromDB(),
+        fetchEquipmentFromDB(),
+      ]);
+
+      if (dbFarms && dbFarms.length > 0) {
+        // Attach crops to farms
+        const farmsWithCrops = dbFarms.map((f) => ({
+          ...f,
+          crops: dbCrops.filter((c: any) => c.farmId === f.id),
+        }));
+        setFarms(farmsWithCrops);
+        setActiveFarmId((prev) => (prev && farmsWithCrops.some((f) => f.id === prev) ? prev : farmsWithCrops[0].id));
+      } else {
+        setFarms(initialFarms);
+        setActiveFarmId(initialFarms[0]?.id || 'farm-1');
+      }
+
+      if (dbTxs) setTransactions(dbTxs);
+      if (dbInv) setInventory(dbInv);
+      if (dbCrops) setCrops(dbCrops);
+      if (dbAdvisories) setAdvisories(dbAdvisories);
+      if (dbEq) setEquipment(dbEq);
+    } catch (e) {
+      console.warn('Appwrite live data load error:', e);
+    }
+  };
 
   // Restore authenticated Appwrite session and load data on application mount
   useEffect(() => {
-    // Initial fetch of financial transactions from Appwrite DB
-    fetchTransactionsFromDB()
-      .then((txs) => {
-        if (txs && txs.length > 0) {
-          setTransactions(txs);
-        }
-      })
-      .catch((e) => console.log('Appwrite financials load notice:', e));
-
     getCurrentUser()
       .then(async (user) => {
         if (user) {
@@ -76,30 +110,16 @@ export default function App() {
             id: user.id,
           });
           setCurrentScreen('home');
-
-          // Load live farms and transactions from Appwrite Database
-          try {
-            const [dbFarms, dbTxs] = await Promise.all([
-              fetchFarmsFromDB(user.id),
-              fetchTransactionsFromDB(),
-            ]);
-            if (dbFarms && dbFarms.length > 0) {
-              setFarms(dbFarms);
-              setActiveFarmId(dbFarms[0].id);
-            }
-            if (dbTxs && dbTxs.length > 0) {
-              setTransactions(dbTxs);
-            }
-          } catch (e) {
-            console.log('Appwrite sync fallback:', e);
-          }
+          loadDatabaseData(user.id);
         } else {
           setCurrentScreen('auth');
+          loadDatabaseData();
         }
       })
       .catch((err) => {
         console.log('Appwrite session status:', err);
         setCurrentScreen('auth');
+        loadDatabaseData();
       });
   }, []);
 
@@ -132,11 +152,30 @@ export default function App() {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'crops':
-        return <CropGuideScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <CropGuideScreen
+            onBack={() => setCurrentScreen('home')}
+            farms={farms}
+            farmId={activeFarmId}
+            userId={currentUser?.id}
+          />
+        );
       case 'tasks':
-        return <TasksScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <TasksScreen
+            onBack={() => setCurrentScreen('home')}
+            farmId={activeFarmId}
+            userId={currentUser?.id}
+          />
+        );
       case 'inventory':
-        return <InventoryScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <InventoryScreen
+            onBack={() => setCurrentScreen('home')}
+            farmId={activeFarmId}
+            userId={currentUser?.id}
+          />
+        );
       case 'ledger':
       case 'stats':
       case 'expenses':
@@ -169,7 +208,13 @@ export default function App() {
           />
         );
       case 'equipment':
-        return <EquipmentScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <EquipmentScreen
+            onBack={() => setCurrentScreen('home')}
+            farmId={activeFarmId}
+            userId={currentUser?.id}
+          />
+        );
       case 'parcels':
       case 'my-farms':
       case 'farms':
@@ -191,15 +236,36 @@ export default function App() {
           />
         );
       case 'team':
-        return <TeamScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <TeamScreen
+            onBack={() => setCurrentScreen('home')}
+            farmId={activeFarmId}
+            userId={currentUser?.id}
+          />
+        );
       case 'support':
-        return <SupportScreen onBack={() => setCurrentScreen('home')} />;
+        return (
+          <SupportScreen
+            onBack={() => setCurrentScreen('home')}
+            userId={currentUser?.id}
+          />
+        );
       case 'advisories':
         return <AdvisoriesScreen onBack={() => setCurrentScreen('home')} />;
       case 'weather':
         return <WeatherScreen farm={currentFarm} onBack={() => setCurrentScreen('home')} />;
       case 'reports':
-        return <ReportsScreen farm={currentFarm} onBack={() => setCurrentScreen('home')} />;
+        return (
+          <ReportsScreen
+            farm={currentFarm}
+            farms={farms}
+            inventory={inventory}
+            transactions={transactions}
+            crops={crops}
+            equipment={equipment}
+            onBack={() => setCurrentScreen('home')}
+          />
+        );
       case 'subscription':
         return (
           <SubscriptionScreen
@@ -231,6 +297,7 @@ export default function App() {
               } else {
                 setCurrentScreen('home');
               }
+              loadDatabaseData(user.id);
             }}
             onBack={currentUser ? () => setCurrentScreen('home') : undefined}
           />
@@ -252,6 +319,7 @@ export default function App() {
               onLoginSuccess={(user) => {
                 setCurrentUser(user);
                 setCurrentScreen('home');
+                loadDatabaseData(user.id);
               }}
             />
           );
@@ -265,6 +333,8 @@ export default function App() {
             onNavigate={(screen) => setCurrentScreen(screen)}
             onOpenTutorial={() => setTutorialVisible(true)}
             transactions={transactions}
+            inventory={inventory}
+            advisoriesCount={advisories.length}
           />
         );
     }

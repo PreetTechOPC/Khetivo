@@ -366,6 +366,62 @@ export async function fetchCropsFromDB(farmId?: string): Promise<Crop[]> {
 }
 
 /**
+ * Create Crop in Appwrite Database
+ */
+export async function createCropInDB(crop: any, userId?: string): Promise<Crop> {
+  const doc = await databases.createDocument(
+    APPWRITE_CONFIG.DATABASE_ID,
+    APPWRITE_CONFIG.COLLECTIONS.FARM_CROPS,
+    ID.unique(),
+    {
+      farmId: crop.farmId || 'default_farm',
+      userId: userId || 'usr_default_farmer',
+      name: crop.name,
+      cropName: crop.name,
+      variety: crop.variety || 'Standard',
+      area: Number(crop.area) || 1,
+      areaUnit: crop.areaUnit || 'Acres',
+      season: crop.season || 'Rabi',
+      stage: crop.stage || 'Sowing & Germination',
+      stageStep: Number(crop.stageStep) || 1,
+      currentDay: Number(crop.currentDay) || 1,
+      totalDays: Number(crop.totalDays) || 95,
+      health: crop.health || 'Optimal',
+      sownDate: crop.sownDate || new Date().toISOString(),
+      harvestDate: crop.harvestDate || new Date().toISOString(),
+      nextMilestone: crop.nextMilestone || '',
+      color: crop.color || '#278449',
+      currentMoisture: 35,
+      lowMoistureAlert: 30,
+    }
+  );
+
+  return {
+    id: doc.$id,
+    name: doc.name,
+    variety: doc.variety,
+    area: doc.area,
+    areaUnit: doc.areaUnit,
+    season: doc.season,
+    stage: doc.stage,
+    stageStep: doc.stageStep,
+    currentDay: doc.currentDay,
+    totalDays: doc.totalDays,
+    health: doc.health,
+    sownDate: doc.sownDate,
+    nextMilestone: doc.nextMilestone,
+    harvestDate: doc.harvestDate,
+    color: doc.color,
+    lowMoistureAlert: doc.lowMoistureAlert,
+    currentMoisture: doc.currentMoisture,
+    dos: [],
+    donts: [],
+    diseases: '',
+    sprayGuide: '',
+  };
+}
+
+/**
  * Fetch Inventory Items from Appwrite Database
  */
 export async function fetchInventoryFromDB(farmId?: string): Promise<InventoryItem[]> {
@@ -535,4 +591,393 @@ export async function fetchTasksFromDB(farmId?: string): Promise<Task[]> {
     console.warn('[Appwrite fetchTasks Error]:', error);
     return [];
   }
+}
+
+/**
+ * Create a Task in Appwrite Database
+ */
+export async function createTaskInDB(task: Partial<Task>, userId?: string): Promise<Task> {
+  const doc = await databases.createDocument(
+    APPWRITE_CONFIG.DATABASE_ID,
+    APPWRITE_CONFIG.COLLECTIONS.TASKS,
+    ID.unique(),
+    {
+      farmId: task.farmId || 'default_farm',
+      userId: userId || 'usr_default_farmer',
+      title: task.title || 'Untitled Task',
+      category: task.category || 'General',
+      priority: task.priority || 'Medium',
+      status: task.status || 'To Do',
+      dueDate: task.dueDate || new Date().toISOString(),
+      assignedTo: task.assignedTo || 'Harpreet Singh',
+      zone: task.zone || '',
+      crop: task.crop || '',
+      instructions: task.instructions || '',
+      description: task.description || '',
+    }
+  );
+
+  return {
+    id: doc.$id,
+    farmId: doc.farmId,
+    farmName: task.farmName || 'Khetivo Farm',
+    title: doc.title,
+    category: doc.category,
+    priority: doc.priority,
+    status: doc.status,
+    dueDate: doc.dueDate,
+    assignedTo: doc.assignedTo,
+    zone: doc.zone,
+    crop: doc.crop,
+    instructions: doc.instructions,
+    description: doc.description,
+  };
+}
+
+/**
+ * Update Task Status in Appwrite Database
+ */
+export async function updateTaskStatusInDB(taskId: string, status: 'To Do' | 'In Progress' | 'Completed'): Promise<void> {
+  try {
+    await databases.updateDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.TASKS,
+      taskId,
+      {
+        status,
+        ...(status === 'Completed' ? { completedDate: new Date().toISOString() } : {}),
+      }
+    );
+  } catch (error) {
+    console.warn('[Appwrite updateTaskStatus Error]:', error);
+  }
+}
+
+/**
+ * Delete a Task in Appwrite Database
+ */
+export async function deleteTaskInDB(taskId: string): Promise<void> {
+  try {
+    await databases.deleteDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.TASKS,
+      taskId
+    );
+  } catch (error) {
+    console.warn('[Appwrite deleteTask Error]:', error);
+  }
+}
+
+/**
+ * Create an Inventory Item in Appwrite Database
+ */
+export async function createInventoryItemInDB(item: Partial<InventoryItem>, userId?: string): Promise<InventoryItem> {
+  const doc = await databases.createDocument(
+    APPWRITE_CONFIG.DATABASE_ID,
+    APPWRITE_CONFIG.COLLECTIONS.INVENTORY_ITEMS,
+    ID.unique(),
+    {
+      farmId: item.farmId || 'default_farm',
+      storeId: item.storeId || 'store_main',
+      userId: userId || 'usr_default_farmer',
+      name: item.name || 'Item',
+      category: item.category || 'General',
+      batchNumber: item.batchNumber || `BAT-${Date.now().toString().slice(-5)}`,
+      purchasedDate: item.purchasedDate || new Date().toISOString(),
+      expiryDate: item.expiryDate || new Date().toISOString(),
+      quantity: Number(item.quantity) || 0,
+      unit: item.unit || 'kg',
+      rate: Number(item.rate) || 0,
+      lowStockThreshold: Number(item.lowStockThreshold) || 5,
+    }
+  );
+
+  return {
+    id: doc.$id,
+    farmId: doc.farmId,
+    farmName: item.farmName || 'Khetivo Farm',
+    storeId: doc.storeId,
+    storeName: item.storeName || 'Main Store',
+    name: doc.name,
+    category: doc.category,
+    batchNumber: doc.batchNumber,
+    purchasedDate: doc.purchasedDate,
+    expiryDate: doc.expiryDate,
+    quantity: doc.quantity,
+    unit: doc.unit,
+    rate: doc.rate,
+    lowStockThreshold: doc.lowStockThreshold,
+  };
+}
+
+/**
+ * Update Inventory Item Quantity in Appwrite Database
+ */
+export async function updateInventoryQtyInDB(itemId: string, quantity: number): Promise<void> {
+  try {
+    await databases.updateDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.INVENTORY_ITEMS,
+      itemId,
+      { quantity }
+    );
+  } catch (error) {
+    console.warn('[Appwrite updateInventoryQty Error]:', error);
+  }
+}
+
+/**
+ * Delete Inventory Item from Appwrite Database
+ */
+export async function deleteInventoryItemInDB(itemId: string): Promise<void> {
+  try {
+    await databases.deleteDocument(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.INVENTORY_ITEMS,
+      itemId
+    );
+  } catch (error) {
+    console.warn('[Appwrite deleteInventoryItem Error]:', error);
+  }
+}
+
+/**
+ * Fetch Equipment from Appwrite Database
+ */
+export async function fetchEquipmentFromDB(farmId?: string): Promise<any[]> {
+  try {
+    const queries: string[] = [Query.limit(50)];
+    if (farmId) {
+      queries.push(Query.equal('farmId', farmId));
+    }
+
+    const res = await databases.listDocuments(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT,
+      queries
+    );
+
+    return res.documents.map((doc: any) => ({
+      id: doc.$id,
+      name: doc.name || 'Equipment',
+      model: doc.model || '',
+      category: doc.category || 'Tractor',
+      hoursRun: Number(doc.runtimeHours) || 0,
+      nextServiceHours: Number(doc.nextServiceHours) || 250,
+      status: doc.status || 'Operational',
+      fuelLevel: Number(doc.fuelLevel) || 80,
+      operator: doc.operator || 'Operator',
+      fuelEfficiency: doc.fuelEfficiency || '4.0 L/hr',
+      nextServiceDate: doc.nextServiceDate || '',
+      farm: doc.farmName || 'Khetivo Farm',
+    }));
+  } catch (error) {
+    console.warn('[Appwrite fetchEquipment Error]:', error);
+    return [];
+  }
+}
+
+/**
+ * Create Equipment in Appwrite Database
+ */
+export async function createEquipmentInDB(eq: any, userId?: string): Promise<any> {
+  const doc = await databases.createDocument(
+    APPWRITE_CONFIG.DATABASE_ID,
+    APPWRITE_CONFIG.COLLECTIONS.EQUIPMENT,
+    ID.unique(),
+    {
+      farmId: eq.farmId || 'default_farm',
+      userId: userId || 'usr_default_farmer',
+      name: eq.name,
+      category: eq.category || 'Tractor',
+      model: eq.model || 'Standard',
+      operator: eq.operator || 'Operator',
+      status: eq.status || 'Operational',
+      runtimeHours: Number(eq.hoursRun) || 0,
+      nextServiceHours: Number(eq.nextServiceHours) || 250,
+      fuelLevel: Number(eq.fuelLevel) || 100,
+      fuelEfficiency: eq.fuelEfficiency || '4.0 L/hr',
+      lastServiceDate: new Date().toISOString(),
+      nextServiceDate: eq.nextServiceDate || new Date().toISOString(),
+    }
+  );
+
+  return {
+    id: doc.$id,
+    name: doc.name,
+    category: doc.category,
+    model: doc.model,
+    operator: doc.operator,
+    status: doc.status,
+    hoursRun: doc.runtimeHours,
+    nextServiceHours: doc.nextServiceHours,
+    fuelLevel: doc.fuelLevel,
+    fuelEfficiency: doc.fuelEfficiency,
+    nextServiceDate: doc.nextServiceDate,
+  };
+}
+
+/**
+ * Fetch Team Members from Appwrite Database
+ */
+export async function fetchTeamFromDB(farmId?: string): Promise<any[]> {
+  try {
+    const queries: string[] = [Query.limit(50)];
+    if (farmId) {
+      queries.push(Query.equal('farmId', farmId));
+    }
+
+    const res = await databases.listDocuments(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.TEAM_MEMBERS,
+      queries
+    );
+
+    return res.documents.map((doc: any) => ({
+      id: doc.$id,
+      name: doc.name || 'Worker',
+      role: doc.designationTitle || doc.roleCategory || 'Worker',
+      phone: doc.phone || '+91 98000-00000',
+      assignedParcels: doc.assignedParcels || 'All Holdings',
+      status: doc.status === 'Active' ? 'On Duty' : 'Off Duty',
+    }));
+  } catch (error) {
+    console.warn('[Appwrite fetchTeam Error]:', error);
+    return [];
+  }
+}
+
+/**
+ * Create Team Member in Appwrite Database
+ */
+export async function createTeamMemberInDB(member: any, userId?: string): Promise<any> {
+  const doc = await databases.createDocument(
+    APPWRITE_CONFIG.DATABASE_ID,
+    APPWRITE_CONFIG.COLLECTIONS.TEAM_MEMBERS,
+    ID.unique(),
+    {
+      farmId: member.farmId || 'default_farm',
+      userId: userId || 'usr_default_farmer',
+      name: member.name,
+      phone: member.phone || '+91 98000-00000',
+      roleCategory: 'worker',
+      designationTitle: member.role || 'Field Worker',
+      status: member.status === 'Off Duty' ? 'Inactive' : 'Active',
+      joinedDate: new Date().toISOString(),
+    }
+  );
+
+  return {
+    id: doc.$id,
+    name: doc.name,
+    role: doc.designationTitle,
+    phone: doc.phone,
+    assignedParcels: member.assignedParcels || 'All Holdings',
+    status: doc.status === 'Active' ? 'On Duty' : 'Off Duty',
+  };
+}
+
+/**
+ * Fetch Advisories from Appwrite Database
+ */
+export async function fetchAdvisoriesFromDB(): Promise<any[]> {
+  try {
+    const res = await databases.listDocuments(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.ADVISORIES,
+      [Query.limit(50), Query.orderDesc('$createdAt')]
+    );
+
+    return res.documents.map((doc: any) => ({
+      id: doc.$id,
+      title: doc.title || 'Advisory',
+      category: doc.category || 'Pest & Disease Alert',
+      priority: doc.priority || 'High',
+      targetCrop: doc.targetCrop || 'All Crops',
+      targetDistrict: doc.targetDistrict || 'All Districts',
+      targetState: doc.targetState || 'Punjab',
+      message: doc.message || '',
+      actionPrescription: doc.actionPrescription || '',
+      dispatchedAt: doc.dispatchedAt ? new Date(doc.dispatchedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Today',
+      dispatchedBy: doc.dispatchedBy || 'PAU University Agronomist',
+      isActive: doc.isActive !== false,
+    }));
+  } catch (error) {
+    console.warn('[Appwrite fetchAdvisories Error]:', error);
+    return [];
+  }
+}
+
+/**
+ * Fetch Support Tickets from Appwrite Database
+ */
+export async function fetchSupportTicketsFromDB(userId?: string): Promise<any[]> {
+  try {
+    const queries: string[] = [Query.limit(50), Query.orderDesc('$createdAt')];
+    if (userId) {
+      queries.push(Query.equal('userId', userId));
+    }
+
+    const res = await databases.listDocuments(
+      APPWRITE_CONFIG.DATABASE_ID,
+      APPWRITE_CONFIG.COLLECTIONS.SUPPORT_TICKETS,
+      queries
+    );
+
+    return res.documents.map((doc: any) => ({
+      id: doc.$id,
+      ticketNo: doc.ticketNo || 'TKT-0000',
+      subject: doc.subject || 'Support Request',
+      category: doc.category || 'General Support',
+      farmName: doc.farmName || 'Khetivo Farm',
+      cropName: doc.cropName || 'General',
+      priority: doc.priority || 'Normal',
+      status: doc.status || 'Open',
+      createdAt: doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent',
+      lastReply: doc.resolution || 'Waiting for specialist agronomist review.',
+      assignedAgronomist: doc.assignedAgronomist || 'PAU duty agronomist',
+      description: doc.description || '',
+    }));
+  } catch (error) {
+    console.warn('[Appwrite fetchSupportTickets Error]:', error);
+    return [];
+  }
+}
+
+/**
+ * Create Support Ticket in Appwrite Database
+ */
+export async function createSupportTicketInDB(ticket: any, userId?: string): Promise<any> {
+  const doc = await databases.createDocument(
+    APPWRITE_CONFIG.DATABASE_ID,
+    APPWRITE_CONFIG.COLLECTIONS.SUPPORT_TICKETS,
+    ID.unique(),
+    {
+      ticketNo: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
+      userId: userId || 'usr_default_farmer',
+      farmName: ticket.farmName || 'Khetivo Farm',
+      cropName: ticket.cropName || 'General',
+      subject: ticket.subject || 'Farmer Query',
+      category: ticket.category || 'Crop Health & Pathology',
+      priority: ticket.priority || 'Normal',
+      status: 'Open',
+      description: ticket.description || '',
+      assignedAgronomist: 'PAU Agronomist',
+    }
+  );
+
+  return {
+    id: doc.$id,
+    ticketNo: doc.ticketNo,
+    subject: doc.subject,
+    category: doc.category,
+    farmName: doc.farmName,
+    cropName: doc.cropName,
+    priority: doc.priority,
+    status: doc.status,
+    createdAt: 'Just now',
+    lastReply: 'Ticket registered. Duty agronomist will review within 2 hours.',
+    assignedAgronomist: doc.assignedAgronomist,
+    description: doc.description,
+  };
 }

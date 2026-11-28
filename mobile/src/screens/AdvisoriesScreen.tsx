@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share, ActivityIndicator } from 'react-native';
 import { colors } from '../theme/colors';
-import { initialAdvisories, Advisory } from '../data/mockData';
+import { Advisory } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAlert } from '../context/AlertContext';
+import { fetchAdvisoriesFromDB } from '../services/appwrite';
 
 interface AdvisoriesScreenProps {
   onBack: () => void;
@@ -11,9 +12,30 @@ interface AdvisoriesScreenProps {
 
 export const AdvisoriesScreen: React.FC<AdvisoriesScreenProps> = ({ onBack }) => {
   const { showSuccess } = useAlert();
-  const [advisories] = useState<Advisory[]>(initialAdvisories);
+  const [advisories, setAdvisories] = useState<Advisory[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'pest' | 'weather'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Load live advisories from Appwrite Database
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchAdvisoriesFromDB()
+      .then((dbAdvisories) => {
+        if (mounted) {
+          setAdvisories(dbAdvisories);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Load advisories notice:', err);
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const filtered = advisories.filter((a) => {
     if (categoryFilter === 'all') return true;

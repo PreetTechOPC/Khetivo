@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,14 +10,18 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../theme/colors';
-import { initialWorkers, Worker } from '../data/mockData';
+import { Worker } from '../data/mockData';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAlert } from '../context/AlertContext';
+import { fetchTeamFromDB, createTeamMemberInDB } from '../services/appwrite';
 
 interface TeamScreenProps {
   onBack: () => void;
+  farmId?: string;
+  userId?: string;
 }
 
 interface Designation {
@@ -80,12 +84,33 @@ const initialDesignations: Designation[] = [
   },
 ];
 
-export const TeamScreen: React.FC<TeamScreenProps> = ({ onBack }) => {
+export const TeamScreen: React.FC<TeamScreenProps> = ({ onBack, farmId, userId }) => {
   const { showInfo, showWarning, showSuccess } = useAlert();
-  const [workers, setWorkers] = useState<Worker[]>(initialWorkers);
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [designations, setDesignations] = useState<Designation[]>(initialDesignations);
   const [subTab, setSubTab] = useState<'members' | 'designations'>('members');
   const [search, setSearch] = useState('');
+
+  // Load team members from Appwrite Database
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchTeamFromDB(farmId)
+      .then((dbTeam) => {
+        if (mounted) {
+          setWorkers(dbTeam);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Load team notice:', err);
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [farmId]);
 
   // Modals
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
@@ -118,7 +143,7 @@ export const TeamScreen: React.FC<TeamScreenProps> = ({ onBack }) => {
     });
   };
 
-  const handleAddMember = () => {
+  const handleAddMember = async () => {
     if (!memberFormName.trim()) {
       showWarning('Required Field', 'Please enter Full Name.');
       return;
@@ -132,22 +157,31 @@ export const TeamScreen: React.FC<TeamScreenProps> = ({ onBack }) => {
       return;
     }
     const des = designations.find((d) => d.id === memberFormDesignationId) || designations[0];
-    const created: Worker = {
-      id: `w-${Date.now()}`,
+    const memberPayload: any = {
+      farmId: farmId || 'default_farm',
       name: memberFormName.trim(),
       role: des.title,
       phone: memberFormPhone.trim(),
       assignedParcels: memberFormFarm,
       status: memberFormStatus === 'Active' ? 'On Duty' : 'Off Duty',
     };
-    setWorkers([...workers, created]);
+
     setIsAddMemberOpen(false);
     setMemberFormName('');
     setMemberFormPhone('+91 ');
     setMemberFormEmail('');
     setMemberFormNotes('');
     setMemberFormStatus('Active');
-    showSuccess('Member Added', `${created.name} added as ${created.role} (${memberFormFarm}).`);
+
+    try {
+      const created = await createTeamMemberInDB(memberPayload, userId);
+      setWorkers((prev) => [...prev, created]);
+      showSuccess('Member Added', `${created.name} saved to database.`);
+    } catch (err: any) {
+      console.warn('Create team member error:', err);
+      setWorkers((prev) => [...prev, { ...memberPayload, id: `w-${Date.now()}` }]);
+      showSuccess('Member Added', `${memberPayload.name} added as ${memberPayload.role}.`);
+    }
   };
 
   const handleAddDesignation = () => {

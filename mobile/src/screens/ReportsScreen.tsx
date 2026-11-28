@@ -15,10 +15,23 @@ import { useAlert } from '../context/AlertContext';
 
 interface ReportsScreenProps {
   farm?: Farm;
+  farms?: Farm[];
+  inventory?: any[];
+  transactions?: any[];
+  crops?: any[];
+  equipment?: any[];
   onBack: () => void;
 }
 
-export const ReportsScreen: React.FC<ReportsScreenProps> = ({ onBack }) => {
+export const ReportsScreen: React.FC<ReportsScreenProps> = ({
+  farm,
+  farms = [],
+  inventory = [],
+  transactions = [],
+  crops = [],
+  equipment = [],
+  onBack,
+}) => {
   const { showSuccess, showInfo } = useAlert();
   const [reportViewMode, setReportViewMode] = useState<'chart' | 'table'>('chart');
   const [reportCategory, setReportCategory] = useState<'financial' | 'crops' | 'inputs' | 'machinery'>('financial');
@@ -26,37 +39,23 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({ onBack }) => {
   const [farmFilter, setFarmFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Mock scoped data
-  const totalCombinedArea = initialFarms.reduce((sum, f) => sum + f.totalArea, 0);
+  // Live dynamic data
+  const totalCombinedArea = farms.reduce((sum, f) => sum + f.totalArea, 0) || (farm ? farm.totalArea : 0);
 
-  const activeCrops = [
-    { id: 'c-1', name: 'Wheat', variety: 'HD-3086 / Sharbati', area: 18, areaUnit: 'Acres', season: 'Rabi', sownDate: '2026-10-24', stage: 'Tillering', currentDay: 28, totalDays: 135, health: 'Vigorous', farmName: 'Khetivo Green Acres (Samrala)' },
-    { id: 'c-2', name: 'Potato', variety: 'Kufri Pukhraj', area: 10, areaUnit: 'Acres', season: 'Rabi', sownDate: '2026-10-10', stage: 'Tuber Bulking', currentDay: 42, totalDays: 90, health: 'Optimal', farmName: 'Khetivo Green Acres (Samrala)' },
-    { id: 'c-3', name: 'Mustard / Sarson', variety: 'Pusa Jai Kisan', area: 16, areaUnit: 'Acres', season: 'Rabi', sownDate: '2026-10-18', stage: 'Vegetative', currentDay: 35, totalDays: 120, health: 'Vigorous', farmName: 'Malwa Golden Fields (Sangrur)' },
-    { id: 'c-4', name: 'Green Fodder', variety: 'Barseem', area: 8, areaUnit: 'Acres', season: 'Rabi', sownDate: '2026-11-01', stage: 'Multi-Cut', currentDay: 20, totalDays: 150, health: 'Good', farmName: 'Malwa Golden Fields (Sangrur)' },
+  const activeCrops = crops.length > 0 ? crops : [
+    { id: 'c-1', name: 'Wheat', variety: 'HD-3086 / PBW-826', area: 18, areaUnit: 'Acres', season: 'Rabi', sownDate: '2026-10-24', stage: 'Tillering', currentDay: 28, totalDays: 135, health: 'Vigorous', farmName: farm?.name || 'Khetivo Farm' },
   ];
 
-  const financialTransactions = [
-    { id: 'tx-1', date: '2026-10-28', type: 'production', title: 'Basmati 1121 Mandi Sale', category: 'Mandi Harvest Sale', amount: 1078000, status: 'Settled', farmName: 'Khetivo Green Acres' },
-    { id: 'tx-2', date: '2026-11-01', type: 'expense', title: 'PBW-826 Certified Seeds', category: 'Seeds & Nursery', amount: 48500, status: 'Settled', farmName: 'Khetivo Green Acres' },
-    { id: 'tx-3', date: '2026-11-03', type: 'expense', title: 'Basal DAP & MOP Fertilizers', category: 'Fertilizers', amount: 89200, status: 'Settled', farmName: 'Khetivo Green Acres' },
-    { id: 'tx-4', date: '2026-11-05', type: 'expense', title: 'Diesel for Laser Leveler', category: 'Diesel & Fuel', amount: 32400, status: 'Settled', farmName: 'Malwa Golden Fields' },
-    { id: 'tx-5', date: '2026-11-07', type: 'loss', title: 'Post-Harvest Sorting Moisture Loss', category: 'Crop Loss', amount: 12500, status: 'Settled', farmName: 'Khetivo Green Acres' },
-  ];
+  const financialTransactions = transactions;
 
-  const equipmentList = [
-    { id: 'eq-1', name: 'John Deere 5310 4WD (55 HP)', category: 'Tractor', operator: 'Gurmukh Ram', runtimeHours: 840, fuelSpec: '4.8 L/hr Diesel', status: 'Operational', nextService: '2026-12-15' },
-    { id: 'eq-2', name: 'Sonalika DI 60 Sikander (60 HP)', category: 'Tractor', operator: 'Jaswinder Singh', runtimeHours: 620, fuelSpec: '5.2 L/hr Diesel', status: 'Operational', nextService: '2026-11-30' },
-    { id: 'eq-3', name: 'Kirloskar 10HP Submersible Solar Pump', category: 'Irrigation Pump', operator: 'Harpreet Singh', runtimeHours: 410, fuelSpec: 'Solar / Grid Hybrid', status: 'Operational', nextService: '2027-01-10' },
-    { id: 'eq-4', name: 'Rotavator & Laser Land Leveler', category: 'Implements', operator: 'Harnek Singh', runtimeHours: 70, fuelSpec: 'PTO Driven', status: 'Service Due', nextService: '2026-11-18' },
-  ];
+  const equipmentList = equipment;
 
-  // Aggregates
-  const totalProduction = 1078000;
-  const totalExpenses = 170100;
-  const totalLosses = 12500;
+  // Live Aggregates
+  const totalProduction = transactions.filter((t) => t.type === 'production').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = transactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const totalLosses = transactions.filter((t) => t.type === 'loss').reduce((sum, t) => sum + t.amount, 0);
   const netRealization = totalProduction - totalExpenses - totalLosses;
-  const totalInventoryValuation = initialInventory.reduce((sum, item) => sum + item.quantity * item.rate, 0);
+  const totalInventoryValuation = inventory.reduce((sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.rate) || 0), 0);
 
   const handleExportCSV = () => {
     let filename = `khetivo_${reportCategory}_report.csv`;

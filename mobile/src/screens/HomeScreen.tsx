@@ -8,7 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { colors } from '../theme/colors';
-import { Farm, Crop, initialAdvisories, initialInventory, InventoryItem } from '../data/mockData';
+import { Farm, Crop, InventoryItem } from '../data/mockData';
 import { FinancialTransaction } from './LedgerScreen';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
@@ -20,6 +20,8 @@ interface HomeScreenProps {
   onOpenTutorial?: () => void;
   farmerName?: string;
   transactions?: FinancialTransaction[];
+  inventory?: InventoryItem[];
+  advisoriesCount?: number;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -29,6 +31,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigate,
   farmerName = 'Mohan Lal',
   transactions = [],
+  inventory = [],
+  advisoriesCount = 0,
 }) => {
   const totalAcres = farms.reduce((acc, f) => acc + f.totalArea, 0);
 
@@ -55,8 +59,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   );
   const displayCrops: DisplayCrop[] = allCrops.length > 0 ? allCrops : ((currentFarm.crops || []) as DisplayCrop[]);
 
-  // Inventory preview
-  const displayInventory: InventoryItem[] = initialInventory.slice(0, 2);
+  // Live Inventory preview
+  const displayInventory: InventoryItem[] = inventory.slice(0, 3);
 
   return (
     <View style={styles.container}>
@@ -92,9 +96,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               activeOpacity={0.7}
             >
               <Ionicons name="notifications-outline" size={19} color={colors.text} />
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{initialAdvisories.length}</Text>
-              </View>
+              {advisoriesCount > 0 && (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>{advisoriesCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -319,28 +325,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
 
           <View style={styles.rowsContainer}>
-            {displayInventory.map((item, idx) => (
-              <TouchableOpacity
-                key={item.id || idx}
-                style={[styles.inventoryRow, idx > 0 && styles.rowBorderTop]}
-                onPress={() => onNavigate('inventory')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.inventoryLeft}>
-                  <Text style={styles.inventoryPercentage}>
-                    {idx === 0 ? '56%' : '20%'}
-                  </Text>
-                  <Text style={styles.inventorySub}>
-                    {item.storeName || 'Main Store'} • {item.category || 'Fungicide'}
-                  </Text>
-                </View>
-                <View style={styles.inventoryRight}>
-                  <Text style={styles.inventoryQty}>
-                    {idx === 0 ? '724 kg' : '220 kg'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+            {displayInventory.length === 0 ? (
+              <View style={[styles.inventoryRow, { justifyContent: 'center', paddingVertical: 14 }]}>
+                <Text style={{ fontSize: 12, color: colors.textMuted }}>No inventory items recorded yet</Text>
+              </View>
+            ) : (
+              displayInventory.map((item, idx) => (
+                <TouchableOpacity
+                  key={item.id || idx}
+                  style={[styles.inventoryRow, idx > 0 && styles.rowBorderTop]}
+                  onPress={() => onNavigate('inventory')}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.inventoryLeft}>
+                    <Text style={styles.inventoryPercentage}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.inventorySub}>
+                      {item.storeName || 'Main Store'} • {item.category || 'General'}
+                    </Text>
+                  </View>
+                  <View style={styles.inventoryRight}>
+                    <Text style={styles.inventoryQty}>
+                      {item.quantity} {item.unit || 'kg'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         </View>
 

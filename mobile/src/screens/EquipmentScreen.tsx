@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,14 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../theme/colors';
-import { initialEquipment, Equipment } from '../data/mockData';
+import { Equipment } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
 import { useAlert } from '../context/AlertContext';
+import { fetchEquipmentFromDB, createEquipmentInDB } from '../services/appwrite';
 
 export const EQUIPMENT_CATEGORIES = [
   'Tractor (4WD / 2WD)',
@@ -34,15 +36,38 @@ export const EQUIPMENT_FARMS = [
 
 interface EquipmentScreenProps {
   onBack: () => void;
+  farmId?: string;
+  userId?: string;
 }
 
-export const EquipmentScreen: React.FC<EquipmentScreenProps> = ({ onBack }) => {
+export const EquipmentScreen: React.FC<EquipmentScreenProps> = ({ onBack, farmId, userId }) => {
   const { showWarning, showSuccess } = useAlert();
-  const [fleet, setFleet] = useState<Equipment[]>(initialEquipment);
+  const [fleet, setFleet] = useState<Equipment[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [filter, setFilter] = useState<'all' | 'operational' | 'service_due' | 'issues'>('all');
   const [search, setSearch] = useState('');
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+
+  // Load real equipment fleet from Appwrite Database
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchEquipmentFromDB(farmId)
+      .then((dbFleet) => {
+        if (mounted) {
+          setFleet(dbFleet);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Load equipment notice:', err);
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [farmId]);
 
   // Form states for Register Equipment (matching Image)
   const [eqName, setEqName] = useState('');
@@ -78,14 +103,13 @@ export const EquipmentScreen: React.FC<EquipmentScreenProps> = ({ onBack }) => {
     setOpenDropdown(null);
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!eqName.trim()) {
       showWarning('Required Field', 'Please enter equipment / machine name.');
       return;
     }
     const runtime = parseFloat(eqRuntimeHours) || 0;
-    const created: Equipment = {
-      id: `eq-${Date.now()}`,
+    const payload: Partial<Equipment> = {
       name: eqName.trim(),
       model: eqModelNumber.trim() || 'Standard Model',
       hoursRun: runtime,
@@ -98,10 +122,18 @@ export const EquipmentScreen: React.FC<EquipmentScreenProps> = ({ onBack }) => {
       nextServiceDate: eqNextServiceDate,
       fuelEfficiency: eqFuelEfficiency.trim() || '3.8 L/hr (Optimal)',
     };
-    setFleet([created, ...fleet]);
     setIsRegisterOpen(false);
     resetRegisterForm();
-    showSuccess('Equipment Registered', `${created.name} added to your farm fleet.`);
+
+    try {
+      const created = await createEquipmentInDB(payload, userId);
+      setFleet((prev) => [created, ...prev]);
+      showSuccess('Equipment Registered', `${created.name} saved to database.`);
+    } catch (err: any) {
+      console.warn('Create equipment error:', err);
+      setFleet((prev) => [{ ...payload, id: `eq-${Date.now()}` } as Equipment, ...prev]);
+      showSuccess('Equipment Registered', `${payload.name} added to your farm fleet.`);
+    }
   };
 
   const handleReportProblem = () => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,19 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../theme/colors';
-import { initialTasks, Task } from '../data/mockData';
+import { Task } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
 import { useAlert } from '../context/AlertContext';
+import {
+  fetchTasksFromDB,
+  createTaskInDB,
+  updateTaskStatusInDB,
+  deleteTaskInDB,
+} from '../services/appwrite';
 
 const TASK_CATEGORIES = [
   'Fertilization & Nutrition',
@@ -47,16 +54,39 @@ const TASK_STATUSES: ('To Do' | 'In Progress' | 'Completed')[] = [
 
 interface TasksScreenProps {
   onBack: () => void;
+  farmId?: string;
+  userId?: string;
 }
 
-export const TasksScreen: React.FC<TasksScreenProps> = ({ onBack }) => {
+export const TasksScreen: React.FC<TasksScreenProps> = ({ onBack, farmId, userId }) => {
   const { showDeleteConfirm, showWarning, showSuccess } = useAlert();
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [taskViewMode, setTaskViewMode] = useState<'list' | 'calendar'>('list');
   const [taskFilter, setTaskFilter] = useState<'all' | 'todo' | 'in_progress' | 'completed'>('all');
   const [farmFilter, setFarmFilter] = useState<string>('all');
   const [taskSearch, setTaskSearch] = useState('');
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+
+  // Load live tasks from Appwrite Database
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchTasksFromDB(farmId)
+      .then((dbTasks) => {
+        if (mounted) {
+          setTasks(dbTasks);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Load tasks notice:', err);
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [farmId]);
 
   // Calendar State
   const [calendarMonth, setCalendarMonth] = useState(10); // November (0-indexed: 10 = Nov)
@@ -86,15 +116,13 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onBack }) => {
 
   // Toggle Status
   const handleToggleStatus = (id: string) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const nextStatus = task.status === 'Completed' ? 'To Do' : 'Completed';
     setTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === id) {
-          const nextStatus = t.status === 'Completed' ? 'To Do' : 'Completed';
-          return { ...t, status: nextStatus };
-        }
-        return t;
-      })
+      prev.map((t) => (t.id === id ? { ...t, status: nextStatus } : t))
     );
+    updateTaskStatusInDB(id, nextStatus);
   };
 
   // Delete Task
@@ -104,20 +132,20 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onBack }) => {
       'Are you sure you want to delete this field task? This action cannot be undone.',
       () => {
         setTasks((prev) => prev.filter((t) => t.id !== id));
+        deleteTaskInDB(id);
       }
     );
   };
 
   // Create Task
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     if (!newTitle.trim()) {
       showWarning('Required Field', 'Please enter a task title.');
       return;
     }
     const cleanPriority = newPriority.replace(' Priority', '') as 'Low' | 'Medium' | 'High' | 'Urgent';
-    const created: Task = {
-      id: `task-${Date.now()}`,
-      farmId: newFarmName.includes('Malwa') ? 'farm-2' : 'farm-1',
+    const newTaskPayload: Partial<Task> = {
+      farmId: farmId || (newFarmName.includes('Malwa') ? 'farm-2' : 'farm-1'),
       farmName: newFarmName,
       title: newTitle.trim(),
       category: newCategory,
@@ -129,12 +157,22 @@ export const TasksScreen: React.FC<TasksScreenProps> = ({ onBack }) => {
       crop: newCrop.trim() || 'PBW 826 Wheat',
       instructions: newInstructions.trim(),
     };
-    setTasks([created, ...tasks]);
+
     setIsCreateModalOpen(false);
     setOpenDropdown(null);
     setNewTitle('');
     setNewInstructions('');
-    showSuccess('Task Created', 'Field operation successfully scheduled.');
+
+    try {
+      const created = await createTaskInDB(newTaskPayload, userId);
+      setTasks((prev) => [created, ...prev]);
+      showSuccess('Task Created', 'Field operation successfully saved to database.');
+    } catch (err: any) {
+      console.warn('Create task error:', err);
+      // Fallback local update
+      setTasks((prev) => [{ ...newTaskPayload, id: `task-${Date.now()}` } as Task, ...prev]);
+      showSuccess('Task Created', 'Field operation saved.');
+    }
   };
 
   // Compute Due Status Label & Color

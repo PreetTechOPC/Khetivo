@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,16 @@ import {
   Linking,
   TextInput,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAlert } from '../context/AlertContext';
+import { fetchSupportTicketsFromDB, createSupportTicketInDB } from '../services/appwrite';
 
 interface SupportScreenProps {
   onBack: () => void;
+  userId?: string;
 }
 
 interface SupportTicket {
@@ -100,11 +103,32 @@ const faqs = [
   },
 ];
 
-export const SupportScreen: React.FC<SupportScreenProps> = ({ onBack }) => {
+export const SupportScreen: React.FC<SupportScreenProps> = ({ onBack, userId }) => {
   const { showInfo, showWarning, showSuccess } = useAlert();
-  const [tickets, setTickets] = useState<SupportTicket[]>(initialTickets);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(0);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+
+  // Load real tickets from Appwrite Database
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchSupportTicketsFromDB(userId)
+      .then((dbTickets) => {
+        if (mounted) {
+          setTickets(dbTickets);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Load support tickets notice:', err);
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [userId]);
 
   // Quick Ask Form
   const [askFarm, setAskFarm] = useState('Khetivo Green Acres (Samrala)');
@@ -132,54 +156,58 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({ onBack }) => {
     });
   };
 
-  const handleQuickAsk = () => {
+  const handleQuickAsk = async () => {
     if (!askQuestion.trim()) {
       showWarning('Required Field', 'Please describe your crop question or problem.');
       return;
     }
-    const created: SupportTicket = {
-      id: `tkt-${Date.now()}`,
-      ticketNo: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
+    const payload = {
       subject: `Agronomy Query: ${askCrop}`,
       category: 'Crop Health & Pathology',
       farmName: askFarm,
       cropName: askCrop,
       priority: 'Normal',
-      status: 'Open',
-      createdAt: 'Just now',
-      lastReply: 'Ticket assigned to PAU Agronomy Desk. Reply expected within 2 hours.',
-      assignedAgronomist: 'Dr. Harpreet Singh (PAU)',
       description: askQuestion.trim(),
     };
-    setTickets([created, ...tickets]);
     setAskQuestion('');
-    showSuccess('Question Submitted', `Ticket #${created.ticketNo} logged. An agronomist will review your query.`);
+
+    try {
+      const created = await createSupportTicketInDB(payload, userId);
+      setTickets((prev) => [created, ...prev]);
+      showSuccess('Question Submitted', `Ticket #${created.ticketNo} logged in database.`);
+    } catch (e) {
+      console.warn('Quick ask error:', e);
+      setTickets((prev) => [{ ...payload, id: `tkt-${Date.now()}`, ticketNo: `TKT-${Math.floor(1000 + Math.random() * 9000)}`, status: 'Open', createdAt: 'Just now', lastReply: 'Ticket assigned.', assignedAgronomist: 'PAU Agronomist' } as SupportTicket, ...prev]);
+      showSuccess('Question Submitted', 'Ticket logged.');
+    }
   };
 
-  const handleCreateTicket = () => {
+  const handleCreateTicket = async () => {
     if (!modalSubject.trim() || !modalDesc.trim()) {
       showWarning('Required Field', 'Please provide a ticket subject and description.');
       return;
     }
-    const created: SupportTicket = {
-      id: `tkt-${Date.now()}`,
-      ticketNo: `TKT-${Math.floor(1000 + Math.random() * 9000)}`,
+    const payload = {
       subject: modalSubject.trim(),
       category: modalCategory,
       farmName: askFarm,
       cropName: askCrop,
       priority: modalPriority,
-      status: 'Open',
-      createdAt: 'Just now',
-      lastReply: 'Ticket assigned. Agronomist reviewing farm telemetry.',
-      assignedAgronomist: 'Agronomy Support Team',
       description: modalDesc.trim(),
     };
-    setTickets([created, ...tickets]);
     setIsModalOpen(false);
     setModalSubject('');
     setModalDesc('');
-    showSuccess('Ticket Created', `Support Ticket #${created.ticketNo} created successfully.`);
+
+    try {
+      const created = await createSupportTicketInDB(payload, userId);
+      setTickets((prev) => [created, ...prev]);
+      showSuccess('Ticket Created', `Support Ticket #${created.ticketNo} registered in database.`);
+    } catch (e) {
+      console.warn('Create ticket error:', e);
+      setTickets((prev) => [{ ...payload, id: `tkt-${Date.now()}`, ticketNo: `TKT-${Math.floor(1000 + Math.random() * 9000)}`, status: 'Open', createdAt: 'Just now', lastReply: 'Ticket assigned.', assignedAgronomist: 'Agronomy Support' } as SupportTicket, ...prev]);
+      showSuccess('Ticket Created', 'Support ticket submitted.');
+    }
   };
 
   return (

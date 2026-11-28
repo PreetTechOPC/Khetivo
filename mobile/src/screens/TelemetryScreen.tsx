@@ -13,19 +13,20 @@ interface TelemetryScreenProps {
 
 export const TelemetryScreen: React.FC<TelemetryScreenProps> = ({
   farm,
-  crops = initialCrops,
+  crops = [],
   onBack,
 }) => {
   const { showAlert, showSuccess } = useAlert();
   const [motorRunning, setMotorRunning] = useState(false);
   const [timerDuration, setTimerDuration] = useState('45 Mins');
-  const [selectedCrop, setSelectedCrop] = useState(crops[0]);
+  const activeCropsList = crops.length > 0 ? crops : (farm.crops || []);
+  const [selectedCrop, setSelectedCrop] = useState<Crop | null>(activeCropsList[0] || null);
 
   const handleToggleMotor = () => {
     if (!motorRunning) {
       showAlert({
         title: 'Start Tubewell Motor',
-        message: `Start 10HP Submersible motor for ${selectedCrop.name} with ${timerDuration} auto-cutoff?`,
+        message: `Start 10HP Submersible motor for ${selectedCrop?.name || 'Crop'} with ${timerDuration} auto-cutoff?`,
         type: 'warning',
         buttons: [
           { text: 'Cancel', style: 'cancel' },
@@ -128,7 +129,7 @@ export const TelemetryScreen: React.FC<TelemetryScreenProps> = ({
               key={crop.id}
               style={[
                 styles.parcelCard,
-                selectedCrop.id === crop.id && styles.parcelCardSelected,
+                selectedCrop?.id === crop.id && styles.parcelCardSelected,
               ]}
               onPress={() => setSelectedCrop(crop)}
               activeOpacity={0.8}

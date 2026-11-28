@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,20 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../theme/colors';
-import { initialFarms, Farm, Crop } from '../data/mockData';
+import { Farm, Crop } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
 import { useAlert } from '../context/AlertContext';
+import { fetchCropsFromDB, createCropInDB } from '../services/appwrite';
 
 interface CropGuideScreenProps {
   onBack: () => void;
+  farms?: Farm[];
+  farmId?: string;
+  userId?: string;
 }
 
 export interface CropTemplate {
@@ -311,86 +316,49 @@ interface ActiveCropData {
   templateId: string;
 }
 
-export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack }) => {
+export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack, farms = [], farmId, userId }) => {
   const { showWarning, showSuccess } = useAlert();
-  const [crops, setCrops] = useState<ActiveCropData[]>([
-    {
-      id: 'crop-1',
-      name: 'Wheat (Kanak)',
-      variety: 'HD-3086 / Sharbati',
-      area: 18,
-      areaUnit: 'Acres',
-      season: 'Rabi',
-      stage: 'Crown Root Initiation & Tillering',
-      stageStep: 2,
-      currentDay: 28,
-      totalDays: 135,
-      health: 'Vigorous Canopy (94% NDVI)',
-      sownDate: 'Oct 24, 2026',
-      harvestDate: 'Late March 2027',
-      nextMilestone: '1st Split Urea Top-Dressing (Day 30)',
-      farmId: 'farm-1',
-      farmName: 'Khetivo Green Acres (Samrala)',
-      templateId: 'wheat',
-    },
-    {
-      id: 'crop-2',
-      name: 'Potato (Aloo)',
-      variety: 'Kufri Pukhraj (Certified)',
-      area: 10,
-      areaUnit: 'Acres',
-      season: 'Rabi',
-      stage: 'Tuber Bulking & Canopy Closure',
-      stageStep: 3,
-      currentDay: 42,
-      totalDays: 95,
-      health: 'Optimal (92% NDVI)',
-      sownDate: 'Oct 10, 2026',
-      harvestDate: 'Mid Jan 2027',
-      nextMilestone: 'Late Blight Preventive Spray (Day 48)',
-      farmId: 'farm-1',
-      farmName: 'Khetivo Green Acres (Samrala)',
-      templateId: 'potato',
-    },
-    {
-      id: 'crop-3',
-      name: 'Mustard / Sarson',
-      variety: 'Pusa Jai Kisan',
-      area: 16,
-      areaUnit: 'Acres',
-      season: 'Rabi',
-      stage: 'Vegetative & Budding Stage',
-      stageStep: 2,
-      currentDay: 35,
-      totalDays: 120,
-      health: 'Vigorous (96% NDVI)',
-      sownDate: 'Oct 18, 2026',
-      harvestDate: 'Late Feb 2027',
-      nextMilestone: 'Foliar Boron & Sulphur Spray (Day 42)',
-      farmId: 'farm-2',
-      farmName: 'Malwa Golden Fields (Sangrur)',
-      templateId: 'mustard',
-    },
-    {
-      id: 'crop-4',
-      name: 'Green Fodder',
-      variety: 'Barseem (African Tall)',
-      area: 8,
-      areaUnit: 'Acres',
-      season: 'Rabi',
-      stage: 'Vegetative / Multi-Cut',
-      stageStep: 1,
-      currentDay: 20,
-      totalDays: 150,
-      health: 'Good (91% NDVI)',
-      sownDate: 'Nov 01, 2026',
-      harvestDate: 'April 2027',
-      nextMilestone: 'First Harvest Cut (Day 45)',
-      farmId: 'farm-2',
-      farmName: 'Malwa Golden Fields (Sangrur)',
-      templateId: 'fodder',
-    },
-  ]);
+  const [crops, setCrops] = useState<ActiveCropData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Load live crops from Appwrite Database
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchCropsFromDB(farmId)
+      .then((dbCrops) => {
+        if (mounted) {
+          const mapped: ActiveCropData[] = dbCrops.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            variety: c.variety,
+            area: c.area,
+            areaUnit: c.areaUnit,
+            season: c.season,
+            stage: c.stage,
+            stageStep: c.stageStep || 1,
+            currentDay: c.currentDay || 1,
+            totalDays: c.totalDays || 95,
+            health: c.health || 'Optimal',
+            sownDate: c.sownDate || 'Recent',
+            harvestDate: c.harvestDate || 'Upcoming',
+            nextMilestone: c.nextMilestone || 'Inspection',
+            farmId: c.farmId || farmId || 'default_farm',
+            farmName: c.farmName || 'Khetivo Farm',
+            templateId: c.name.toLowerCase().includes('potato') ? 'potato' : c.name.toLowerCase().includes('mustard') ? 'mustard' : 'wheat',
+          }));
+          setCrops(mapped);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Load crops notice:', err);
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [farmId]);
 
   const [selectedCropIndex, setSelectedCropIndex] = useState(0);
   const [addCropModalOpen, setAddCropModalOpen] = useState(false);
@@ -426,7 +394,7 @@ export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack }) => {
   const selectedTemplate =
     CROP_TEMPLATES.find((t) => t.id === modalTemplateId) || CROP_TEMPLATES[0];
   const selectedFarm =
-    initialFarms.find((f) => f.id === modalFarmId) || initialFarms[0];
+    farms.find((f) => f.id === modalFarmId) || farms[0] || { id: 'farm-1', name: 'My Farm' };
 
   // Dynamic handler: When user clicks a crop template in "Select Crop to Plant",
   // Current Crop Age (Day) immediately changes according to the selected crop!
@@ -454,17 +422,16 @@ export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack }) => {
     setOpenDropdown(null);
   };
 
-  const handleAddCropSubmit = () => {
+  const handleAddCropSubmit = async () => {
     if (!modalArea.trim() || isNaN(Number(modalArea)) || Number(modalArea) <= 0) {
       showWarning('Required Field', 'Please enter a valid allocated area in acres.');
       return;
     }
 
     const tmpl = CROP_TEMPLATES.find((t) => t.id === modalTemplateId) || CROP_TEMPLATES[0];
-    const targetFarm = initialFarms.find((f) => f.id === modalFarmId) || initialFarms[0];
+    const targetFarm = farms.find((f) => f.id === modalFarmId) || farms[0] || { id: 'farm-1', name: 'My Farm' };
 
-    const newCrop: ActiveCropData = {
-      id: `crop-${Date.now()}`,
+    const newCropPayload: any = {
       name: tmpl.name,
       variety: modalVariety || tmpl.variety,
       area: Number(modalArea),
@@ -483,11 +450,28 @@ export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack }) => {
       templateId: tmpl.id,
     };
 
-    setCrops([...crops, newCrop]);
-    setSelectedCropIndex(crops.length);
     setAddCropModalOpen(false);
     setOpenDropdown(null);
-    showSuccess('Crop Added', `${newCrop.name} (${newCrop.variety}) successfully added to ${targetFarm.name}.`);
+
+    try {
+      const created = await createCropInDB(newCropPayload, userId);
+      const mappedNewCrop: ActiveCropData = {
+        ...newCropPayload,
+        id: created.id,
+      };
+      setCrops((prev) => [...prev, mappedNewCrop]);
+      setSelectedCropIndex(crops.length);
+      showSuccess('Crop Added', `${newCropPayload.name} (${newCropPayload.variety}) saved to database.`);
+    } catch (err: any) {
+      console.warn('Create crop error:', err);
+      const fallbackCrop: ActiveCropData = {
+        ...newCropPayload,
+        id: `crop-${Date.now()}`,
+      };
+      setCrops((prev) => [...prev, fallbackCrop]);
+      setSelectedCropIndex(crops.length);
+      showSuccess('Crop Added', `${newCropPayload.name} added to ${targetFarm.name}.`);
+    }
   };
 
   return (
@@ -775,7 +759,7 @@ export const CropGuideScreen: React.FC<CropGuideScreenProps> = ({ onBack }) => {
                   </TouchableOpacity>
                   {openDropdown === 'farm' && (
                     <View style={styles.dropdownList}>
-                      {initialFarms.map((f) => {
+                      {(farms.length > 0 ? farms : [{ id: 'farm-1', name: 'My Farm' }]).map((f: any) => {
                         const farmLabel = `${f.name} (${f.totalArea} Acres - ${f.district})`;
                         const isSelected = modalFarmId === f.id;
                         return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,19 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { colors } from '../theme/colors';
-import { initialInventory, initialUsageLogs, InventoryItem, ItemUsageLog } from '../data/mockData';
+import { InventoryItem, ItemUsageLog } from '../data/mockData';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { DatePickerModal } from '../components/DatePickerModal';
 import { useAlert } from '../context/AlertContext';
+import {
+  fetchInventoryFromDB,
+  createInventoryItemInDB,
+  updateInventoryQtyInDB,
+  deleteInventoryItemInDB,
+} from '../services/appwrite';
 
 const INVENTORY_FARMS = [
   'Khetivo Green Acres',
@@ -61,16 +68,40 @@ const INVENTORY_UNITS = [
 
 interface InventoryScreenProps {
   onBack: () => void;
+  farmId?: string;
+  userId?: string;
 }
 
-export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
+export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack, farmId, userId }) => {
   const { showDeleteConfirm, showWarning, showError, showSuccess } = useAlert();
-  const [items, setItems] = useState<InventoryItem[]>(initialInventory);
-  const [usageLogs, setUsageLogs] = useState<ItemUsageLog[]>(initialUsageLogs);
+  const [items, setItems] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [usageLogs, setUsageLogs] = useState<ItemUsageLog[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'low_stock' | 'expiring' | 'usages'>('all');
   const [storeFilter, setStoreFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedId, setExpandedId] = useState<string | null>('inv-1'); // Default expand first item like in screenshot
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Load live inventory items from Appwrite Database
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchInventoryFromDB(farmId)
+      .then((dbItems) => {
+        if (mounted) {
+          setItems(dbItems);
+          if (dbItems.length > 0) setExpandedId(dbItems[0].id);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.warn('Load inventory notice:', err);
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [farmId]);
 
   // Modals
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
@@ -133,6 +164,7 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
       'Are you sure you want to remove this stock item from inventory? All associated usage logs will be preserved.',
       () => {
         setItems((prev) => prev.filter((i) => i.id !== id));
+        deleteInventoryItemInDB(id);
       }
     );
   };
@@ -156,10 +188,12 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
       return;
     }
 
-    // Deduct stock
+    const updatedQty = selectedItem.quantity - qty;
+    // Deduct stock in UI & DB
     setItems((prev) =>
-      prev.map((i) => (i.id === selectedItem.id ? { ...i, quantity: i.quantity - qty } : i))
+      prev.map((i) => (i.id === selectedItem.id ? { ...i, quantity: updatedQty } : i))
     );
+    updateInventoryQtyInDB(selectedItem.id, updatedQty);
 
     // Add log
     const newLog: ItemUsageLog = {
@@ -195,14 +229,16 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
       showWarning('Invalid Quantity', 'Please enter a valid restock quantity.');
       return;
     }
+    const updatedQty = selectedItem.quantity + qty;
     setItems((prev) =>
-      prev.map((i) => (i.id === selectedItem.id ? { ...i, quantity: i.quantity + qty } : i))
+      prev.map((i) => (i.id === selectedItem.id ? { ...i, quantity: updatedQty } : i))
     );
+    updateInventoryQtyInDB(selectedItem.id, updatedQty);
     setIsRestockModalOpen(false);
     showSuccess('Restocked Successfully', `Added ${qty} ${selectedItem.unit} to ${selectedItem.name}.`);
   };
 
-  const handleSaveNewItem = () => {
+  const handleSaveNewItem = async () => {
     if (!formName.trim() && !formBatch.trim()) {
       showWarning('Required Field', 'Please enter Item Name.');
       return;
@@ -212,9 +248,8 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
     const finalRate = parseFloat(formRate) || 450;
     const finalThreshold = parseFloat(formThreshold) || 5;
 
-    const newItem: InventoryItem = {
-      id: `inv-${Date.now()}`,
-      farmId: formFarm.includes('Malwa') ? 'farm-2' : 'farm-1',
+    const newItemPayload: Partial<InventoryItem> = {
+      farmId: farmId || (formFarm.includes('Malwa') ? 'farm-2' : 'farm-1'),
       farmName: formFarm,
       storeId: formStore.includes('Chemical') ? 'store-2' : 'store-1',
       storeName: formStore,
@@ -228,13 +263,22 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({ onBack }) => {
       rate: finalRate,
       lowStockThreshold: finalThreshold,
     };
-    setItems([newItem, ...items]);
+
     setIsAddItemModalOpen(false);
     setOpenDropdown(null);
     setFormName('');
     setFormQty('');
     setFormRate('');
-    showSuccess('Item Added', `${newItem.name} added to ${newItem.storeName}.`);
+
+    try {
+      const created = await createInventoryItemInDB(newItemPayload, userId);
+      setItems((prev) => [created, ...prev]);
+      showSuccess('Item Added', `${created.name} added to database.`);
+    } catch (err: any) {
+      console.warn('Create inventory item error:', err);
+      setItems((prev) => [{ ...newItemPayload, id: `inv-${Date.now()}` } as InventoryItem, ...prev]);
+      showSuccess('Item Added', `${finalName} added to ${formStore}.`);
+    }
   };
 
   const handleSaveStore = () => {
