@@ -86,6 +86,18 @@ export async function POST(req: NextRequest) {
       console.warn("Could not save to Appwrite user_profiles:", dbErr.message);
     }
 
+    // Dispatch welcome email asynchronously if valid email provided
+    if (email && email.includes("@")) {
+      import("@/lib/emailService").then(({ sendWelcomeEmail }) => {
+        sendWelcomeEmail({
+          toEmail: effectiveEmail,
+          farmerName: effectiveName,
+          farmerId,
+          phone: cleanPhone,
+        }).catch((e) => console.warn("[Welcome Email dispatch notice]:", e));
+      });
+    }
+
     return NextResponse.json({
       success: true,
       message: "Mobile phone verified successfully! User profile registered in Appwrite.",

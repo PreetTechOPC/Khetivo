@@ -117,6 +117,18 @@ export async function POST(req: NextRequest) {
 
     const farmerId = `KHET-${effectivePhone.slice(-5)}`;
 
+    // Dispatch welcome email asynchronously for newly registered user
+    if (isEmail) {
+      import("@/lib/emailService").then(({ sendWelcomeEmail }) => {
+        sendWelcomeEmail({
+          toEmail: effectiveEmail,
+          farmerName: defaultName,
+          farmerId,
+          phone: effectivePhone,
+        }).catch((e) => console.warn("[Welcome Email dispatch notice]:", e));
+      });
+    }
+
     return NextResponse.json({
       success: true,
       message: "New account registered and signed in via Appwrite.",

@@ -124,12 +124,50 @@ export async function POST(req: NextRequest) {
             invoiceNo: invNo,
             date: startDate,
             period: "Annual License (1 Year)",
-            planName: planTier === "pro" ? "Precision Pro (Annual)" : "Enterprise Agri (Annual)",
+            planName: planTier === "pro" ? "Farm Pro (Annual)" : "Estate Enterprise (Annual)",
             amount: Number(annualFee),
             paymentMethod,
             status: "Paid",
           }
         );
+
+        // Fetch user profile to send custom subscription confirmation email
+        try {
+          const profileRes = await databases.listDocuments(
+            APPWRITE_CONFIG.DATABASE_ID,
+            APPWRITE_CONFIG.COLLECTIONS.USER_PROFILES,
+            [Query.equal("userId", userId), Query.limit(1)]
+          );
+
+          if (profileRes.documents.length > 0) {
+            const profile = profileRes.documents[0];
+            if (profile.email && profile.email.includes("@")) {
+              const { sendSubscriptionInvoiceEmail } = await import("@/lib/emailService");
+              sendSubscriptionInvoiceEmail({
+                toEmail: profile.email,
+                farmerName: profile.name || "Progressive Farmer",
+                invoiceNo: invNo,
+                planName: planTier === "pro" ? "Farm Pro (Annual)" : "Estate Enterprise (Annual)",
+                period: "Annual License (1 Year)",
+                amount: Number(annualFee),
+                paymentMethod,
+                date: new Date(startDate).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }),
+                acresLimit: `Up to ${maxAcres} Acres`,
+                renewalDate: new Date(renewalDate).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }),
+              }).catch((e) => console.warn("[Subscription Email send notice]:", e));
+            }
+          }
+        } catch (emailErr: any) {
+          console.warn("Could not dispatch subscription email:", emailErr.message);
+        }
       } catch (invErr: any) {
         console.warn("Could not record billing invoice in Appwrite:", invErr.message);
       }

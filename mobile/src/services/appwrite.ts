@@ -216,6 +216,28 @@ export async function registerWithEmail(
     console.warn('Profile sync notice on register:', profileErr);
   }
 
+  // Dispatch Welcome Email via custom email API
+  try {
+    const webEndpoint =
+      Platform.OS === 'android'
+        ? 'http://10.0.2.2:3000/api/email'
+        : 'http://localhost:3000/api/email';
+
+    fetch(webEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'welcome',
+        payload: {
+          toEmail: email,
+          farmerName: name,
+          farmerId: `KHET-${(phone || currentAccount.$id).replace(/\D/g, '').slice(-5)}`,
+          phone: phone,
+        },
+      }),
+    }).catch(() => {});
+  } catch {}
+
   return {
     id: currentAccount.$id,
     name: currentAccount.name || name,
@@ -225,7 +247,7 @@ export async function registerWithEmail(
 }
 
 /**
- * Send password recovery email via Appwrite
+ * Send password recovery email via Appwrite & Custom Khetivo Email Service
  */
 export async function sendPasswordRecovery(email: string): Promise<void> {
   const redirectUrl = makeRedirectUri({
@@ -233,7 +255,37 @@ export async function sendPasswordRecovery(email: string): Promise<void> {
     path: 'auth',
     preferLocalhost: Platform.OS === 'web',
   });
-  await account.createRecovery(email, redirectUrl);
+
+  // 1. Trigger Appwrite native account recovery
+  try {
+    await account.createRecovery(email, redirectUrl);
+  } catch (err) {
+    console.warn('Appwrite createRecovery notice:', err);
+  }
+
+  // 2. Dispatch custom branded Khetivo HTML reset email
+  try {
+    const webEndpoint =
+      Platform.OS === 'android'
+        ? 'http://10.0.2.2:3000/api/email'
+        : 'http://localhost:3000/api/email';
+
+    await fetch(webEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'forgot_password',
+        payload: {
+          toEmail: email,
+          farmerName: email.split('@')[0],
+          resetLink: `${redirectUrl}?email=${encodeURIComponent(email)}`,
+          resetCode: Math.floor(100000 + Math.random() * 900000).toString(),
+        },
+      }),
+    });
+  } catch (customEmailErr) {
+    console.log('Custom recovery email dispatch notice:', customEmailErr);
+  }
 }
 
 // =============================================================================
