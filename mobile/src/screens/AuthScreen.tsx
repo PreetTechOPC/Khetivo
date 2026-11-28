@@ -546,13 +546,6 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             )}
           </TouchableOpacity>
 
-          {/* Appwrite Security Badge */}
-          <View style={styles.appwriteBadge}>
-            <Ionicons name="shield-checkmark" size={13} color="#059669" />
-            <Text style={styles.appwriteBadgeText}>
-              Powered by Appwrite Cloud Authentication
-            </Text>
-          </View>
 
           {/* Bottom Switcher Footer */}
           <View style={styles.footerWrap}>
@@ -814,20 +807,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: colors.text,
-  },
-  appwriteBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    alignSelf: 'center',
-  },
-  appwriteBadgeText: {
-    fontSize: 11,
-    color: '#059669',
-    fontWeight: '600',
   },
 
   dividerRow: {
