@@ -47,9 +47,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
   // Form Fields
   const [fullName, setFullName] = useState('');
-  const [identifier, setIdentifier] = useState(''); // Email, Gmail or Farmer ID
+  const [identifier, setIdentifier] = useState('farmer@khetivo.com'); // Default login email
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('khetivo@123'); // Default login password
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Forgot password modal state
@@ -98,6 +98,25 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     if (!validate()) return;
 
     setAuthLoading('submit');
+
+    // Check for preset demo / default credentials (instant fallback login)
+    const isDefaultDemoLogin =
+      mode === 'signin' &&
+      (identifier.trim().toLowerCase() === 'farmer@khetivo.com' ||
+        identifier.trim().toLowerCase() === 'demo@khetivo.com' ||
+        identifier.trim().toUpperCase() === 'KV-1042') &&
+      password === 'khetivo@123';
+
+    if (isDefaultDemoLogin) {
+      setAuthLoading(null);
+      onLoginSuccess({
+        name: 'Gurpreet Singh',
+        email: 'farmer@khetivo.com',
+        phone: '+91 98140-54321',
+        id: 'KV-FARM-1042',
+      });
+      return;
+    }
 
     // If identifier looks like an email address, authenticate through Appwrite
     const isEmail = identifier.includes('@');
@@ -311,6 +330,35 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
           {/* FORM FIELDS (Gmail, Email, ID & Password) */}
           <View style={styles.formCard}>
+            {/* Quick Demo Credentials Info Banner (Sign In Only) */}
+            {mode === 'signin' && (
+              <TouchableOpacity
+                style={styles.demoCard}
+                onPress={() => {
+                  setIdentifier('farmer@khetivo.com');
+                  setPassword('khetivo@123');
+                  setErrors({});
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.demoCardHeader}>
+                  <View style={styles.demoBadge}>
+                    <Ionicons name="key-outline" size={13} color="#065F46" />
+                    <Text style={styles.demoBadgeText}>Default Test Credentials</Text>
+                  </View>
+                  <Text style={styles.demoTapToFill}>Tap to Auto-fill</Text>
+                </View>
+                <View style={styles.demoCredentialsRow}>
+                  <Text style={styles.demoCredText}>
+                    <Text style={{ fontWeight: '700' }}>ID / Email:</Text> farmer@khetivo.com
+                  </Text>
+                  <Text style={styles.demoCredText}>
+                    <Text style={{ fontWeight: '700' }}>Pass:</Text> khetivo@123
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+
             {/* Full Name (Sign Up only) */}
             {mode === 'signup' && (
               <View style={styles.inputGroup}>
@@ -833,6 +881,45 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     gap: 12,
+  },
+  demoCard: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 12,
+    padding: 10,
+    gap: 6,
+  },
+  demoCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  demoBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  demoBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  demoTapToFill: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#059669',
+    textDecorationLine: 'underline',
+  },
+  demoCredentialsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  demoCredText: {
+    fontSize: 11,
+    color: '#047857',
   },
   inputGroup: {
     gap: 4,
